@@ -1,65 +1,88 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import Dropdown from '@/Components/Dropdown';
 import { Link, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 export default function AuthenticatedLayout({ header, children }) {
-    const user = usePage().props.auth.user;
+    const { auth } = usePage().props;
+    const user = auth.user;
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    
-    // Role-Specific Notifications Logic
-    const getNotifications = () => {
+
+    // Memoize notifications so they don't recalculate every render
+    const notifications = useMemo(() => {
+        const roles = {
+            admin: [
+                { id: 1, title: 'System maintenance scheduled', time: '3d', color: 'bg-rose-500' },
+                { id: 2, title: 'Monthly sales report generated', time: '1h', color: 'bg-indigo-500' },
+                { id: 3, title: 'New staff account pending approval', time: '5h', color: 'bg-blue-500' },
+            ],
+            staff: [
+                { id: 1, title: 'Low Stock: Mulberry Feed', time: '10m', color: 'bg-amber-500' },
+                { id: 2, title: 'New task assigned by Admin', time: '2h', color: 'bg-purple-500' },
+                { id: 3, title: 'Delivery #4402 received', time: '1d', color: 'bg-emerald-500' },
+            ],
+            customer: [
+                { id: 1, title: 'Order #1023 is Ready for Pickup!', time: '2h', color: 'bg-emerald-500' },
+                { id: 2, title: 'Your payment confirmed', time: '5h', color: 'bg-blue-500' },
+                { id: 3, title: 'New promo: 10% off feeds', time: '1d', color: 'bg-pink-500' },
+            ]
+        };
+        return roles[user.role] || [];
+    }, [user.role]);
+
+    // Build Navigation based on role
+    const navigation = useMemo(() => {
+        const items = [
+            { 
+                name: 'Dashboard', 
+                href: route('dashboard'), 
+                icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', 
+                current: route().current('dashboard') 
+            },
+        ];
+
         if (user.role === 'admin') {
-            return [
-                { id: 1, title: 'System maintenance scheduled', time: '3d', type: 'system', color: 'bg-rose-500' },
-                { id: 2, title: 'Monthly sales report generated', time: '1h', type: 'report', color: 'bg-indigo-500' },
-                { id: 3, title: 'New staff account pending approval', time: '5h', type: 'user', color: 'bg-blue-500' },
-            ];
+            items.push(
+                { name: 'Users', href: route().has('admin.users.index') ? route('admin.users.index') : '#', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z', current: route().current('admin.users.*') },
+                { name: 'Products', href: route().has('products.index') ? route('products.index') : '#', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', current: route().current('products.*') },
+                { name: 'Reports', href: route().has('admin.reports') ? route('admin.reports') : '#', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z', current: route().current('admin.reports') }
+            );
         } else if (user.role === 'staff') {
-            return [
-                { id: 1, title: 'Low Stock: Mulberry Feed', time: '10m', type: 'inventory', color: 'bg-amber-500' },
-                { id: 2, title: 'New task assigned by Admin', time: '2h', type: 'task', color: 'bg-purple-500' },
-                { id: 3, title: 'Delivery #4402 received', time: '1d', type: 'inventory', color: 'bg-emerald-500' },
-            ];
+            items.push(
+                { name: 'Inventory', href: route().has('inventory.index') ? route('inventory.index') : '#', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10', current: route().current('inventory.*') },
+                { name: 'Tasks', href: route().has('tasks.index') ? route('tasks.index') : '#', icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4', current: route().current('tasks.*') }
+            );
         } else if (user.role === 'customer') {
-            return [
-                { id: 1, title: 'Order #1023 is now Ready for Pickup!', time: '2h', type: 'order', color: 'bg-emerald-500' },
-                { id: 2, title: 'Your payment has been confirmed', time: '5h', type: 'payment', color: 'bg-blue-500' },
-                { id: 3, title: 'New promo: 10% off on all feeds', time: '1d', type: 'promo', color: 'bg-pink-500' },
-            ];
+            items.push(
+                { 
+                    name: 'My Orders', 
+                    href: route().has('orders.index') ? route('orders.index') : '#', 
+                    icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2', 
+                    current: route().current('orders.*') 
+                },
+                                { 
+                    name: 'Storefront', 
+                    href: '/', 
+                    icon: 'M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z',
+                    current: route().current('home') 
+                }
+            );
         }
-        return [];
-    };
-
-    const notifications = getNotifications();
-
-    const navigation = [
-        { name: 'Dashboard', href: route('dashboard'), icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', current: route().current('dashboard') },
-    ];
-
-    if (user.role === 'admin') {
-        navigation.push(
-            { name: 'Users', href: route('admin.users'), icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z', current: route().current('admin.users') },
-            { name: 'Products', href: route('products.index'), icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', current: route().current('products.index') },
-            { name: 'Reports', href: route('admin.reports'), icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z', current: route().current('admin.reports') }
-        );
-    } else if (user.role === 'staff') {
-        navigation.push(
-            { name: 'Inventory', href: route('inventory.index'), icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10', current: route().current('inventory.index') },
-            { name: 'Tasks', href: route('tasks.index'), icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4', current: route().current('tasks.index') }
-        );
-    } else if (user.role === 'customer') {
-        navigation.length = 0;
-        navigation.push(
-            { name: 'Storefront', href: '/', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', current: false },
-            { name: 'My Orders', href: route('orders.index'), icon: 'M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z', current: route().current('orders.index') }
-        );
-    }
+        return items;
+    }, [user.role]);
 
     return (
-        <div className="flex h-screen bg-slate-50 font-sans antialiased">
+        <div className="flex h-screen bg-slate-50 font-sans antialiased overflow-hidden">
+            {/* Mobile Sidebar Overlay */}
+            {sidebarOpen && (
+                <div 
+                    className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm lg:hidden" 
+                    onClick={() => setSidebarOpen(false)}
+                />
+            )}
+
             {/* Sidebar */}
-            <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-200 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
+            <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-200 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
                 <div className="flex flex-col h-full">
                     <div className="p-8">
                         <Link href="/">
@@ -67,19 +90,19 @@ export default function AuthenticatedLayout({ header, children }) {
                         </Link>
                     </div>
 
-                    <nav className="flex-1 px-6 space-y-2">
+                    <nav className="flex-1 px-6 space-y-2 overflow-y-auto">
                         <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-4 mb-4">Main Navigation</div>
                         {navigation.map((item) => (
                             <Link
                                 key={item.name}
                                 href={item.href}
-                                className={`flex items-center px-4 py-3.5 text-sm font-bold rounded-2xl transition-all duration-200 ${
+                                className={`flex items-center px-4 py-3.5 text-sm font-bold rounded-2xl transition-all duration-200 group ${
                                     item.current
-                                        ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-200 translate-x-1'
+                                        ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-100 translate-x-1'
                                         : 'text-slate-500 hover:bg-slate-50 hover:text-indigo-600'
                                 }`}
                             >
-                                <svg className={`mr-3 h-5 w-5 ${item.current ? 'text-white' : 'text-slate-400 transition-colors group-hover:text-indigo-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg className={`mr-3 h-5 w-5 ${item.current ? 'text-white' : 'text-slate-400 group-hover:text-indigo-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
                                 </svg>
                                 {item.name}
@@ -87,7 +110,6 @@ export default function AuthenticatedLayout({ header, children }) {
                         ))}
                     </nav>
 
-                    {/* Bottom Sidebar - User Brief */}
                     <div className="p-6 border-t border-slate-100 bg-slate-50/50">
                         <div className="flex items-center gap-3 px-2">
                             <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -97,21 +119,27 @@ export default function AuthenticatedLayout({ header, children }) {
                 </div>
             </aside>
 
-            {/* Main Content */}
-            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                <header className="h-24 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-10 z-40">
-                    <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 text-slate-600 bg-slate-100 rounded-xl">
+            {/* Main Content Area */}
+            <div className="flex-1 flex flex-col min-w-0">
+                <header className="h-24 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-6 lg:px-10 z-40 shrink-0">
+                    <button 
+                        onClick={() => setSidebarOpen(true)} 
+                        className="lg:hidden p-2 text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors"
+                        aria-label="Open Menu"
+                    >
                         <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16M4 18h16" />
                         </svg>
                     </button>
 
                     <div className="hidden md:block">
-                        <h2 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em]">{header ? header : 'Resource Overview'}</h2>
+                        <h2 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em]">
+                            {header || 'Resource Overview'}
+                        </h2>
                     </div>
 
-                    <div className="flex items-center gap-4">
-                        {/* Role-Based Notification Bell */}
+                    <div className="flex items-center gap-2 lg:gap-4">
+                        {/* Notification Bell */}
                         <Dropdown>
                             <Dropdown.Trigger>
                                 <button className="relative p-3 bg-slate-50 text-slate-500 rounded-2xl hover:bg-indigo-50 hover:text-indigo-600 transition-all group">
@@ -134,9 +162,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                 <div className="p-5 border-b bg-slate-50/80 backdrop-blur-sm">
                                     <div className="flex items-center justify-between">
                                         <span className="font-black text-[10px] uppercase tracking-widest text-slate-900">Notifications</span>
-                                        <span className="bg-indigo-600 text-white px-2 py-0.5 rounded-lg text-[10px] font-black tracking-tighter">
-                                            {notifications.length} NEW
-                                        </span>
+                                        <span className="bg-indigo-600 text-white px-2 py-0.5 rounded-lg text-[10px] font-black">{notifications.length} NEW</span>
                                     </div>
                                 </div>
                                 <div className="max-h-[350px] overflow-y-auto bg-white">
@@ -154,48 +180,39 @@ export default function AuthenticatedLayout({ header, children }) {
                                             </div>
                                         ))
                                     ) : (
-                                        <div className="py-12 text-center">
-                                            <p className="text-xs font-bold text-slate-300 uppercase tracking-widest italic">All caught up!</p>
-                                        </div>
+                                        <div className="py-12 text-center text-xs font-bold text-slate-300 uppercase tracking-widest italic">All caught up!</div>
                                     )}
                                 </div>
-                                <button className="w-full py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 hover:text-indigo-600 bg-slate-50/50 transition-colors border-t border-slate-100">
-                                    View Activity Log
-                                </button>
                             </Dropdown.Content>
                         </Dropdown>
 
-                        <div className="h-10 w-[1px] bg-slate-100 mx-2"></div>
+                        <div className="h-10 w-[1px] bg-slate-100 mx-1"></div>
 
                         {/* User Profile */}
                         <Dropdown>
                             <Dropdown.Trigger>
-                                <button className="flex items-center gap-4 pl-2 pr-1 py-1 rounded-2xl hover:bg-slate-50 transition-all group focus:outline-none">
-                                    <div className="text-right hidden lg:block">
-                                        <p className="text-sm font-black text-slate-900 leading-none tracking-tight group-hover:text-indigo-600 transition">{user.name}</p>
+                                <button className="flex items-center gap-3 pl-2 pr-1 py-1 rounded-2xl hover:bg-slate-50 transition-all group focus:outline-none">
+                                    <div className="text-right hidden sm:block">
+                                        <p className="text-sm font-black text-slate-900 leading-none group-hover:text-indigo-600 transition">{user.name}</p>
                                         <p className="text-[9px] font-black uppercase tracking-[0.2em] text-indigo-500 mt-1.5">{user.role}</p>
                                     </div>
                                     <img 
                                         className="h-11 w-11 rounded-2xl border-2 border-white shadow-md group-hover:shadow-indigo-100 transition-all object-cover" 
-                                        src={`https://ui-avatars.com/api/?name=${user.name}&background=6366f1&color=fff&bold=true&font-size=0.33`} 
+                                        src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=6366f1&color=fff&bold=true&font-size=0.33`} 
                                         alt={user.name} 
                                     />
                                 </button>
                             </Dropdown.Trigger>
                             <Dropdown.Content align="right" width="48" className="rounded-2xl border-0 shadow-2xl overflow-hidden mt-2">
-                                <div className="p-4 bg-slate-50/50 border-b border-slate-100 lg:hidden">
-                                    <p className="text-xs font-black text-slate-900 truncate">{user.name}</p>
-                                    <p className="text-[9px] font-bold text-indigo-500 uppercase">{user.role}</p>
-                                </div>
                                 <Dropdown.Link href={route('profile.edit')} className="font-bold text-xs py-3">Settings</Dropdown.Link>
-                                <Dropdown.Link href={route('logout')} method="post" as="button" className="font-bold text-xs py-3 text-rose-600">Logout</Dropdown.Link>
+                                <Dropdown.Link href={route('logout')} method="post" as="button" className="font-bold text-xs py-3 text-rose-600 w-full text-left">Logout</Dropdown.Link>
                             </Dropdown.Content>
                         </Dropdown>
                     </div>
                 </header>
 
                 <main className="flex-1 overflow-x-hidden overflow-y-auto scroll-smooth">
-                    <div className="container mx-auto px-10 py-10 max-w-7xl">
+                    <div className="container mx-auto px-6 lg:px-10 py-8 lg:py-10 max-w-7xl">
                         {children}
                     </div>
                 </main>

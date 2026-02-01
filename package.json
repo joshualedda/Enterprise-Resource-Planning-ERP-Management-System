@@ -24,6 +24,8 @@
     },
     "dependencies": {
         "@heroicons/react": "^2.2.0",
+        "react-hot-toast": "^2.6.0",
+        "sweetalert2": "^11.26.17",
         "swiper": "^12.1.0"
     }
 }

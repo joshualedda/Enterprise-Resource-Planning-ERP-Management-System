@@ -31,8 +31,17 @@ class HandleInertiaRequests extends Middleware
     {
         return [
             ...parent::share($request),
+            
+            // I-share ang Auth user details
             'auth' => [
                 'user' => $request->user(),
+            ],
+
+            // ITO ANG PINAKA-IMPORTANTE: 
+            // Dito natin kinukuha ang session messages para mabasa ng React Toast
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
             ],
         ];
     }

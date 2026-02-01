@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Http\Controllers\Admin\UsersController;
 use Illuminate\Http\Request;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProfileController;
@@ -76,6 +77,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/admin/users', [UsersController::class, 'index'])->name('admin.users.index');
+    Route::post('/admin/users', [UsersController::class, 'store'])->name('admin.users.store');
+    Route::put('/admin/users/{user}', [UsersController::class, 'update'])->name('admin.users.update');
+    Route::delete('/admin/users/{user}', [UsersController::class, 'destroy'])->name('admin.users.destroy');
 });
 
 require __DIR__.'/auth.php';
