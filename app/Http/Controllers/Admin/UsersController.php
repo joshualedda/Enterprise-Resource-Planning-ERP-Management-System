@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 
+date_default_timezone_set('Asia/Manila');
 class UsersController extends Controller
 {
     /**
@@ -36,7 +37,6 @@ public function store(Request $request)
             'password' => ['required', 'confirmed', Password::defaults()],
         ]);
 
-        // 2. I-save sa variable para hindi mag-error na "Undefined variable $user"
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
@@ -44,15 +44,12 @@ public function store(Request $request)
             'password' => Hash::make($validated['password']),
         ]);
 
-        // 3. I-trigger ang email verification process
+
         event(new Registered($user));
 
         return back()->with('success', 'New user ' . $validated['name'] . ' has been added! A verification email has been sent.');
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, User $user)
     {
         $validated = $request->validate([
@@ -61,7 +58,6 @@ public function store(Request $request)
             'role' => 'required|string|in:admin,staff,customer',
         ]);
 
-        // Optional: Update password kung may nilagay
         if ($request->filled('password')) {
             $request->validate([
                 'password' => ['confirmed', Password::defaults()],
@@ -77,12 +73,8 @@ public function store(Request $request)
         return back()->with('success', 'User ' . $user->name . ' updated successfully!');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Request $request, User $user)
     {
-        // Base sa React code mo, 'admin_password' ang pinapasa mong key
         $request->validate([
             'admin_password' => ['required', 'current_password'],
         ]);

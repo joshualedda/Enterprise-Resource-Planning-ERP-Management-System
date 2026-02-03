@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Inertia\Response;
-
+date_default_timezone_set('Asia/Manila');
 class RegisteredUserController extends Controller
 {
     /**
@@ -40,12 +40,11 @@ public function store(Request $request): RedirectResponse
         'name' => $request->name,
         'email' => $request->email,
         'password' => Hash::make($request->password),
-        'role' => 'customer', // Siguraduhing may default role kung kailangan
+        'role' => 'customer', 
     ]);
 
     event(new Registered($user));
 
-    // BAGUHIN MO ITO: Redirect sa login instead na verification notice
     return redirect()->route('login')->with('status', 'Registration successful! Please login to verify your email.');
 }
 }

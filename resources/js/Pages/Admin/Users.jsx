@@ -1,77 +1,79 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, usePage, useForm, router } from '@inertiajs/react'; // Dagdag ang router
+import InputLabel from '@/Components/InputLabel';
+import TextInput from '@/Components/TextInput';
+import InputError from '@/Components/InputError';
+import { Head, usePage, useForm, router } from '@inertiajs/react';
 import { useState, useEffect, useMemo } from 'react';
 import Modal from '@/Components/Modal';
 import SecondaryButton from '@/Components/SecondaryButton';
 import DangerButton from '@/Components/DangerButton';
 import PrimaryButton from '@/Components/PrimaryButton';
-import InputError from '@/Components/InputError';
-import TextInput from '@/Components/TextInput';
-
-// Libraries
 import toast, { Toaster } from 'react-hot-toast';
 import Swal from 'sweetalert2';
 
 export default function AdminUsers({ auth, users }) {
     const { flash } = usePage().props;
+
     const [showModal, setShowModal] = useState(false);
-    const [modalMode, setModalMode] = useState('create'); 
+    const [modalMode, setModalMode] = useState('create');
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [showViewModal, setShowViewModal] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
 
-    // --- NEW STATES FOR SEARCH & PAGINATION ---
+    // Search & Pagination
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 5; // Dito mo i-set kung ilan ang lalabas sa table
+    const itemsPerPage = 5;
+
+    // Email Validation States
+    const [emailFeedback, setEmailFeedback] = useState({ message: '', type: '' });
+    const [isChecking, setIsChecking] = useState(false);
 
     const { data, setData, post, put, delete: destroy, processing, errors, reset, clearErrors } = useForm({
-        name: '', 
-        email: '', 
-        role: 'staff', 
-        password: '', 
+        name: '',
+        email: '',
+        role: 'staff',
+        password: '',
         password_confirmation: '',
-        admin_password: '', 
+        admin_password: '',
     });
 
-    // --- FIX: TOAST ALERT LOGIC ---
+    // Toast Flash Messages
     useEffect(() => {
-        if (flash?.success) {
-            toast.success(flash.success);
-        }
-        if (flash?.error) {
-            toast.error(flash.error);
-        }
+        if (flash?.success) toast.success(flash.success);
+        if (flash?.error) toast.error(flash.error);
     }, [flash]);
 
-    // --- SEARCH LOGIC ---
+    // Search Filter
     const filteredUsers = useMemo(() => {
         return users
             .filter(user => user.id !== auth.user.id)
-            .filter(user => 
+            .filter(user =>
                 user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 user.email.toLowerCase().includes(searchQuery.toLowerCase())
             );
     }, [users, auth.user.id, searchQuery]);
 
-    // --- PAGINATION CALCULATION ---
+    // Pagination
     const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+
     const paginatedUsers = useMemo(() => {
         const start = (currentPage - 1) * itemsPerPage;
         return filteredUsers.slice(start, start + itemsPerPage);
     }, [filteredUsers, currentPage]);
 
     useEffect(() => {
-        setCurrentPage(1); // Balik sa page 1 pag nag-search
+        setCurrentPage(1);
     }, [searchQuery]);
 
+    // Stats
     const stats = useMemo(() => ({
         total: users.length,
         staff: users.filter(u => u.role === 'staff').length,
         customers: users.filter(u => u.role === 'customer').length
     }), [users]);
 
-    // Avatar Logic
+    // Avatar Helper
     const getAvatarInfo = (name) => {
         const initials = name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || '??';
         const colors = ['bg-indigo-500', 'bg-emerald-500', 'bg-sky-500', 'bg-violet-500', 'bg-orange-500'];
@@ -79,10 +81,13 @@ export default function AdminUsers({ auth, users }) {
         return { initials, color: colors[charCodeSum % colors.length] };
     };
 
+    // Open Modal
     const openModal = (mode, user = null) => {
         setModalMode(mode);
         setSelectedUser(user);
         clearErrors();
+        setEmailFeedback({ message: '', type: '' });
+
         if (user && mode === 'edit') {
             setData({
                 name: user.name,
@@ -101,19 +106,71 @@ export default function AdminUsers({ auth, users }) {
         }
     };
 
+    // Real-time Email Check (Debounced)
+    useEffect(() => {
+        // Skip if same email on edit
+        if (modalMode === 'edit' && selectedUser?.email === data.email) {
+            setEmailFeedback({ message: '', type: '' });
+            return;
+        }
+
+        const checkEmail = async () => {
+            if (
+                data.email.length < 5 ||
+                !data.email.includes('@') ||
+                !data.email.includes('.')
+            ) {
+                setEmailFeedback({ message: '', type: '' });
+                return;
+            }
+
+            setIsChecking(true);
+            try {
+                const res = await axios.post('/api/check-email', { email: data.email });
+
+                if (res.data.exists) {
+                    setEmailFeedback({ message: '❌ This email is already in use.', type: 'error' });
+                } else {
+                    setEmailFeedback({ message: '✅ Email is available!', type: 'success' });
+                }
+            } catch (err) {
+                console.error(err);
+                setEmailFeedback({ message: '⚠️ Could not verify email.', type: 'error' });
+            } finally {
+                setIsChecking(false);
+            }
+        };
+
+        const timeoutId = setTimeout(checkEmail, 600);
+        return () => clearTimeout(timeoutId);
+
+    }, [data.email, modalMode, selectedUser]);
+
+    // Submit (Create & Edit)
     const submit = (e) => {
         e.preventDefault();
+
+        if (emailFeedback.type === 'error') {
+            toast.error('Please use a unique valid email.');
+            return;
+        }
+
         const action = modalMode === 'edit' ? put : post;
-        const url = modalMode === 'edit' ? route('admin.users.update', selectedUser.id) : route('admin.users.store');
+        const url =
+            modalMode === 'edit'
+                ? route('admin.users.update', selectedUser.id)
+                : route('admin.users.store');
 
         action(url, {
-            onSuccess: () => { 
-                setShowModal(false); 
+            onSuccess: () => {
+                setShowModal(false);
                 reset();
+                setEmailFeedback({ message: '', type: '' });
             }
         });
     };
 
+    // Delete Flow
     const initiateDelete = (user) => {
         setSelectedUser(user);
         clearErrors();
@@ -121,22 +178,20 @@ export default function AdminUsers({ auth, users }) {
 
         Swal.fire({
             title: 'Delete User?',
-            text: `Are you sure you want to delete this account ${user.name}?`,
+            text: `Are you sure you want to delete ${user.name}?`,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#e11d48',
             cancelButtonColor: '#64748b',
             confirmButtonText: 'Yes, delete it!',
-            borderRadius: '24px',
         }).then((result) => {
-            if (result.isConfirmed) {
-                setShowDeleteModal(true);
-            }
+            if (result.isConfirmed) setShowDeleteModal(true);
         });
     };
 
     const handleFinalDelete = (e) => {
         e.preventDefault();
+
         destroy(route('admin.users.destroy', selectedUser.id), {
             data: { admin_password: data.admin_password },
             preserveScroll: true,
@@ -146,10 +201,11 @@ export default function AdminUsers({ auth, users }) {
                 Swal.fire('Deleted!', 'User removed.', 'success');
             },
             onError: () => {
-                toast.error("Wrong Password, Try again.");
+                toast.error('Wrong admin password.');
             }
         });
     };
+
 
     return (
         <AuthenticatedLayout 
@@ -295,39 +351,118 @@ export default function AdminUsers({ auth, users }) {
                 </div>
             </Modal>
 
-            {/* CREATE / EDIT MODAL */}
-            <Modal show={showModal} onClose={() => setShowModal(false)} maxWidth="md">
-                <form onSubmit={submit} className="p-8">
-                    <h2 className="text-2xl font-black text-slate-900 capitalize mb-6">{modalMode} Member</h2>
-                    <div className="space-y-5">
-                        <FormInput label="Full Name" value={data.name} onChange={e => setData('name', e.target.value)} error={errors.name} />
-                        <FormInput label="Email Address" type="email" value={data.email} onChange={e => setData('email', e.target.value)} error={errors.email} />
-                        
-                        <div>
-                            <label className="text-[10px] font-black uppercase text-slate-400 ml-1 tracking-widest">Role</label>
-                            <select 
-                                className="w-full mt-1.5 border-slate-200 rounded-2xl font-bold text-sm focus:ring-indigo-500 focus:border-indigo-500" 
-                                value={data.role} 
-                                onChange={(e) => setData('role', e.target.value)}
-                            >
-                                <option value="staff">Staff</option>
-                                <option value="customer">Customer</option>
-                            </select>
-                        </div>
+      {/* CREATE / EDIT MODAL */}
+<Modal show={showModal} onClose={() => setShowModal(false)} maxWidth="md">
+    <form onSubmit={submit} className="p-8">
+        <h2 className="text-2xl font-black text-slate-900 capitalize mb-6">
+            {modalMode} Member
+        </h2>
 
-                        {modalMode === 'create' && (
-                            <div className="grid grid-cols-2 gap-4">
-                                <FormInput label="Password" type="password" value={data.password} onChange={e => setData('password', e.target.value)} error={errors.password} />
-                                <FormInput label="Confirm" type="password" value={data.password_confirmation} onChange={e => setData('password_confirmation', e.target.value)} />
-                            </div>
-                        )}
-                    </div>
-                    <div className="mt-10 flex justify-end gap-3">
-                        <SecondaryButton onClick={() => setShowModal(false)} type="button">Cancel</SecondaryButton>
-                        <PrimaryButton disabled={processing}>{modalMode === 'edit' ? 'Save Changes' : 'Create Member'}</PrimaryButton>
-                    </div>
-                </form>
-            </Modal>
+        <div className="space-y-5">
+            {/* Full Name */}
+            <FormInput
+                label="Full Name"
+                value={data.name}
+                onChange={e => setData('name', e.target.value)}
+                error={errors.name}
+            />
+
+            {/* 🔥 Email with Instant Validation */}
+            <div>
+                <InputLabel
+                    htmlFor="email"
+                    value="Email Address"
+                    className="font-bold text-slate-700"
+                />
+
+                <div className="relative">
+                    <TextInput
+                        id="email"
+                        type="email"
+                        value={data.email}
+                        className={`mt-1 block w-full bg-slate-50 transition-all ${
+                            emailFeedback.type === 'error'
+                                ? 'border-red-500 focus:ring-red-500'
+                                : emailFeedback.type === 'success'
+                                ? 'border-emerald-500 focus:ring-emerald-500'
+                                : 'border-slate-200'
+                        }`}
+                        autoComplete="username"
+                        onChange={(e) => setData('email', e.target.value)}
+                        required
+                    />
+
+                    {/* Loading Spinner inside input */}
+                    {isChecking && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                            <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Real-time Feedback Message */}
+                {emailFeedback.message && (
+                    <p
+                        className={`mt-2 text-[11px] font-black uppercase tracking-wider ${
+                            emailFeedback.type === 'error'
+                                ? 'text-red-500'
+                                : 'text-emerald-600'
+                        }`}
+                    >
+                        {emailFeedback.message}
+                    </p>
+                )}
+
+                <InputError message={errors.email} className="mt-2" />
+            </div>
+
+            {/* Role */}
+            <div>
+                <label className="text-[10px] font-black uppercase text-slate-400 ml-1 tracking-widest">
+                    Role
+                </label>
+                <select
+                    className="w-full mt-1.5 border-slate-200 rounded-2xl font-bold text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                    value={data.role}
+                    onChange={(e) => setData('role', e.target.value)}
+                >
+                    <option value="staff">Staff</option>
+                    <option value="customer">Customer</option>
+                </select>
+            </div>
+
+            {/* Password (Create Only) */}
+            {modalMode === 'create' && (
+                <div className="grid grid-cols-2 gap-4">
+                    <FormInput
+                        label="Password"
+                        type="password"
+                        value={data.password}
+                        onChange={e => setData('password', e.target.value)}
+                        error={errors.password}
+                    />
+                    <FormInput
+                        label="Confirm"
+                        type="password"
+                        value={data.password_confirmation}
+                        onChange={e => setData('password_confirmation', e.target.value)}
+                    />
+                </div>
+            )}
+        </div>
+
+        <div className="mt-10 flex justify-end gap-3">
+            <SecondaryButton onClick={() => setShowModal(false)} type="button">
+                Cancel
+            </SecondaryButton>
+
+            <PrimaryButton disabled={processing || isChecking}>
+                {modalMode === 'edit' ? 'Save Changes' : 'Create Member'}
+            </PrimaryButton>
+        </div>
+    </form>
+</Modal>
+
 
             {/* PASSWORD VERIFICATION MODAL */}
             <Modal show={showDeleteModal} onClose={() => setShowDeleteModal(false)} maxWidth="md">
