@@ -26,6 +26,8 @@
         "@heroicons/react": "^2.2.0",
         "lucide-react": "^0.563.0",
         "react-hot-toast": "^2.6.0",
+        "react-sweetalert2": "^0.6.0",
+        "react-toast": "^1.0.3",
         "sweetalert2": "^11.26.17",
         "swipe": "^1.7.7",
         "swiper": "^12.1.0"
