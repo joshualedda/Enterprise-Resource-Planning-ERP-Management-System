@@ -8,28 +8,16 @@ import 'swiper/css/pagination';
 import 'swiper/css/navigation';
 import 'swiper/css/effect-fade';
 
-export default function Storefront({ auth }) {
-    const [products, setProducts] = useState([]);
+export default function Storefront({ auth, products }) { // Added products prop
 
-    const dummyProducts = [
-        { id: 1, name: 'Premium Hybrid Silkworm Eggs', category: 'Biologicals', price: '500', rating: 5.0, reviews: 124, image_urls: ['/img/barong.jpg'] },
-        { id: 2, name: 'Certified Mulberry Saplings', category: 'Planting Material', price: '25', rating: 4.8, reviews: 89, image_urls: ['/img/3.jpg'] },
-        { id: 3, name: 'Grade-A Raw Silk Cocoons', category: 'Raw Materials', price: '1,200', rating: 4.9, reviews: 56, image_urls: ['/img/4.jpg'] },
-        { id: 4, name: 'Silk Extract (Sericin)', category: 'Cosmetic Grade', price: '3,500', rating: 4.7, reviews: 34, image_urls: ['/img/5.jpg'] },
-        { id: 5, name: 'Traditional Pina-Silk Barong', category: 'Textiles', price: '8,500', rating: 5.0, reviews: 12, image_urls: ['/img/2.jpg'] },
-    ];
-
-    useEffect(() => {
-        setProducts(dummyProducts);
-    }, []);
-
-    const renderStars = (rating) => {
+    // Helper for stars (since we don't have ratings yet, we'll default to 5 for now)
+    const renderStars = (rating = 5) => {
         return (
             <div className="flex items-center gap-0.5">
                 {[...Array(5)].map((_, i) => (
-                    <svg 
-                        key={i} 
-                        className={`w-3.5 h-3.5 ${i < Math.floor(rating) ? 'text-yellow-400 fill-yellow-400' : 'text-slate-200 fill-slate-200'}`} 
+                    <svg
+                        key={i}
+                        className={`w-3.5 h-3.5 ${i < Math.floor(rating) ? 'text-yellow-400 fill-yellow-400' : 'text-slate-200 fill-slate-200'}`}
                         viewBox="0 0 20 20"
                     >
                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
@@ -67,9 +55,9 @@ export default function Storefront({ auth }) {
                                 D'SERI<span className="text-lime-500">CORE</span>
                             </span>
                         </Link>
-                        
+
                         <div className="hidden lg:flex gap-8 text-[11px] font-black uppercase tracking-widest text-slate-500">
-                            
+
                             {/* MENU ITEM: E-COMMERCE */}
                             <div className="group/mega static">
                                 <Link href="#" className="hover:text-slate-950 transition-colors relative py-8 block">
@@ -223,7 +211,7 @@ export default function Storefront({ auth }) {
                             </div>
                         </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-6">
                         <Link href={route('login')} className="text-xs font-bold uppercase tracking-widest hover:text-lime-600 transition">Log In</Link>
                         <Link href="#" className="bg-slate-950 text-white px-6 py-3 text-[11px] font-black uppercase tracking-[0.15em] hover:bg-lime-500 hover:text-slate-950 transition-all duration-300">
@@ -250,7 +238,7 @@ export default function Storefront({ auth }) {
                                 <div className="space-y-4">
                                     <span className="inline-block text-lime-400 text-xs font-black uppercase tracking-[0.5em] border-l-4 border-lime-400 pl-4">Premium Fiber Sourcing</span>
                                     <h1 className="text-7xl lg:text-9xl font-black text-white leading-[0.85] tracking-tighter">
-                                        PURE <br/> PHILIPPINE <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-lime-400 to-emerald-400">SILK.</span>
+                                        PURE <br /> PHILIPPINE <br /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-lime-400 to-emerald-400">SILK.</span>
                                     </h1>
                                     <p className="text-lg text-slate-300 max-w-lg font-medium leading-relaxed pb-8">
                                         Empowering the local textile ecosystem through scientific excellence and integrated supply chain logistics.
@@ -266,7 +254,7 @@ export default function Storefront({ auth }) {
                 </Swiper>
             </header>
 
-{/* --- PRODUCT SHOWCASE --- */}
+            {/* --- PRODUCT SHOWCASE --- */}
             <section className="py-32 bg-[#FAFAFA]">
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="flex flex-col md:flex-row justify-between items-end mb-16">
@@ -282,7 +270,7 @@ export default function Storefront({ auth }) {
                         spaceBetween={30}
                         slidesPerView={1}
                         navigation={true}
-                        loop={true} 
+                        loop={products && products.length > 4}
                         autoplay={{
                             delay: 2500,
                             disableOnInteraction: false,
@@ -295,53 +283,56 @@ export default function Storefront({ auth }) {
                         }}
                         className="product-swiper"
                     >
-                        {products.map(product => (
+                        {products && products.map(product => (
                             <SwiperSlide key={product.id}>
-                                <div className="group bg-white border border-slate-200 p-4 hover:border-lime-400 transition-all duration-500 relative h-full">
-                                    <div className="aspect-[4/5] mb-6 overflow-hidden bg-slate-50 relative">
-                                        <img 
-                                            src={product.image_urls[0]} 
-                                            className="w-full h-full object-cover mix-blend-multiply group-hover:scale-110 transition-transform duration-700" 
-                                            onError={(e) => { e.target.src = 'https://placehold.co/600x800/f8fafc/0f172a?text=Silk+Asset'; }}
-                                        />
+                                <Link href={route('products.show', product.id)}>
+                                    <div className="group bg-white border border-slate-200 p-4 hover:border-lime-400 transition-all duration-500 relative h-full cursor-pointer">
+                                        <div className="aspect-[4/5] mb-6 overflow-hidden bg-slate-50 relative">
+                                            <img
+                                                src={product.image_path || '/img/placeholder.jpg'}
+                                                className="w-full h-full object-cover mix-blend-multiply group-hover:scale-110 transition-transform duration-700"
+                                                onError={(e) => { e.target.src = 'https://placehold.co/600x800/f8fafc/0f172a?text=Silk+Asset'; }}
+                                                alt={product.product}
+                                            />
 
-                                        <div className="absolute bottom-4 left-4">
-                                            <span className="bg-slate-950 text-white text-[9px] font-black px-3 py-1 uppercase tracking-widest">
-                                                {product.category}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="space-y-2">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            {renderStars(product.rating)}
-                                            <span className="text-[11px] font-black text-slate-900">{product.rating}</span>
-                                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                                                | {product.reviews} Verified Reviews
-                                            </span>
+                                            <div className="absolute bottom-4 left-4">
+                                                <span className="bg-slate-950 text-white text-[9px] font-black px-3 py-1 uppercase tracking-widest">
+                                                    {product.category?.category || 'Uncategorized'}
+                                                </span>
+                                            </div>
                                         </div>
 
-                                        <div className="flex justify-between items-start">
-                                            <h4 className="font-black text-lg text-slate-900 leading-tight h-14 line-clamp-2 w-full uppercase tracking-tight italic">
-                                                {product.name}
-                                            </h4>
-                                        </div>
-                                        
-                                        <div className="flex justify-between items-center pt-4 border-t border-slate-100">
-                                            <p className="font-black text-xl text-slate-950 tracking-tighter italic">₱{product.price}</p>
-                                            <button className="w-10 h-10 bg-slate-950 text-white flex items-center justify-center hover:bg-lime-500 hover:text-slate-950 transition-all duration-300">
-                                                <span className="text-lg font-bold">+</span>
-                                            </button>
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                {renderStars(5)}
+                                                <span className="text-[11px] font-black text-slate-900">5.0</span>
+                                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                                                    | {product.status}
+                                                </span>
+                                            </div>
+
+                                            <div className="flex justify-between items-start">
+                                                <h4 className="font-black text-lg text-slate-900 leading-tight h-14 line-clamp-2 w-full uppercase tracking-tight italic">
+                                                    {product.product}
+                                                </h4>
+                                            </div>
+
+                                            <div className="flex justify-between items-center pt-4 border-t border-slate-100">
+                                                <p className="font-black text-sm text-slate-500 tracking-tighter italic">View Details</p>
+                                                <button className="w-10 h-10 bg-slate-950 text-white flex items-center justify-center hover:bg-lime-500 hover:text-slate-950 transition-all duration-300">
+                                                    <span className="text-lg font-bold">→</span>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
+                                </Link>
                             </SwiperSlide>
                         ))}
                     </Swiper>
                 </div>
             </section>
 
-            {/* --- FOOTER --- (Rest of your footer code stays the same) */}
+            {/* --- FOOTER --- */}
             <footer className="bg-slate-950 text-white pt-24">
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 pb-20 border-b border-white/10">
@@ -354,7 +345,7 @@ export default function Storefront({ auth }) {
                                 The official digital infrastructure for the Philippine Sericulture industry. Connecting farmers, researchers, and global markets.
                             </p>
                         </div>
-                        
+
                         {['Solutions', 'Ecosystem', 'Support'].map((title, idx) => (
                             <div key={idx} className="space-y-6">
                                 <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-lime-400">{title}</h4>
@@ -367,7 +358,7 @@ export default function Storefront({ auth }) {
                             </div>
                         ))}
                     </div>
-                    
+
                     <div className="py-12 flex flex-col md:flex-row justify-between items-center gap-6">
                         <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
                             © 2026 SRDI - DMMMSU. Sericulture Research and Development Institute.

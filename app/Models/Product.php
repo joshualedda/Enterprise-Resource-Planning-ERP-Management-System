@@ -10,19 +10,18 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class Product extends Model
 {
     protected $fillable = [
-        'name',
-        'description',
-        'price',
         'category_id',
-        'image_urls',
-        'stock_quantity',
+        'image_id',
+        'product',
+        'status',
     ];
+
 
     protected $casts = [
-        'image_urls' => 'array',
-        'price' => 'decimal:2',
+        'category_id' => 'integer',
     ];
 
+    // Relationship (some of the relationsships are not used yet - jl)
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);

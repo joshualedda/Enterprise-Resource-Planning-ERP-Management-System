@@ -9,13 +9,15 @@ import axios from 'axios';
 
 export default function Register() {
     const [showPassword, setShowPassword] = useState(false);
-    
+
     // Email Validation States
     const [isChecking, setIsChecking] = useState(false);
     const [emailFeedback, setEmailFeedback] = useState({ message: '', type: '' }); // type: 'error' or 'success'
-    
+
     const { data, setData, post, processing, errors, reset } = useForm({
-        name: '',
+        first_name: '',
+        middle_name: '',
+        last_name: '',
         email: '',
         password: '',
         password_confirmation: '',
@@ -34,7 +36,7 @@ export default function Register() {
             try {
                 // Tatawag sa Laravel Route na ginawa natin sa web.php
                 const response = await axios.post('/api/check-email', { email: data.email });
-                
+
                 if (response.data.exists) {
                     setEmailFeedback({ message: '❌ This email is already in use.', type: 'error' });
                 } else {
@@ -55,8 +57,8 @@ export default function Register() {
     const submit = (e) => {
         e.preventDefault();
         // Pigilan ang submit kung may error sa email check
-        if (emailFeedback.type === 'error') return; 
-        
+        if (emailFeedback.type === 'error') return;
+
         post(route('register'), {
             onFinish: () => reset('password', 'password_confirmation'),
         });
@@ -72,19 +74,46 @@ export default function Register() {
             </div>
 
             <form onSubmit={submit} className="space-y-5">
-                {/* Full Name */}
+                {/* First Name */}
                 <div>
-                    <InputLabel htmlFor="name" value="Full Name" className="font-bold text-slate-700" />
+                    <InputLabel htmlFor="first_name" value="First Name" className="font-bold text-slate-700" />
                     <TextInput
-                        id="name"
-                        value={data.name}
+                        id="first_name"
+                        value={data.first_name}
                         className="mt-1 block w-full bg-slate-50 border-slate-200"
-                        autoComplete="name"
+                        autoComplete="given-name"
                         isFocused={true}
-                        onChange={(e) => setData('name', e.target.value)}
+                        onChange={(e) => setData('first_name', e.target.value)}
                         required
                     />
-                    <InputError message={errors.name} className="mt-2" />
+                    <InputError message={errors.first_name} className="mt-2" />
+                </div>
+
+                {/* Middle Name */}
+                <div>
+                    <InputLabel htmlFor="middle_name" value="Middle Name (Optional)" className="font-bold text-slate-700" />
+                    <TextInput
+                        id="middle_name"
+                        value={data.middle_name}
+                        className="mt-1 block w-full bg-slate-50 border-slate-200"
+                        autoComplete="additional-name"
+                        onChange={(e) => setData('middle_name', e.target.value)}
+                    />
+                    <InputError message={errors.middle_name} className="mt-2" />
+                </div>
+
+                {/* Last Name */}
+                <div>
+                    <InputLabel htmlFor="last_name" value="Last Name" className="font-bold text-slate-700" />
+                    <TextInput
+                        id="last_name"
+                        value={data.last_name}
+                        className="mt-1 block w-full bg-slate-50 border-slate-200"
+                        autoComplete="family-name"
+                        onChange={(e) => setData('last_name', e.target.value)}
+                        required
+                    />
+                    <InputError message={errors.last_name} className="mt-2" />
                 </div>
 
                 {/* Email with Instant Validation */}
@@ -95,10 +124,9 @@ export default function Register() {
                             id="email"
                             type="email"
                             value={data.email}
-                            className={`mt-1 block w-full bg-slate-50 transition-all ${
-                                emailFeedback.type === 'error' ? 'border-red-500 focus:ring-red-500' : 
-                                emailFeedback.type === 'success' ? 'border-emerald-500 focus:ring-emerald-500' : 'border-slate-200'
-                            }`}
+                            className={`mt-1 block w-full bg-slate-50 transition-all ${emailFeedback.type === 'error' ? 'border-red-500 focus:ring-red-500' :
+                                    emailFeedback.type === 'success' ? 'border-emerald-500 focus:ring-emerald-500' : 'border-slate-200'
+                                }`}
                             autoComplete="username"
                             onChange={(e) => setData('email', e.target.value)}
                             required
@@ -110,12 +138,11 @@ export default function Register() {
                             </div>
                         )}
                     </div>
-                    
+
                     {/* Real-time Feedback Message */}
                     {emailFeedback.message && (
-                        <p className={`mt-2 text-[11px] font-black uppercase tracking-wider ${
-                            emailFeedback.type === 'error' ? 'text-red-500' : 'text-emerald-600'
-                        }`}>
+                        <p className={`mt-2 text-[11px] font-black uppercase tracking-wider ${emailFeedback.type === 'error' ? 'text-red-500' : 'text-emerald-600'
+                            }`}>
                             {emailFeedback.message}
                         </p>
                     )}
@@ -167,12 +194,11 @@ export default function Register() {
 
                 {/* Submit Button */}
                 <div className="pt-2">
-                    <PrimaryButton 
-                        className={`w-full justify-center py-3.5 rounded-xl shadow-lg transition-all ${
-                            emailFeedback.type === 'error' 
-                            ? 'bg-slate-300 cursor-not-allowed' 
-                            : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-100'
-                        }`} 
+                    <PrimaryButton
+                        className={`w-full justify-center py-3.5 rounded-xl shadow-lg transition-all ${emailFeedback.type === 'error'
+                                ? 'bg-slate-300 cursor-not-allowed'
+                                : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-100'
+                            }`}
                         disabled={processing || emailFeedback.type === 'error'}
                     >
                         {processing ? 'Processing...' : 'Register Account'}

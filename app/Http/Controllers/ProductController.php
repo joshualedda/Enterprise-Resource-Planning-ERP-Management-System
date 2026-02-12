@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\Category;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class ProductController extends Controller
 {
@@ -12,7 +14,10 @@ class ProductController extends Controller
      */
     public function index()
     {
-        return Product::with('category')->get();
+        return Inertia::render('Products/Index', [
+            'products' => Product::with('category')->latest()->get(),
+            'categories' => Category::all(),
+        ]);
     }
 
     /**
@@ -21,15 +26,15 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string',
-            'description' => 'required|string',
-            'price' => 'required|numeric',
+            'product' => 'required|string|max:150',
             'category_id' => 'required|exists:categories,id',
-            'image_urls' => 'nullable|array',
-            'stock_quantity' => 'required|integer',
+            'status' => 'required|in:active,inactive,archived', // Adjust based on your migration default
+            'image_path' => 'nullable|string',
         ]);
 
-        return Product::create($request->all());
+        Product::create($request->all());
+
+        return redirect()->route('products.index')->with('success', 'Product created successfully.');
     }
 
     /**
@@ -37,7 +42,9 @@ class ProductController extends Controller
      */
     public function show(Product $product)
     {
-        return $product->load('category');
+        return Inertia::render('Products/Show', [
+            'product' => $product->load('category'),
+        ]);
     }
 
     /**
@@ -46,16 +53,15 @@ class ProductController extends Controller
     public function update(Request $request, Product $product)
     {
         $request->validate([
-            'name' => 'sometimes|string',
-            'description' => 'sometimes|string',
-            'price' => 'sometimes|numeric',
-            'category_id' => 'sometimes|exists:categories,id',
-            'image_urls' => 'nullable|array',
-            'stock_quantity' => 'sometimes|integer',
+            'product' => 'required|string|max:150',
+            'category_id' => 'required|exists:categories,id',
+            'status' => 'required|in:active,inactive,archived',
+            'image_path' => 'nullable|string',
         ]);
 
         $product->update($request->all());
-        return $product;
+
+        return redirect()->route('products.index')->with('success', 'Product updated successfully.');
     }
 
     /**
@@ -64,6 +70,6 @@ class ProductController extends Controller
     public function destroy(Product $product)
     {
         $product->delete();
-        return response()->noContent();
+        return redirect()->route('products.index')->with('success', 'Product deleted successfully.');
     }
 }

@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, Link } from '@inertiajs/react';
 import { useState, Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import InputLabel from '@/Components/InputLabel';
@@ -8,14 +8,14 @@ import InputError from '@/Components/InputError';
 import PrimaryButton from '@/Components/PrimaryButton';
 import toast, { Toaster } from 'react-hot-toast';
 
-export default function Index({ products }) { // Note: Receiving products as a prop from Laravel
+export default function Index({ products, categories }) {
     const [isOpen, setIsOpen] = useState(false);
 
     const { data, setData, post, processing, reset, errors } = useForm({
-        name: '',
-        category: 'Biological',
-        price: '',
-        stock: '',
+        product: '',
+        category_id: '',
+        status: 'active',
+        image_path: '',
     });
 
     const submit = (e) => {
@@ -37,15 +37,15 @@ export default function Index({ products }) { // Note: Receiving products as a p
             <Toaster position="top-right" />
 
             <div className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
-                
+
                 {/* --- HEADER ACTIONS --- */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-center gap-4 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm w-full md:w-auto">
                         <button className="px-6 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold shadow-md">All Products</button>
                         <button className="px-6 py-2 text-slate-500 hover:text-indigo-600 rounded-xl text-sm font-bold transition">Categories</button>
                     </div>
-                    
-                    <button 
+
+                    <button
                         onClick={() => setIsOpen(true)}
                         className="w-full md:w-auto px-6 py-3 bg-indigo-600 text-white rounded-2xl text-sm font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-200 flex items-center justify-center gap-2"
                     >
@@ -58,35 +58,39 @@ export default function Index({ products }) { // Note: Receiving products as a p
                 {products && products.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {products.map((product) => (
-                            <div key={product.id} className="group bg-white rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden">
+                            <Link
+                                href={route('products.show', product.id)}
+                                key={product.id}
+                                className="group bg-white rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden block"
+                            >
                                 <div className="relative h-48 overflow-hidden">
-                                    <img 
-                                        src={product.image || 'https://images.unsplash.com/photo-1589923188900-85dae523342b?q=80&w=400'} 
-                                        alt={product.name}
+                                    <img
+                                        src={product.image_path || 'https://images.unsplash.com/photo-1589923188900-85dae523342b?q=80&w=400'}
+                                        alt={product.product}
                                         className="w-full h-full object-cover group-hover:scale-110 transition duration-500"
                                     />
                                     <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full shadow-sm">
-                                        <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">{product.category}</span>
+                                        <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">{product.category?.category || 'N/A'}</span>
                                     </div>
                                 </div>
-                                
+
                                 <div className="p-6">
-                                    <h3 className="text-lg font-bold text-slate-900 mb-1 truncate">{product.name}</h3>
-                                    <p className="text-indigo-600 font-black text-xl mb-4">₱{parseFloat(product.price).toLocaleString()}</p>
-                                    
-                                    <div className="flex items-center justify-between pt-4 border-t border-slate-50">
+                                    <h3 className="text-lg font-bold text-slate-900 mb-1 truncate">{product.product}</h3>
+
+                                    <div className="flex items-center justify-between pt-4 border-t border-slate-50 mt-4">
                                         <div className="flex flex-col">
-                                            <span className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Stock Level</span>
-                                            <span className={`text-sm font-bold ${product.stock < 10 ? 'text-rose-500' : 'text-slate-700'}`}>
-                                                {product.stock} units
+                                            <span className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Status</span>
+                                            <span className={`text-sm font-bold capitalize ${product.status === 'active' ? 'text-emerald-600' : 'text-slate-500'
+                                                }`}>
+                                                {product.status}
                                             </span>
                                         </div>
-                                        <button className="p-2 hover:bg-slate-50 rounded-xl text-slate-400 hover:text-indigo-600 transition">
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
-                                        </button>
+                                        <div className="p-2 bg-slate-50 rounded-xl text-indigo-600">
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            </Link>
                         ))}
                     </div>
                 ) : (
@@ -135,58 +139,47 @@ export default function Index({ products }) { // Note: Receiving products as a p
 
                                         <form onSubmit={submit} className="space-y-4">
                                             <div>
-                                                <InputLabel htmlFor="name" value="Product Name" className="font-bold" />
+                                                <InputLabel htmlFor="product" value="Product Name" className="font-bold" />
                                                 <TextInput
-                                                    id="name"
-                                                    value={data.name}
-                                                    onChange={(e) => setData('name', e.target.value)}
+                                                    id="product"
+                                                    value={data.product}
+                                                    onChange={(e) => setData('product', e.target.value)}
                                                     className="mt-1 block w-full bg-slate-50 border-slate-200"
                                                     placeholder="e.g. Bivoltine Eggs"
                                                     required
                                                 />
-                                                <InputError message={errors.name} className="mt-2" />
+                                                <InputError message={errors.product} className="mt-2" />
                                             </div>
 
                                             <div>
-                                                <InputLabel htmlFor="category" value="Category" className="font-bold" />
-                                                <select 
-                                                    id="category"
-                                                    value={data.category}
-                                                    onChange={(e) => setData('category', e.target.value)}
+                                                <InputLabel htmlFor="category_id" value="Category" className="font-bold" />
+                                                <select
+                                                    id="category_id"
+                                                    value={data.category_id}
+                                                    onChange={(e) => setData('category_id', e.target.value)}
                                                     className="mt-1 block w-full border-slate-200 bg-slate-50 focus:border-indigo-500 focus:ring-indigo-500 rounded-xl shadow-sm text-sm"
+                                                    required
                                                 >
-                                                    <option>Biological</option>
-                                                    <option>Planting</option>
-                                                    <option>Equipment</option>
-                                                    <option>Finished Goods</option>
+                                                    <option value="">Select a Category</option>
+                                                    {categories && categories.map(cat => (
+                                                        <option key={cat.id} value={cat.id}>{cat.category}</option>
+                                                    ))}
                                                 </select>
+                                                <InputError message={errors.category_id} className="mt-2" />
                                             </div>
 
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <InputLabel htmlFor="price" value="Price (₱)" className="font-bold" />
-                                                    <TextInput
-                                                        id="price"
-                                                        type="number"
-                                                        value={data.price}
-                                                        onChange={(e) => setData('price', e.target.value)}
-                                                        className="mt-1 block w-full bg-slate-50 border-slate-200"
-                                                        placeholder="0.00"
-                                                        required
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <InputLabel htmlFor="stock" value="Initial Stock" className="font-bold" />
-                                                    <TextInput
-                                                        id="stock"
-                                                        type="number"
-                                                        value={data.stock}
-                                                        onChange={(e) => setData('stock', e.target.value)}
-                                                        className="mt-1 block w-full bg-slate-50 border-slate-200"
-                                                        placeholder="0"
-                                                        required
-                                                    />
-                                                </div>
+                                            <div>
+                                                <InputLabel htmlFor="status" value="Status" className="font-bold" />
+                                                <select
+                                                    id="status"
+                                                    value={data.status}
+                                                    onChange={(e) => setData('status', e.target.value)}
+                                                    className="mt-1 block w-full border-slate-200 bg-slate-50 focus:border-indigo-500 focus:ring-indigo-500 rounded-xl shadow-sm text-sm"
+                                                >
+                                                    <option value="active">Active</option>
+                                                    <option value="inactive">Inactive</option>
+                                                    <option value="archived">Archived</option>
+                                                </select>
                                             </div>
 
                                             <div className="pt-4">
