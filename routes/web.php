@@ -4,12 +4,19 @@ use App\Models\Product;
 use App\Models\Order;
 use App\Models\User;
 use App\Http\Controllers\Admin\UsersController;
+use App\Http\Controllers\StorefrontController;
 use Illuminate\Http\Request;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+
+Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
+
+Route::post('/inventory/adjust', [InventoryController::class, 'adjust'])->name('inventory.adjust');
+
 
 Route::post('/api/check-email', function (Request $request) {
     try {
@@ -48,6 +55,8 @@ Route::get('/Welcome', function () {
 
 
 
+Route::get('/', [StorefrontController::class, 'index'])->name('storefront');
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', function () {
         return Inertia::render('Dashboard', [
@@ -71,7 +80,6 @@ Route::delete('/products/{product}', [App\Http\Controllers\ProductController::cl
 
 // Authenticated functional pages (placeholders)
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/inventory', function () { return Inertia::render('Inventory/Index'); })->name('inventory.index');
     Route::get('/tasks', function () { return Inertia::render('Tasks/Index'); })->name('tasks.index');
     Route::get('/admin/users', function () { return Inertia::render('Admin/Users'); })->name('admin.users');
     Route::get('/admin/reports', function () { return Inertia::render('Admin/Reports'); })->name('admin.reports');

@@ -9,14 +9,12 @@ return new class extends Migration {
     {
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
-
-            $table->foreignId('user_id')->constrained('users')->cascadeOnUpdate()->restrictOnDelete();
-
-            $table->string('receipt', 120)->nullable();
-            $table->string('transacted_by', 120)->nullable();
-
+            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete(); 
+            $table->string('reference_no')->unique(); // e.g. DSERI-2026-0001
+            $table->decimal('total_amount', 15, 2);
+            $table->string('receipt_path')->nullable(); // Para sa image ng physical receipt
+            $table->string('transacted_by')->nullable(); // Pangalan ng staff
             $table->enum('status', ['pending', 'paid', 'cancelled', 'completed'])->default('pending');
-
             $table->timestamps();
         });
     }

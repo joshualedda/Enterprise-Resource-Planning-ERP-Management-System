@@ -9,12 +9,11 @@ return new class extends Migration {
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
-
-            $table->foreignId('transaction_id')->constrained('transactions')->cascadeOnUpdate()->cascadeOnDelete();
-            $table->foreignId('stock_id')->constrained('stocks')->cascadeOnUpdate()->restrictOnDelete();
-
-            $table->string('status', 30)->default('pending');
-
+            $table->foreignId('transaction_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('product_id')->constrained();
+            $table->integer('quantity');
+            $table->decimal('price_at_sale', 15, 2); // Presyo nung binili
+            $table->string('status', 30)->default('active');
             $table->timestamps();
         });
     }

@@ -10,9 +10,6 @@ use Inertia\Inertia;
 
 class ProductController extends Controller
 {
-    /**
-     * Display all products (Index Page)
-     */
     public function index()
     {
         return Inertia::render('Products/Index', [
@@ -21,27 +18,24 @@ class ProductController extends Controller
         ]);
     }
 
-    /**
-     * Display the details of a specific product
-     */
     public function show(Product $product)
     {
         return Inertia::render('Products/Show', [
             'product' => $product->load('category'),
             'categories' => Category::all(),
+            'description' => $product->description, // Idagdag ito para maipasa ang description sa view
         ]);
     }
 
-    /**
-     * Store a new product
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
             'product' => 'required|string|max:150',
             'category_id' => 'required|exists:categories,id',
             'status' => 'required|in:active,inactive',
+            'price' => 'required|numeric|min:0|max:99999999.99',
             'image' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:2048',
+            'description' => 'nullable|string|max:500', // Idagdag ito para i-validate ang description
         ]);
 
         $imagePath = null;
@@ -53,27 +47,30 @@ class ProductController extends Controller
             'product' => $validated['product'],
             'category_id' => $validated['category_id'],
             'status' => $validated['status'],
+            'price' => $validated['price'],
             'image_path' => $imagePath,
+            'description' => $validated['description'], // Idagdag ito para ma-save ang description
         ]);
 
         return redirect()->route('products.index')->with('success', 'Product successfully added!');
     }
 
-    /**
-     * Update an existing product
-     */
     public function update(Request $request, Product $product)
     {
         $validated = $request->validate([
             'product' => 'required|string|max:150',
             'category_id' => 'required|exists:categories,id',
             'status' => 'required|in:active,inactive',
+            'price' => 'required|numeric|min:0|max:99999999.99',
             'image' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:2048',
+            'description' => 'nullable|string|max:500', // Idagdag ito para i-validate ang description
         ]);
 
         $product->product = $validated['product'];
         $product->category_id = $validated['category_id'];
         $product->status = $validated['status'];
+        $product->price = $validated['price'];
+        $product->description = $validated['description'];
 
         if ($request->hasFile('image')) {
             if ($product->image_path && Storage::disk('public')->exists($product->image_path)) {
@@ -87,9 +84,6 @@ class ProductController extends Controller
         return redirect()->back()->with('success', 'Product updated successfully!');
     }
 
-    /**
-     * Delete a product
-     */
     public function destroy(Product $product)
     {
         if ($product->image_path && Storage::disk('public')->exists($product->image_path)) {

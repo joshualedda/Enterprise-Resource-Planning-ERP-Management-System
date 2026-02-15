@@ -10,13 +10,12 @@ return new class extends Migration {
     {
         Schema::create('products', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('category_id')
-                  ->constrained('categories')
-                  ->cascadeOnUpdate()
-                  ->restrictOnDelete();
-       $table->string('image_path')->nullable();
+            $table->foreignId('category_id')->constrained()->cascadeOnUpdate()->restrictOnDelete();
             $table->string('product', 150);
-            $table->string('status', 30)->default('active');
+            $table->text('description')->nullable();
+            $table->decimal('price', 15, 2);
+            $table->string('image_path')->nullable();
+            $table->string('status')->default('active'); // active, archived
             $table->timestamps();
         });
     }

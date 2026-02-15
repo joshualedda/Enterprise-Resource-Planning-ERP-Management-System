@@ -19,7 +19,9 @@ export default function Index({ auth, products, categories }) {
         product: '',
         category_id: '',
         status: 'active',
+        price: '',
         image: null,
+        description: null,
     });
 
     const categoryForm = useForm({
@@ -107,6 +109,13 @@ export default function Index({ auth, products, categories }) {
         }
     };
 
+    const formatPrice = (price) => {
+        return new Intl.NumberFormat('en-PH', {
+            style: 'currency',
+            currency: 'PHP'
+        }).format(price);
+    };
+
     return (
         <AuthenticatedLayout
             user={auth.user}
@@ -182,6 +191,9 @@ export default function Index({ auth, products, categories }) {
 
                                     <div className="p-6">
                                         <h3 className="text-lg font-bold text-slate-900 mb-1 truncate">{product.product}</h3>
+                                        {product.price && (
+                                            <p className="text-2xl font-black text-indigo-600 mb-2">{formatPrice(product.price)}</p>
+                                        )}
                                         <div className="flex items-center justify-between pt-4 border-t border-slate-50 mt-4">
                                             <div className="flex flex-col">
                                                 <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest">Status</span>
@@ -262,7 +274,6 @@ export default function Index({ auth, products, categories }) {
                     )
                 )}
 
-                {/* Add/Edit Product Modal */}
                 <Transition show={isOpen} as={Fragment}>
                     <Dialog as="div" className="relative z-50" onClose={() => setIsOpen(false)}>
                         <Transition.Child
@@ -345,6 +356,22 @@ export default function Index({ auth, products, categories }) {
                                                         <InputError message={errors.product} />
                                                     </div>
 
+                                                    <div>
+                                                        <InputLabel htmlFor="price" value="Price (₱)" className="text-[10px] font-black uppercase text-slate-400 tracking-widest" />
+                                                        <TextInput
+                                                            id="price"
+                                                            type="number"
+                                                            step="0.01"
+                                                            min="0"
+                                                            value={data.price}
+                                                            onChange={(e) => setData('price', e.target.value)}
+                                                            className="mt-2 block w-full bg-slate-50 border-slate-200 focus:ring-indigo-600 rounded-2xl"
+                                                            placeholder="0.00"
+                                                            required
+                                                        />
+                                                        <InputError message={errors.price} />
+                                                    </div>
+
                                                     <div className="grid grid-cols-2 gap-4">
                                                         <div>
                                                             <InputLabel value="Category" className="text-[10px] font-black uppercase text-slate-400 tracking-widest" />
@@ -376,6 +403,22 @@ export default function Index({ auth, products, categories }) {
                                                         </div>
                                                     </div>
 
+                                                 <div>
+                                                    <InputLabel htmlFor="description" value="Description" className="text-[10px] font-black uppercase text-slate-400 tracking-widest" />
+                                                    
+                                                    {/* Gumamit ng textarea para sa multi-line support */}
+                                                    <textarea
+                                                        id="description"
+                                                        value={data.description}
+                                                        onChange={(e) => setData('description', e.target.value)}
+                                                        className="mt-2 block w-full bg-slate-50 border-slate-200 focus:border-indigo-600 focus:ring-indigo-600 rounded-2xl min-h-[120px] py-3 px-4 text-sm transition-all"
+                                                        placeholder="Enter product details, material info, or care instructions..."
+                                                        required
+                                                    />
+                                                    
+                                                    <InputError message={errors.description} />
+                                                </div>
+
                                                     <div className="pt-10 flex gap-3">
                                                         <button 
                                                             type="button" 
@@ -401,7 +444,6 @@ export default function Index({ auth, products, categories }) {
                     </Dialog>
                 </Transition>
 
-                {/* Add/Edit Category Modal */}
                 <Transition show={isCategoryModalOpen} as={Fragment}>
                     <Dialog as="div" className="relative z-50" onClose={() => setIsCategoryModalOpen(false)}>
                         <Transition.Child

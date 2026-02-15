@@ -9,16 +9,11 @@ return new class extends Migration {
     {
         Schema::create('stocks', function (Blueprint $table) {
             $table->id();
-            $table->string('batch_no', 60)->nullable();
-            $table->integer('stock')->default(0);
-
-            $table->enum('availability', ['available', 'low', 'out_of_stock'])->default('available');
-
-            $table->integer('restore_point')->default(0);
-
-            // (for wine category) - from your ERD
-            $table->date('expiration_date')->nullable();
-
+            $table->foreignId('product_id')->constrained()->cascadeOnDelete();
+            $table->integer('quantity');
+            $table->enum('type', ['in', 'out']); 
+            $table->string('batch_code')->nullable(); // For Traceability
+            $table->string('remarks')->nullable();
             $table->timestamps();
         });
     }

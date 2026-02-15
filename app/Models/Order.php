@@ -8,27 +8,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Order extends Model
 {
-    protected $fillable = [
-        'user_id',
-        'status',
-        'total_amount',
-    ];
+    // Note: Sa logic natin, 'Order' ang nagsisilbing OrderItem
+    protected $fillable = ['transaction_id', 'product_id', 'quantity', 'price_at_sale'];
 
-    protected $casts = [
-        'total_amount' => 'decimal:2',
-    ];
-
-    public function user() {
-        return $this->belongsTo(User::class, 'customer_id'); // Palitan 'customer_id' base sa actual column name
+    public function transaction() {
+        return $this->belongsTo(Transaction::class);
     }
 
-    public function orderItems(): HasMany
-    {
-        return $this->hasMany(OrderItem::class);
-    }
-
-    public function invoice()
-    {
-        return $this->hasOne(Invoice::class);
+    public function product() {
+        return $this->belongsTo(Product::class);
     }
 }

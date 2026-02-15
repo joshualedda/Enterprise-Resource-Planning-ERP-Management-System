@@ -7,14 +7,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Inventory extends Model
 {
-    protected $fillable = [
-        'product_id',
-        'quantity',
-        'location',
-    ];
+    protected $fillable = ['product_id', 'quantity', 'type', 'batch_code', 'restock_date', 'remarks'];
 
-    public function product(): BelongsTo
-    {
+    public function product() {
         return $this->belongsTo(Product::class);
     }
 }

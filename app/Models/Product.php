@@ -4,59 +4,57 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Casts\Attribute;
-use Illuminate\Support\Facades\Storage;
 
 class Product extends Model
 {
     protected $fillable = [
-        'category_id',
-        'image_path',
-        'product',
-        'status',
+        'category_id', 
+        'product', 
+        'description', 
+        'price', 
+        'image_path', 
+        'status'
     ];
 
-    protected $casts = [
-        'category_id' => 'integer',
+    protected $appends = [
+        'stock_count', 
+        'image_url', 
+        'restock_date'
     ];
 
-    /**
-     * Appends the image_url to the JSON response for Inertia.
-     */
-    protected $appends = ['image_url'];
-
-    /**
-     * Get the image URL attribute
-     */
-    protected function imageUrl(): Attribute
-    {
-        return Attribute::get(fn () => 
-            $this->image_path 
-                ? Storage::url($this->image_path) 
-                : 'https://images.unsplash.com/photo-1589923188900-85dae523342b?q=80&w=400'
-        );
-    }
-
-    // Relationships
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
     }
 
-    public function orderItems(): HasMany
-    {
-        return $this->hasMany(OrderItem::class);
-    }
-
     public function inventory(): HasOne
     {
-        return $this->hasOne(Inventory::class);
+        return $this->hasOne(Inventory::class)->latestOfMany();
     }
 
-    public function wips(): HasMany
+    public function getStockCountAttribute()
     {
-        return $this->hasMany(WIP::class);
+        $in = Inventory::where('product_id', $this->id)->where('type', 'in')->sum('quantity');
+        $out = Inventory::where('product_id', $this->id)->where('type', 'out')->sum('quantity');
+        
+        return $in - $out;
+    }
+
+    protected function restockDate(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->inventory?->restock_date
+        );
+    }
+
+    protected function imageUrl(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->image_path 
+                ? asset('storage/' . $this->image_path) 
+                : asset('images/default-product.png'),
+        );
     }
 }

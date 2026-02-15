@@ -13,10 +13,11 @@ return new class extends Migration
     {
         Schema::create('employees', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->string('department');
-            $table->decimal('salary_rate', 10, 2);
-            $table->decimal('performance_score', 3, 2)->default(0.00);
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->string('employee_id')->unique();
+            $table->string('position');
+            $table->date('date_hired');
+            $table->decimal('base_salary', 15, 2);
             $table->timestamps();
         });
     }
