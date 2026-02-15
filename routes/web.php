@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Product;
+use App\Models\Order;
 use App\Models\User;
 use App\Http\Controllers\Admin\UsersController;
 use Illuminate\Http\Request;
@@ -31,32 +33,36 @@ Route::post('/api/check-email', function (Request $request) {
 });
 
 Route::get('/', function () {
-    return Inertia::render('Storefront', [
+    return Inertia::render('Welcome', [
         'auth' => auth()->user() ? ['user' => auth()->user()] : null,
         'products' => \App\Models\Product::with('category')->latest()->take(8)->get(),
     ]);
 })->name('home');
 
-Route::get('/storefront', function () {
-    return Inertia::render('Storefront', [
+Route::get('/Welcome', function () {
+    return Inertia::render('Welcome', [
         'auth' => auth()->user() ? ['user' => auth()->user()] : null,
         'products' => \App\Models\Product::with('category')->latest()->take(8)->get(),
     ]);
-})->name('storefront');
+})->name('Welcome');
 
-// Dashboard route moved below to handle logic
 
-Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', function () {
-        return Inertia::render('Admin/Dashboard', [
-            'users' => \App\Models\User::all(),
+        return Inertia::render('Dashboard', [
+            'users' => \App\Models\User::all(), // Paalala: Sa production, dapat limited ito
             'products' => \App\Models\Product::all(),
+            'orders' => \App\Models\Order::all(), // Idagdag ito para sa Customer/Staff
+            'stats' => [
+                'active_orders' => \App\Models\Order::where('status', 'active')->count(),
+                'pending_tasks' => 5 // Sample static data
+            ]
         ]);
     })->name('dashboard');
 });
 
-// Storefront / Public pages
-// Storefront / Public pages
+
 Route::get('/products', [App\Http\Controllers\ProductController::class, 'index'])->name('products.index');
 Route::get('/products/{product}', [App\Http\Controllers\ProductController::class, 'show'])->name('products.show');
 Route::post('/products', [App\Http\Controllers\ProductController::class, 'store'])->name('products.store');
@@ -78,52 +84,12 @@ Route::get('/orders', [OrderController::class, 'index'])->middleware(['auth', 'v
 Route::get('/orders', [OrderController::class, 'index'])->middleware(['auth', 'verified'])->name('orders.index');
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Route::get('/dashboard', function () {
-    $user = auth()->user();
-    
-    // Redirect Admin to Admin Dashboard
-    if ($user->role_id === \App\Models\Role::where('name', 'admin')->first()->id || $user->role === 'admin') { 
-        // Note: checking both role_id and role for backward compatibility if needed, 
-        // but ideally we rely on the relationship. 
-        // Let's assume the Accessor/Mutator or direct relation is used.
-        // For now, let's trust the role relationship or the checks we put in place.
-        // Actually, the middleware checks $user->role->name. 
-        // Let's use the relationship.
-        if ($user->role && $user->role->name === 'admin') {
-             return redirect()->route('admin.dashboard');
-        }
-    }
-
-    $data = ['user' => $user];
-
-    if ($user->role && $user->role->name === 'customer') {
-        $data['orders'] = $user->orders()->with('orderItems.product')->get();
-    } elseif ($user->role && $user->role->name === 'staff') {
-        $data['products'] = \App\Models\Product::with('category')->get();
-    }
-
-    return Inertia::render('Dashboard', $data);
-})->middleware(['auth', 'verified'])->name('dashboard');
-
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+   
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {

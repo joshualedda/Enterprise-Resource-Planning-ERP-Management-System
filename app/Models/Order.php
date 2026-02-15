@@ -18,9 +18,8 @@ class Order extends Model
         'total_amount' => 'decimal:2',
     ];
 
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
+    public function user() {
+        return $this->belongsTo(User::class, 'customer_id'); // Palitan 'customer_id' base sa actual column name
     }
 
     public function orderItems(): HasMany

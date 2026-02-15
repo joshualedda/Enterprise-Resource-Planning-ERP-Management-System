@@ -11,9 +11,9 @@ export default function AdminLayout({ header, children }) {
     const navigation = [
         {
             name: 'Dashboard',
-            href: route('admin.dashboard'),
+            href: route('dashboard'),
             icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6',
-            current: route().current('admin.dashboard')
+            current: route().current('dashboard')
         },
         {
             name: 'Users',
@@ -94,11 +94,10 @@ export default function AdminLayout({ header, children }) {
                         </svg>
                     </button>
 
-                    <div className="hidden md:block">
-                        <h2 className="text-xs font-black text-slate-400 uppercase tracking-[0.3em]">
-                            {header || 'Dashboard Overview'}
-                        </h2>
+                    <div className="hidden md:block text-xs font-black text-slate-400 uppercase tracking-[0.3em]">
+                        {header || 'Dashboard Overview'}
                     </div>
+
 
                     <div className="flex items-center gap-2 lg:gap-4">
                         {/* User Profile */}

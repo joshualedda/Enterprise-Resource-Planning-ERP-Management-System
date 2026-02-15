@@ -5,71 +5,99 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Category;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class ProductController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display all products (Index Page)
      */
     public function index()
     {
         return Inertia::render('Products/Index', [
             'products' => Product::with('category')->latest()->get(),
-            'categories' => Category::all(),
+            'categories' => Category::withCount('products')->get(),
         ]);
     }
 
     /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        $request->validate([
-            'product' => 'required|string|max:150',
-            'category_id' => 'required|exists:categories,id',
-            'status' => 'required|in:active,inactive,archived', // Adjust based on your migration default
-            'image_path' => 'nullable|string',
-        ]);
-
-        Product::create($request->all());
-
-        return redirect()->route('products.index')->with('success', 'Product created successfully.');
-    }
-
-    /**
-     * Display the specified resource.
+     * Display the details of a specific product
      */
     public function show(Product $product)
     {
         return Inertia::render('Products/Show', [
             'product' => $product->load('category'),
+            'categories' => Category::all(),
         ]);
     }
 
     /**
-     * Update the specified resource in storage.
+     * Store a new product
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'product' => 'required|string|max:150',
+            'category_id' => 'required|exists:categories,id',
+            'status' => 'required|in:active,inactive',
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:2048',
+        ]);
+
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('products', 'public');
+        }
+
+        Product::create([
+            'product' => $validated['product'],
+            'category_id' => $validated['category_id'],
+            'status' => $validated['status'],
+            'image_path' => $imagePath,
+        ]);
+
+        return redirect()->route('products.index')->with('success', 'Product successfully added!');
+    }
+
+    /**
+     * Update an existing product
      */
     public function update(Request $request, Product $product)
     {
-        $request->validate([
+        $validated = $request->validate([
             'product' => 'required|string|max:150',
             'category_id' => 'required|exists:categories,id',
-            'status' => 'required|in:active,inactive,archived',
-            'image_path' => 'nullable|string',
+            'status' => 'required|in:active,inactive',
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:2048',
         ]);
 
-        $product->update($request->all());
+        $product->product = $validated['product'];
+        $product->category_id = $validated['category_id'];
+        $product->status = $validated['status'];
 
-        return redirect()->route('products.index')->with('success', 'Product updated successfully.');
+        if ($request->hasFile('image')) {
+            if ($product->image_path && Storage::disk('public')->exists($product->image_path)) {
+                Storage::disk('public')->delete($product->image_path);
+            }
+            $product->image_path = $request->file('image')->store('products', 'public');
+        }
+
+        $product->save();
+
+        return redirect()->back()->with('success', 'Product updated successfully!');
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Delete a product
      */
     public function destroy(Product $product)
     {
+        if ($product->image_path && Storage::disk('public')->exists($product->image_path)) {
+            Storage::disk('public')->delete($product->image_path);
+        }
+        
         $product->delete();
-        return redirect()->route('products.index')->with('success', 'Product deleted successfully.');
+        
+        return redirect()->route('products.index')->with('success', 'Product deleted successfully!');
     }
 }

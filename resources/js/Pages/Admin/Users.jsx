@@ -30,9 +30,11 @@ export default function AdminUsers({ auth, users }) {
     const [isChecking, setIsChecking] = useState(false);
 
     const { data, setData, post, put, delete: destroy, processing, errors, reset, clearErrors } = useForm({
-        name: '',
+        first_name: '',
+        middle_name: '',
+        last_name: '',
         email: '',
-        role: 'staff',
+        role_id: 'Choose Role',
         password: '',
         password_confirmation: '',
         admin_password: '',
@@ -45,14 +47,24 @@ export default function AdminUsers({ auth, users }) {
     }, [flash]);
 
     // Search Filter
-    const filteredUsers = useMemo(() => {
-        return users
-            .filter(user => user.id !== auth.user.id)
-            .filter(user =>
-                user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                user.email.toLowerCase().includes(searchQuery.toLowerCase())
+   const filteredUsers = useMemo(() => {
+    return (users || [])
+        .filter(user => user.id !== auth.user.id)
+        .filter(user => {
+            // Safe fallback para sa strings para hindi mag-undefined error
+            const firstName = user?.first_name?.toLowerCase() || '';
+            const lastName = user?.last_name?.toLowerCase() || '';
+            const email = user?.email?.toLowerCase() || '';
+            const search = searchQuery.toLowerCase();
+
+            // I-check kung ang search ay nasa first name, last name, o email
+            return (
+                firstName.includes(search) ||
+                lastName.includes(search) ||
+                email.includes(search)
             );
-    }, [users, auth.user.id, searchQuery]);
+        });
+}, [users, auth.user.id, searchQuery]);
 
     // Pagination
     const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
@@ -81,30 +93,35 @@ export default function AdminUsers({ auth, users }) {
         return { initials, color: colors[charCodeSum % colors.length] };
     };
 
-    // Open Modal
-    const openModal = (mode, user = null) => {
-        setModalMode(mode);
-        setSelectedUser(user);
-        clearErrors();
-        setEmailFeedback({ message: '', type: '' });
+ // Open Modal
+const openModal = (mode, user = null) => {
+    setModalMode(mode);
+    setSelectedUser(user);
+    clearErrors();
+    setEmailFeedback({ message: '', type: '' });
 
-        if (user && mode === 'edit') {
-            setData({
-                name: user.name,
-                email: user.email,
-                role: user.role,
-                password: '',
-                password_confirmation: '',
-                admin_password: '',
-            });
-            setShowModal(true);
-        } else if (mode === 'view') {
-            setShowViewModal(true);
-        } else {
-            reset();
-            setShowModal(true);
-        }
-    };
+    if (user && mode === 'edit') {
+        setData({
+            first_name: user.first_name || '',
+            middle_name: user.middle_name || '',
+            last_name: user.last_name || '',
+            email: user.email || '',
+            // FIX: Gamitin ang role_id imbes na role object
+            role_id: user.role_id, 
+            password: '',
+            password_confirmation: '',
+            admin_password: '',
+        });
+        setShowModal(true);
+    } else if (mode === 'view') {
+        setShowViewModal(true);
+    } else {
+        // Reset at mag-set ng default role para sa Create mode
+        reset();
+        setData('role_id', "Select a Role"); // Default sa Customer (3)
+        setShowModal(true);
+    }
+};
 
     // Real-time Email Check (Debounced)
     useEffect(() => {
@@ -178,7 +195,7 @@ export default function AdminUsers({ auth, users }) {
 
         Swal.fire({
             title: 'Delete User?',
-            text: `Are you sure you want to delete ${user.name}?`,
+            text: `Are you sure you want to delete ${user.first_name} ${user.middle_name || ''} ${user.last_name}?`,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#e11d48',
@@ -210,7 +227,7 @@ export default function AdminUsers({ auth, users }) {
     return (
         <AuthenticatedLayout 
             user={auth.user} 
-            header={<h2 className="font-bold text-xl text-slate-800 tracking-tight">User Management</h2>}
+            header="User Management"
         >
             <Head title="System Users" />
             <Toaster position="top-right" reverseOrder={false} />
@@ -253,42 +270,46 @@ export default function AdminUsers({ auth, users }) {
                                     <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-50">
-                                {paginatedUsers.length > 0 ? paginatedUsers.map((user) => {
-                                    const avatar = getAvatarInfo(user.name);
-                                    return (
-                                        <tr key={user.id} className="hover:bg-slate-50/50 transition-colors">
-                                            <td className="px-8 py-5">
-                                                <div className="flex items-center gap-4">
-                                                    <div className={`w-11 h-11 rounded-full ${avatar.color} flex items-center justify-center font-black text-white text-xs shadow-md border-2 border-white uppercase`}>
-                                                        {avatar.initials}
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-sm font-bold text-slate-900">{user.name}</p>
-                                                        <p className="text-xs font-medium text-slate-400">{user.email}</p>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-8 py-5">
-                                                <span className="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-600">
-                                                    {user.role}
-                                                </span>
-                                            </td>
-                                            <td className="px-8 py-5 text-right">
-                                                <div className="flex justify-end gap-2">
-                                                    <button onClick={() => openModal('view', user)} className="p-2 rounded-xl text-[11px] font-black px-4 border bg-white hover:bg-slate-100 text-slate-600 border-slate-200 transition-all">View</button>
-                                                    <button onClick={() => openModal('edit', user)} className="p-2 rounded-xl text-[11px] font-black px-4 border bg-slate-50 hover:bg-indigo-50 text-indigo-600 border-slate-100 transition-all">Edit</button>
-                                                    <button onClick={() => initiateDelete(user)} className="bg-slate-50 hover:bg-rose-50 text-rose-600 p-2 rounded-xl text-[11px] font-black px-4 border border-slate-100 transition-all">Delete</button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    );
-                                }) : (
-                                    <tr>
-                                        <td colSpan="3" className="px-8 py-10 text-center text-slate-400 text-sm font-medium">No users found.</td>
-                                    </tr>
-                                )}
-                            </tbody>
+<tbody className="divide-y divide-slate-50">
+    {paginatedUsers.length > 0 ? paginatedUsers.map((user) => {
+        // Inayos ang avatar initials gamit ang bagong first_name field
+        const avatar = getAvatarInfo(user.first_name || 'U'); 
+        
+        return (
+            <tr key={user.id} className="hover:bg-slate-50/50 transition-colors">
+                <td className="px-8 py-5">
+                    <div className="flex items-center gap-4">
+                        <div className={`w-11 h-11 rounded-full ${avatar.color} flex items-center justify-center font-black text-white text-xs shadow-md border-2 border-white uppercase`}>
+                            {/* Siguraduhing initials ang lumalabas */}
+                            {user.first_name?.charAt(0)}{user.last_name?.charAt(0)}
+                        </div>
+                        <div>
+                            <p className="text-sm font-bold text-slate-900">{user.first_name} {user.last_name}</p>
+                            <p className="text-xs font-medium text-slate-400">{user.email}</p>
+                        </div>
+                    </div>
+                </td>
+                <td className="px-8 py-5">
+<span className="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-600">
+        {/* Ito ang tamang paraan para kunin ang name mula sa 'with' relationship */}
+        {user.role?.name || 'No Role'}
+    </span>
+                </td>
+                <td className="px-8 py-5 text-right">
+                    <div className="flex justify-end gap-2">
+                        <button onClick={() => openModal('view', user)} className="p-2 rounded-xl text-[11px] font-black px-4 border bg-white hover:bg-slate-100 text-slate-600 border-slate-200 transition-all">View</button>
+                        <button onClick={() => openModal('edit', user)} className="p-2 rounded-xl text-[11px] font-black px-4 border bg-slate-50 hover:bg-indigo-50 text-indigo-600 border-slate-100 transition-all">Edit</button>
+                        <button onClick={() => initiateDelete(user)} className="bg-slate-50 hover:bg-rose-50 text-rose-600 p-2 rounded-xl text-[11px] font-black px-4 border border-slate-100 transition-all">Delete</button>
+                    </div>
+                </td>
+            </tr>
+        );
+    }) : (
+        <tr>
+            <td colSpan="3" className="px-8 py-10 text-center text-slate-400 text-sm font-medium">No users found.</td>
+        </tr>
+    )}
+</tbody>
                         </table>
                     </div>
 
@@ -319,145 +340,202 @@ export default function AdminUsers({ auth, users }) {
                 </div>
             </div>
 
-            {/* VIEW MODAL */}
-            <Modal show={showViewModal} onClose={() => setShowViewModal(false)} maxWidth="md">
-                <div className="p-8">
-                    <div className="flex flex-col items-center text-center mb-8">
-                        <div className={`w-24 h-24 rounded-full ${getAvatarInfo(selectedUser?.name).color} flex items-center justify-center font-black text-white text-2xl shadow-xl mb-4 border-4 border-white`}>
-                            {getAvatarInfo(selectedUser?.name).initials}
-                        </div>
-                        <h2 className="text-2xl font-black text-slate-900">{selectedUser?.name}</h2>
-                        <span className="mt-1 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-indigo-50 text-indigo-600 border border-indigo-100">
-                            {selectedUser?.role}
-                        </span>
-                    </div>
+{/* VIEW MODAL */}
+<Modal show={showViewModal} onClose={() => setShowViewModal(false)} maxWidth="md">
+    <div className="p-8">
+        <div className="flex flex-col items-center text-center mb-8">
+            {/* Avatar - Gagamit ng first_name para sa initials */}
+            <div className={`w-24 h-24 rounded-full ${getAvatarInfo(selectedUser?.first_name).color} flex items-center justify-center font-black text-white text-2xl shadow-xl mb-4 border-4 border-white`}>
+                {selectedUser?.first_name?.charAt(0)}{selectedUser?.last_name?.charAt(0)}
+            </div>
+            
+            {/* Full Name Display */}
+            <h2 className="text-2xl font-black text-slate-900">
+                {selectedUser?.first_name} {selectedUser?.middle_name ? `${selectedUser.middle_name} ` : ''}{selectedUser?.last_name}
+            </h2>
+            
+            {/* Role Badge - Naka-depende sa role_id o role.name */}
+            <span className="mt-1 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-indigo-50 text-indigo-600 border border-indigo-100">
+                {selectedUser?.role?.name || (selectedUser?.role_id === 1 ? 'Admin' : selectedUser?.role_id === 2 ? 'Staff' : 'Customer')}
+            </span>
+        </div>
 
-                    <div className="space-y-4 bg-slate-50 p-6 rounded-3xl border border-slate-100">
-                        <div>
-                            <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Email Address</p>
-                            <p className="text-sm font-bold text-slate-700">{selectedUser?.email}</p>
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Account Created</p>
-                            <p className="text-sm font-bold text-slate-700">{new Date(selectedUser?.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
-                        </div>
-                    </div>
+        <div className="space-y-4 bg-slate-50 p-6 rounded-3xl border border-slate-100">
+            {/* Email Section */}
+            <div>
+                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Email Address</p>
+                <p className="text-sm font-bold text-slate-700">{selectedUser?.email}</p>
+            </div>
 
-                    <div className="mt-8">
-                        <PrimaryButton onClick={() => setShowViewModal(false)} className="w-full justify-center py-4">
-                            Close Profile
-                        </PrimaryButton>
-                    </div>
-                </div>
-            </Modal>
+            {/* Account Role ID Section (Optional but helpful for debugging) */}
+            <div>
+                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">User ID & Role</p>
+                <p className="text-sm font-bold text-slate-700">#{selectedUser?.id} — Type {selectedUser?.role_id}</p>
+            </div>
 
-      {/* CREATE / EDIT MODAL */}
-<Modal show={showModal} onClose={() => setShowModal(false)} maxWidth="md">
+            {/* Created At Section */}
+            <div>
+                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Account Created</p>
+                <p className="text-sm font-bold text-slate-700">
+                    {selectedUser?.created_at 
+                        ? new Date(selectedUser.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+                        : 'N/A'}
+                </p>
+            </div>
+        </div>
+
+        <div className="mt-8">
+            <button 
+                onClick={() => setShowViewModal(false)} 
+                className="w-full justify-center py-4 bg-slate-900 text-white rounded-2xl font-bold text-sm hover:bg-slate-800 transition shadow-lg shadow-slate-200"
+            >
+                Close Profile
+            </button>
+        </div>
+    </div>
+</Modal>
+
+{/* CREATE / EDIT MODAL */}
+<Modal show={showModal} onClose={() => setShowModal(false)} maxWidth="2xl"> {/* Ginawang 2xl para sa side-by-side layout */}
     <form onSubmit={submit} className="p-8">
-        <h2 className="text-2xl font-black text-slate-900 capitalize mb-6">
-            {modalMode} Member
-        </h2>
+        <header className="mb-8">
+            <h2 className="text-2xl font-black text-slate-900 capitalize">
+                {modalMode} Member
+            </h2>
+            <p className="text-sm text-slate-500 font-medium">Fill in the information below to {modalMode} the account.</p>
+        </header>
 
-        <div className="space-y-5">
-            {/* Full Name */}
-            <FormInput
-                label="Full Name"
-                value={data.name}
-                onChange={e => setData('name', e.target.value)}
-                error={errors.name}
-            />
-
-            {/* 🔥 Email with Instant Validation */}
-            <div>
-                <InputLabel
-                    htmlFor="email"
-                    value="Email Address"
-                    className="font-bold text-slate-700"
+        <div className="space-y-6">
+            {/* --- NAME SECTION (Grid 3 columns sa desktop, 1 sa mobile) --- */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormInput
+                    label="First Name"
+                    placeholder="Juan"
+                    value={data.first_name}
+                    onChange={e => setData('first_name', e.target.value)}
+                    error={errors.first_name}
                 />
+                <FormInput
+                    label="Middle Name (Opt)"
+                    placeholder="Dela"
+                    value={data.middle_name}
+                    onChange={e => setData('middle_name', e.target.value)}
+                    error={errors.middle_name}
+                />
+                <FormInput
+                    label="Last Name"
+                    placeholder="Cruz"
+                    value={data.last_name}
+                    onChange={e => setData('last_name', e.target.value)}
+                    error={errors.last_name}
+                />
+            </div>
 
-                <div className="relative">
-                    <TextInput
-                        id="email"
-                        type="email"
-                        value={data.email}
-                        className={`mt-1 block w-full bg-slate-50 transition-all ${
-                            emailFeedback.type === 'error'
-                                ? 'border-red-500 focus:ring-red-500'
-                                : emailFeedback.type === 'success'
-                                ? 'border-emerald-500 focus:ring-emerald-500'
-                                : 'border-slate-200'
-                        }`}
-                        autoComplete="username"
-                        onChange={(e) => setData('email', e.target.value)}
-                        required
+            <hr className="border-slate-100" />
+
+            {/* --- EMAIL & ROLE SECTION (Side-by-side sa desktop) --- */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Email with Instant Validation */}
+                <div>
+                    <InputLabel
+                        htmlFor="email"
+                        value="Email Address"
+                        className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1"
                     />
-
-                    {/* Loading Spinner inside input */}
-                    {isChecking && (
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                            <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-                        </div>
+                    <div className="relative">
+                        <TextInput
+                            id="email"
+                            type="email"
+                            placeholder="juan.cruz@example.com"
+                            value={data.email}
+                            className={`block w-full bg-slate-50 transition-all rounded-2xl ${
+                                emailFeedback.type === 'error'
+                                    ? 'border-red-500 focus:ring-red-500'
+                                    : emailFeedback.type === 'success'
+                                    ? 'border-emerald-500 focus:ring-emerald-500'
+                                    : 'border-slate-200 focus:ring-indigo-500'
+                            }`}
+                            onChange={(e) => setData('email', e.target.value)}
+                            required
+                        />
+                        {isChecking && (
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                            </div>
+                        )}
+                    </div>
+                    {emailFeedback.message && (
+                        <p className={`mt-2 text-[10px] font-bold uppercase tracking-wider ${
+                            emailFeedback.type === 'error' ? 'text-red-500' : 'text-emerald-600'
+                        }`}>
+                            {emailFeedback.message}
+                        </p>
                     )}
+                    <InputError message={errors.email} className="mt-2" />
                 </div>
 
-                {/* Real-time Feedback Message */}
-                {emailFeedback.message && (
-                    <p
-                        className={`mt-2 text-[11px] font-black uppercase tracking-wider ${
-                            emailFeedback.type === 'error'
-                                ? 'text-red-500'
-                                : 'text-emerald-600'
-                        }`}
+                {/* Role Selection */}
+                <div>
+                    <InputLabel
+                        htmlFor="role"
+                        value="User Role"
+                        className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1"
+                    />
+                    <select
+                        id="role"
+                        className="w-full border-slate-200 bg-slate-50 rounded-2xl font-bold text-sm focus:ring-indigo-500 focus:border-indigo-500 h-[42px]"
+                        value={data.role_id}
+                        onChange={(e) => setData('role_id', e.target.value)}
                     >
-                        {emailFeedback.message}
-                    </p>
-                )}
-
-                <InputError message={errors.email} className="mt-2" />
-            </div>
-
-            {/* Role */}
-            <div>
-                <label className="text-[10px] font-black uppercase text-slate-400 ml-1 tracking-widest">
-                    Role
-                </label>
-                <select
-                    className="w-full mt-1.5 border-slate-200 rounded-2xl font-bold text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                    value={data.role}
-                    onChange={(e) => setData('role', e.target.value)}
-                >
-                    <option value="staff">Staff</option>
-                    <option value="customer">Customer</option>
-                </select>
-            </div>
-
-            {/* Password (Create Only) */}
-            {modalMode === 'create' && (
-                <div className="grid grid-cols-2 gap-4">
-                    <FormInput
-                        label="Password"
-                        type="password"
-                        value={data.password}
-                        onChange={e => setData('password', e.target.value)}
-                        error={errors.password}
-                    />
-                    <FormInput
-                        label="Confirm"
-                        type="password"
-                        value={data.password_confirmation}
-                        onChange={e => setData('password_confirmation', e.target.value)}
-                    />
+                        <option value="">Select a Role</option>
+                        <option value="1">Admin</option>
+                        <option value="2">Staff</option>
+                        <option value="3">Customer</option>
+                    </select>
+                    <InputError message={errors.role_id} className="mt-2" />
                 </div>
+            </div>
+
+            {/* --- PASSWORD SECTION (Create Only) --- */}
+            {modalMode === 'create' && (
+                <>
+                    <hr className="border-slate-100" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormInput
+                            label="Password"
+                            type="password"
+                            placeholder="••••••••"
+                            value={data.password}
+                            onChange={e => setData('password', e.target.value)}
+                            error={errors.password}
+                        />
+                        <FormInput
+                            label="Confirm Password"
+                            type="password"
+                            placeholder="••••••••"
+                            value={data.password_confirmation}
+                            onChange={e => setData('password_confirmation', e.target.value)}
+                        />
+                    </div>
+                </>
             )}
         </div>
 
-        <div className="mt-10 flex justify-end gap-3">
-            <SecondaryButton onClick={() => setShowModal(false)} type="button">
+        {/* --- ACTIONS --- */}
+        <div className="mt-10 flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t border-slate-100">
+            <SecondaryButton 
+                onClick={() => setShowModal(false)} 
+                type="button"
+                className="justify-center rounded-xl"
+            >
                 Cancel
             </SecondaryButton>
 
-            <PrimaryButton disabled={processing || isChecking}>
-                {modalMode === 'edit' ? 'Save Changes' : 'Create Member'}
+            <PrimaryButton 
+                disabled={processing || isChecking}
+                className="justify-center rounded-xl bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-100"
+            >
+                {modalMode === 'edit' ? 'Update User Account' : 'Register New Member'}
             </PrimaryButton>
         </div>
     </form>
