@@ -1,208 +1,296 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
+import { 
+    AreaChart, 
+    Area, 
+    XAxis, 
+    YAxis, 
+    CartesianGrid, 
+    Tooltip, 
+    ResponsiveContainer 
+} from 'recharts';
 
-// Mga Shared Components
-import OrderList from '@/Components/OrderList';
-import UserList from '@/Components/UserList';
-import ProductList from '@/Components/ProductList';
-import SimpleChart from '@/Components/SimpleChart';
+// --- HELPERS ---
+const formatPrice = (price) => {
+    return new Intl.NumberFormat('en-PH', {
+        style: 'currency',
+        currency: 'PHP',
+    }).format(price || 0);
+};
 
-// Import ang hiwalay mong file sa Pages
-import StoreView from '@/Pages/StoreView';
-
-export default function Dashboard({ auth, orders, users, products, stats }) {
-    const user = auth.user;
-
-    // 1. URL STATE SYNC: Binabasa kung ?tab=store ang nasa URL
-    const [activeTab, setActiveTab] = useState(
-        new URLSearchParams(window.location.search).get('tab') || 'overview'
-    );
-
-    // Update activeTab kapag nag-click sa Sidebar (nagbago ang URL)
-    useEffect(() => {
-        const currentTab = new URLSearchParams(window.location.search).get('tab') || 'overview';
-        setActiveTab(currentTab);
-    }, [window.location.search]);
-
-    // 2. ROLE-BASED RENDERING LOGIC
-    const renderContent = () => {
-        switch (user.role_id) {
-            case 1: // Admin
-                return <AdminDashboard users={users} products={products} stats={stats} />;
-            case 2: // Staff
-                return <StaffDashboard products={products} stats={stats} />;
-            case 3: // Customer
-                return activeTab === 'store' 
-                    ? <StoreView products={products} /> 
-                    : <CustomerDashboard orders={orders} />;
-            default:
-                return (
-                    <div className="p-12 text-center bg-white rounded-[2.5rem] border border-dashed border-slate-200">
-                        <h3 className="text-xl font-black text-slate-300 uppercase tracking-widest">
-                            Access Denied: Role ID {user.role_id}
-                        </h3>
-                    </div>
-                );
-        }
+// --- REUSABLE DATE FILTER ---
+function DashboardFilter({ currentFilter }) {
+    const handleFilterChange = (f) => {
+        router.get(route('dashboard'), { filter: f }, { 
+            preserveState: true, 
+            replace: true 
+        });
     };
 
     return (
-        <AuthenticatedLayout 
-            user={auth.user}
-            header={
-                <div className="flex items-center justify-between w-full">
-                    <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
-                        <span className="text-sm font-black uppercase tracking-widest text-slate-400">
-                            {activeTab === 'store' ? 'Marketplace' : 'Dashboard'}
-                        </span>
-                    </div>
-
-                    {/* Tabs switcher para sa Customer */}
-                    {user.role_id === 3 && (
-                        <div className="flex bg-slate-100 p-1 rounded-xl shadow-inner">
-                            <button 
-                                onClick={() => setActiveTab('overview')}
-                                className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab !== 'store' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500'}`}
-                            >
-                                Overview
-                            </button>
-                            <button 
-                                onClick={() => setActiveTab('store')}
-                                className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'store' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500'}`}
-                            >
-                                Store
-                            </button>
-                        </div>
-                    )}
-                </div>
-            }
-        >
-            <Head title={activeTab === 'store' ? "Marketplace" : "Dashboard Overview"} />
-            
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                {renderContent()}
-            </div>
-        </AuthenticatedLayout>
+        <div className="flex bg-slate-100 p-1.5 rounded-[1.5rem] border border-slate-200 shadow-inner">
+            {['today', 'week', 'month', 'year'].map((f) => (
+                <button 
+                    key={f} 
+                    onClick={() => handleFilterChange(f)} 
+                    className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${currentFilter === f ? 'bg-white shadow-md text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
+                >
+                    {f}
+                </button>
+            ))}
+        </div>
     );
 }
 
-// --- 1. ADMIN DASHBOARD VIEW ---
-function AdminDashboard({ users, products, stats }) {
+// --- REUSABLE STAT CARD ---
+function StatCard({ label, value, color, icon, subtext, isDark = false }) {
     return (
-        <div className="space-y-8">
+        <div className={`${isDark ? 'bg-slate-900 text-white shadow-2xl' : 'bg-white text-slate-900 shadow-sm'} p-8 rounded-[2.5rem] border border-slate-100 hover:shadow-xl transition-all relative overflow-hidden group`}>
+            <div className={`w-14 h-14 ${color} rounded-2xl flex items-center justify-center text-2xl shadow-lg mb-4 text-white group-hover:scale-110 transition-transform`}>
+                {icon}
+            </div>
+            <p className={`text-[11px] font-black uppercase tracking-[0.15em] ${isDark ? 'text-slate-500' : 'text-slate-400'} mb-2`}>{label}</p>
+            <h3 className="text-4xl font-black tracking-tighter">{value}</h3>
+            {subtext && <p className="text-[10px] text-slate-400 mt-2 font-medium italic opacity-80">{subtext}</p>}
+        </div>
+    );
+}
+
+// --- 1. ADMIN DASHBOARD ---
+function AdminDashboard({ products, orders, topProducts, currentFilter }) {
+    const totalRevenue = useMemo(() => {
+        return orders.reduce((sum, order) => sum + (parseFloat(order.price_at_sale) * (parseInt(order.quantity) || 1)), 0);
+    }, [orders]);
+
+    const chartData = useMemo(() => {
+        const groups = orders.reduce((acc, order) => {
+            const label = new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const subtotal = (parseFloat(order.price_at_sale) * (parseInt(order.quantity) || 1));
+            acc[label] = (acc[label] || 0) + subtotal;
+            return acc;
+        }, {});
+        
+        // Isort ang dates para tama ang takbo ng line chart
+        return Object.keys(groups).map(date => ({ 
+            date, 
+            amount: groups[date] 
+        })).sort((a, b) => new Date(a.date) - new Date(b.date));
+    }, [orders]);
+
+    return (
+        <div className="space-y-10">
             <header className="flex flex-col md:flex-row justify-between items-end gap-4">
                 <div>
-                    <h1 className="text-4xl font-black text-slate-900 tracking-tight">Executive Overview</h1>
-                    <p className="text-slate-500 font-medium">Global system metrics and administrative insights.</p>
+                    <h1 className="text-5xl font-black text-slate-900 tracking-tight leading-none">Executive Overview</h1>
+                    <p className="text-slate-500 font-medium mt-3 text-lg italic uppercase tracking-widest text-[10px]">Management Portal • {currentFilter}</p>
                 </div>
+                <DashboardFilter currentFilter={currentFilter} />
             </header>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <StatCard label="Total Users" value={users?.length || 0} color="bg-indigo-600" icon="👥" />
-                <StatCard label="Total Products" value={products?.length || 0} color="bg-emerald-600" icon="📦" />
-                <StatCard label="Active Orders" value={stats?.active_orders || 0} color="bg-violet-600" icon="🛍️" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <StatCard label="Total Revenue" value={formatPrice(totalRevenue)} color="bg-indigo-600" icon="₱" />
+                <StatCard label="Orders" value={orders.length} color="bg-violet-600" icon="🛍️" />
+                <StatCard label="Best Seller" value={topProducts[0]?.count || 0} color="bg-emerald-500" icon="⭐" subtext={topProducts[0]?.name} />
+                <StatCard label="Inventory" value={products || 0} color="bg-slate-900" icon="📦" isDark />
             </div>
 
-            <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-md">
-                <h2 className="text-sm font-black uppercase tracking-widest text-slate-400 mb-6">User Activity Trend</h2>
-                <div className="h-72 w-full"><SimpleChart /></div>
-            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* LINE CHART SECTION */}
+                <div className="lg:col-span-2 bg-white p-10 rounded-[3rem] border border-slate-200 shadow-sm h-[450px] flex flex-col transition-all hover:shadow-md">
+                    <div className="mb-6">
+                        <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Revenue Trend</h2>
+                        <p className="text-xl font-black text-slate-800">Sales Performance</p>
+                    </div>
+                    
+                    <div className="flex-1 w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                                <defs>
+                                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                <XAxis 
+                                    dataKey="date" 
+                                    axisLine={false} 
+                                    tickLine={false} 
+                                    tick={{fontSize: 10, fontWeight: 'bold', fill: '#94a3b8'}}
+                                    dy={10}
+                                />
+                                <YAxis 
+                                    axisLine={false} 
+                                    tickLine={false} 
+                                    tick={{fontSize: 10, fontWeight: 'bold', fill: '#94a3b8'}}
+                                    tickFormatter={(value) => `₱${value >= 1000 ? (value/1000).toFixed(1) + 'k' : value}`}
+                                />
+                                <Tooltip 
+                                    contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }}
+                                    formatter={(value) => [formatPrice(value), 'Revenue']}
+                                />
+                                <Area 
+                                    type="monotone" 
+                                    dataKey="amount" 
+                                    stroke="#4f46e5" 
+                                    strokeWidth={4} 
+                                    fillOpacity={1} 
+                                    fill="url(#colorRevenue)" 
+                                    dot={{ r: 4, fill: '#4f46e5', strokeWidth: 2, stroke: '#fff' }}
+                                    activeDot={{ r: 6, strokeWidth: 0 }}
+                                    animationDuration={1500}
+                                />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
 
-            <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-md">
-                <h2 className="text-sm font-black uppercase tracking-widest text-slate-400 mb-6">Recent Accounts</h2>
-                <UserList users={users?.slice(0, 5) || []} />
+                {/* BEST SELLERS LIST */}
+                <div className="bg-white p-10 rounded-[3rem] border border-slate-200 shadow-sm">
+                    <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-10">Best Sellers</h2>
+                    {topProducts.length > 0 ? topProducts.map((p, i) => (
+                        <div key={i} className="flex items-center gap-4 mb-5 group">
+                            <div className="w-10 h-10 rounded-lg bg-slate-100 flex-shrink-0 flex items-center justify-center font-black text-slate-400 group-hover:bg-indigo-600 group-hover:text-white transition-colors">#{i+1}</div>
+                            <div className="w-10 h-10 rounded-lg overflow-hidden bg-slate-50 border border-slate-100">
+                                {p.image ? <img src={p.image} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-xs">📦</div>}
+                            </div>
+                            <div className="flex-1 min-w-0"><p className="text-xs font-black uppercase truncate text-slate-700">{p.name}</p></div>
+                            <span className="text-indigo-600 font-black text-xs">{p.count} sold</span>
+                        </div>
+                    )) : (
+                        <div className="text-center py-10 text-slate-300 font-bold uppercase text-[10px]">No Data Available</div>
+                    )}
+                </div>
             </div>
         </div>
     );
 }
 
-// --- 2. STAFF DASHBOARD VIEW ---
-function StaffDashboard({ products, stats }) {
-    const lowStock = useMemo(() => products?.filter(p => p.stock <= 5).length || 0, [products]);
+// --- 2. STAFF DASHBOARD ---
+function StaffDashboard({ orders = [], currentFilter }) {
+    const totalRevenue = useMemo(() => {
+        if (!Array.isArray(orders)) return 0;
+        return orders.reduce((sum, order) => sum + (parseFloat(order.price_at_sale) * (parseInt(order.quantity) || 1)), 0);
+    }, [orders]);
 
     return (
-        <div className="space-y-8">
-            <header>
-                <h1 className="text-4xl font-black text-slate-900 tracking-tight">Operations Hub</h1>
-                <p className="text-slate-500 font-medium">Manage inventory and fulfill pending tasks.</p>
+        <div className="space-y-8 animate-in fade-in duration-700">
+            <header className="flex flex-col md:flex-row justify-between items-end gap-4">
+                <div>
+                    <h1 className="text-4xl font-black text-slate-900 tracking-tight leading-none">Store Operations</h1>
+                    <p className="text-slate-500 font-medium italic mt-2 uppercase text-[10px] tracking-widest">Active Shift • <span className="text-indigo-600 font-black">{currentFilter}</span></p>
+                </div>
+                <DashboardFilter currentFilter={currentFilter} />
             </header>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-slate-900 p-8 rounded-[2.5rem] text-white shadow-xl">
-                    <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Total Stock Items</p>
-                    <h3 className="text-5xl font-black mt-2 tracking-tighter">{products?.length || 0}</h3>
-                </div>
-                <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-md">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Stock Alerts</p>
-                    <h3 className="text-5xl font-black mt-2 text-rose-500 tracking-tighter">{lowStock}</h3>
-                </div>
-                <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-md">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Pending Actions</p>
-                    <h3 className="text-5xl font-black mt-2 text-amber-500 tracking-tighter">{stats?.pending_tasks || 0}</h3>
-                </div>
+                <StatCard label="Total Revenue" value={formatPrice(totalRevenue)} color="bg-indigo-600" icon="₱" />
+                <StatCard label="Orders Handled" value={orders.length} color="bg-sky-500" icon="🛍️" />
+                <StatCard label="Terminal" value="Online" color="bg-slate-900" icon="📟" isDark />
             </div>
 
-            <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-md text-sm">
-                <ProductList products={products || []} />
+            <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
+                <div className="p-8 border-b border-slate-100 font-black uppercase tracking-widest text-xs text-slate-400">Transaction Registry</div>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                        <thead>
+                            <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50">
+                                <th className="px-8 py-5">Item</th>
+                                <th className="px-8 py-5">Reference</th>
+                                <th className="px-8 py-5">Customer</th>
+                                <th className="px-8 py-5 text-right">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50">
+                            {orders.map((o, i) => (
+                                <tr key={i} className="hover:bg-slate-50 transition-all group">
+                                    <td className="px-8 py-5">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded bg-slate-100 overflow-hidden">
+                                                {o.product?.image_url ? <img src={o.product.image_url} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-xs">📦</div>}
+                                            </div>
+                                            <span className="text-xs font-black text-slate-700 uppercase">{o.product?.product}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-8 py-5 text-[10px] font-black text-indigo-500">{o.transaction?.reference_no || `ID-${o.id}`}</td>
+                                    <td className="px-8 py-5 text-xs font-bold text-slate-600">{o.transaction?.user?.name || 'Walk-in'}</td>
+                                    <td className="px-8 py-5 text-right text-xs font-black">{formatPrice(o.price_at_sale * o.quantity)}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );
 }
 
-// --- 3. CUSTOMER DASHBOARD VIEW (ON-SITE / PICKUP LOGIC) ---
-function CustomerDashboard({ orders }) {
-    // I-filter ang orders base sa on-site status
-    const pendingPickup = orders?.filter(o => o.status === 'ready' || o.status === 'pending').length || 0;
-    const completed = orders?.filter(o => o.status === 'completed' || o.status === 'claimed').length || 0;
+// --- 3. CUSTOMER DASHBOARD ---
+function CustomerDashboard({ orders = [], currentFilter }) {
+    const mySpent = useMemo(() => {
+        if (!Array.isArray(orders)) return 0;
+        return orders.reduce((sum, o) => sum + (parseFloat(o.price_at_sale) * (parseInt(o.quantity) || 1)), 0);
+    }, [orders]);
 
     return (
-        <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
-            {/* Hero Section */}
-            <div className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 rounded-[3rem] p-12 text-white shadow-2xl relative overflow-hidden group">
-                <div className="relative z-10">
-                    <h1 className="text-5xl font-black mb-3 tracking-tighter">Welcome back!</h1>
-                    <p className="text-indigo-100 text-lg font-medium opacity-80">Check your order status for on-site pickup.</p>
+        <div className="max-w-5xl mx-auto space-y-10 animate-in slide-in-from-bottom-4 duration-700">
+            <header className="flex flex-col md:flex-row justify-between items-end gap-4">
+                <div>
+                    <h1 className="text-4xl font-black text-slate-900 tracking-tight leading-none">My Ledger</h1>
+                    <p className="text-slate-500 font-medium italic mt-2 uppercase tracking-widest text-[10px]">
+                        Personal Spending Summary • <span className="text-indigo-600">{currentFilter}</span>
+                    </p>
                 </div>
-                <div className="absolute top-[-20%] right-[-10%] text-[15rem] opacity-10 group-hover:rotate-12 transition-transform duration-1000">🏪</div>
+                <DashboardFilter currentFilter={currentFilter} />
+            </header>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <StatCard label="Total Spent" value={formatPrice(mySpent)} color="bg-indigo-600" icon="₱" subtext={`Total expenses for this ${currentFilter}`} />
+                <StatCard label="Items Purchased" value={orders.reduce((a, b) => a + (parseInt(b.quantity) || 0), 0)} color="bg-slate-900" icon="🛒" isDark subtext="Total quantity of orders" />
             </div>
 
-            {/* Stats Section - On-Site Terminology */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <StatButton 
-                    label="Total Bookings" 
-                    val={orders?.length || 0} 
-                    color="text-indigo-600" 
-                    icon="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" 
-                />
-                <StatButton 
-                    label="Ready for Pickup" 
-                    val={pendingPickup} 
-                    color="text-amber-500" 
-                    icon="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" 
-                />
-                <StatButton 
-                    label="Claimed / Finished" 
-                    val={completed} 
-                    color="text-emerald-500" 
-                    icon="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" 
-                />
-            </div>
-
-            {/* History Table */}
-            <div className="bg-white p-10 rounded-[3rem] border border-slate-200 shadow-md">
-                <div className="flex justify-between items-center mb-8">
-                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">Recent Transactions</h2>
-                    <span className="bg-slate-100 text-slate-500 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">On-site Collection</span>
+            <div className="space-y-4">
+                <div className="flex items-center justify-between px-2">
+                    <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Order History</h2>
+                    <span className="text-[10px] font-bold text-slate-300 italic">{orders.length} items total</span>
                 </div>
-                
-                {orders?.length > 0 ? (
-                    <OrderList orders={orders.slice(0, 5)} /> 
+
+                {orders.length > 0 ? (
+                    orders.map((o, i) => (
+                        <div key={i} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between group hover:border-indigo-300 hover:shadow-md transition-all">
+                            <div className="flex items-center gap-6">
+                                <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center overflow-hidden border border-slate-50">
+                                    {o.product?.image_url ? (
+                                        <img src={o.product.image_url} className="w-full h-full object-cover" alt="" />
+                                    ) : (
+                                        <span className="text-2xl">📦</span>
+                                    )}
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1">
+                                        Ref: {o.transaction?.reference_no || `#${o.id.toString().padStart(5, '0')}`}
+                                    </p>
+                                    <h4 className="font-black text-slate-800 text-lg uppercase leading-tight">
+                                        {o.product?.product || 'Unknown Product'}
+                                    </h4>
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">
+                                        Ordered on {new Date(o.created_at).toLocaleDateString()}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="text-right">
+                                <span className="block font-black text-slate-900 text-xl">{formatPrice(o.price_at_sale * o.quantity)}</span>
+                                <span className={`inline-block px-3 py-1 rounded-full text-[8px] font-black uppercase mt-2 ${o.transaction?.status === 'completed' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
+                                    {o.transaction?.status || 'Verified Sale'}
+                                </span>
+                            </div>
+                        </div>
+                    ))
                 ) : (
-                    <div className="py-12 text-center">
-                        <div className="text-4xl mb-4">📝</div>
-                        <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">No orders found</p>
+                    <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-[3rem] p-20 text-center">
+                        <p className="text-slate-300 font-black uppercase tracking-widest text-sm">No purchases found for this period</p>
                     </div>
                 )}
             </div>
@@ -210,29 +298,18 @@ function CustomerDashboard({ orders }) {
     );
 }
 
-// --- REUSABLE UI COMPONENTS ---
-function StatCard({ label, value, color, icon }) {
-    return (
-        <div className={`${color} p-8 rounded-[2.5rem] text-white shadow-lg relative overflow-hidden group`}>
-            <div className="relative z-10">
-                <p className="text-[10px] font-black uppercase tracking-widest opacity-60">{label}</p>
-                <h3 className="text-5xl font-black mt-2 tracking-tighter">{value}</h3>
-            </div>
-            <span className="absolute right-4 bottom-2 text-6xl opacity-20 group-hover:scale-110 transition-transform">{icon}</span>
-        </div>
-    );
-}
+// --- MAIN EXPORT ---
+export default function Dashboard({ auth, orders = [], products = 0, topProducts = [], currentFilter = 'today' }) {
+    const roleId = auth.user.role_id;
 
-function StatButton({ label, val, color, icon }) {
     return (
-        <button className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-md hover:shadow-xl hover:-translate-y-2 transition-all text-left group w-full">
-            <div className={`${color} mb-6 group-hover:scale-110 transition-transform`}>
-                <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d={icon} />
-                </svg>
+        <AuthenticatedLayout user={auth.user}>
+            <Head title="Dashboard" />
+            <div className="max-w-7xl mx-auto px-6 py-10">
+                {roleId === 1 && <AdminDashboard products={products} orders={orders} topProducts={topProducts} currentFilter={currentFilter} />}
+                {roleId === 2 && <StaffDashboard orders={orders} currentFilter={currentFilter} />}
+                {roleId === 3 && <CustomerDashboard orders={orders} currentFilter={currentFilter} />}
             </div>
-            <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">{label}</p>
-            <p className="text-4xl font-black text-slate-900 tracking-tighter">{val}</p>
-        </button>
+        </AuthenticatedLayout>
     );
 }

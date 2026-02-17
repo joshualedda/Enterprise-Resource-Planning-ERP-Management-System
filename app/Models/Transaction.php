@@ -13,8 +13,16 @@ class Transaction extends Model
         return $this->belongsTo(User::class);
     }
 
-    // Listahan ng mga binili sa resibong ito
-    public function orders() {
-        return $this->hasMany(Order::class);
+public function orders()
+{
+    // Dahil sa orders table ay 'transaction_id' ang foreign key
+    return $this->hasMany(Order::class, 'transaction_id');
+}
+    
+    public function order_items()
+    {
+        return $this->hasMany(Order::class, 'transaction_id');
     }
+
+
 }
