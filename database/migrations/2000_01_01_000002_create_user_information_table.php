@@ -13,10 +13,6 @@ return new class extends Migration
     {
     Schema::create('user_information', function (Blueprint $table) {
             $table->id();
-            // Koneksyon sa main users table
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            
-            // Basic Personal Details
             $table->string('first_name', 100);
             $table->string('last_name', 100);
             $table->string('phone_number', 20)->nullable();
