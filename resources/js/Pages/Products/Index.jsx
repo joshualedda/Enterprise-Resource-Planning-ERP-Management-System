@@ -125,26 +125,24 @@ export default function Index({ auth, products, categories }) {
             <Toaster position="top-right" />
 
             <div className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
-                
+
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-center gap-4 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm w-full md:w-auto">
-                        <button 
+                        <button
                             onClick={() => setActiveTab('products')}
-                            className={`px-6 py-2 rounded-xl text-sm font-bold transition ${
-                                activeTab === 'products' 
-                                    ? 'bg-indigo-600 text-white shadow-md' 
+                            className={`px-6 py-2 rounded-xl text-sm font-bold transition ${activeTab === 'products'
+                                    ? 'bg-indigo-600 text-white shadow-md'
                                     : 'text-slate-500 hover:text-indigo-600'
-                            }`}
+                                }`}
                         >
                             All Products
                         </button>
-                        <button 
+                        <button
                             onClick={() => setActiveTab('categories')}
-                            className={`px-6 py-2 rounded-xl text-sm font-bold transition ${
-                                activeTab === 'categories' 
-                                    ? 'bg-indigo-600 text-white shadow-md' 
+                            className={`px-6 py-2 rounded-xl text-sm font-bold transition ${activeTab === 'categories'
+                                    ? 'bg-indigo-600 text-white shadow-md'
                                     : 'text-slate-500 hover:text-indigo-600'
-                            }`}
+                                }`}
                         >
                             Categories
                         </button>
@@ -194,9 +192,8 @@ export default function Index({ auth, products, categories }) {
                                             <img
                                                 src={product.image_url || 'https://images.unsplash.com/photo-1589923188900-85dae523342b?q=80&w=400'}
                                                 alt={product.product}
-                                                className={`w-full h-full object-cover transition duration-700 group-hover:scale-110 ${
-                                                    isOutOfStock ? 'grayscale opacity-60' : ''
-                                                }`}
+                                                className={`w-full h-full object-cover transition duration-700 group-hover:scale-110 ${isOutOfStock ? 'grayscale opacity-60' : ''
+                                                    }`}
                                             />
                                         </div>
 
@@ -216,16 +213,15 @@ export default function Index({ auth, products, categories }) {
                                                     <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest leading-none">
                                                         Inventory
                                                     </span>
-                                                    
+
                                                     <div className="flex flex-col gap-1">
-                                                        <span className={`text-sm font-bold leading-none ${
-                                                            isOutOfStock ? 'text-rose-500' : 
-                                                            isLowStock ? 'text-amber-500' : 
-                                                            'text-emerald-500'
-                                                        }`}>
+                                                        <span className={`text-sm font-bold leading-none ${isOutOfStock ? 'text-rose-500' :
+                                                                isLowStock ? 'text-amber-500' :
+                                                                    'text-emerald-500'
+                                                            }`}>
                                                             {isOutOfStock ? 'Sold Out' : `${quantity} in stock`}
                                                         </span>
-                                                        
+
                                                         {/* Low Stock / Out of Stock Badges sa baba */}
                                                         {isOutOfStock ? (
                                                             <span className="w-fit bg-rose-50 text-rose-600 text-[8px] font-black uppercase px-2 py-0.5 rounded-md border border-rose-100">
@@ -240,11 +236,10 @@ export default function Index({ auth, products, categories }) {
                                                 </div>
 
                                                 {/* Detail Arrow Icon */}
-                                                <div className={`p-2.5 rounded-2xl transition-all duration-300 ${
-                                                    isOutOfStock 
-                                                    ? 'bg-slate-50 text-slate-300' 
-                                                    : 'bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white shadow-sm'
-                                                }`}>
+                                                <div className={`p-2.5 rounded-2xl transition-all duration-300 ${isOutOfStock
+                                                        ? 'bg-slate-50 text-slate-300'
+                                                        : 'bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white shadow-sm'
+                                                    }`}>
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                                                     </svg>
@@ -308,7 +303,7 @@ export default function Index({ auth, products, categories }) {
                                             </button>
                                         </div>
                                     </div>
-                                    
+
                                     <div className="pt-4 border-t border-slate-50 flex items-center gap-2 text-[10px] text-slate-400 font-black uppercase tracking-widest">
                                         <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse"></div>
                                         ID: {category.id}
@@ -358,7 +353,7 @@ export default function Index({ auth, products, categories }) {
                                     >
                                         <Dialog.Panel className="pointer-events-auto w-screen max-w-md">
                                             <div className="flex h-full flex-col bg-white shadow-2xl rounded-l-[3rem] overflow-hidden">
-                                                
+
                                                 <div className="px-8 py-10 bg-indigo-600 text-white">
                                                     <div className="flex items-start justify-between">
                                                         <div>
@@ -372,7 +367,7 @@ export default function Index({ auth, products, categories }) {
                                                 </div>
 
                                                 <form onSubmit={submit} className="relative flex-1 px-8 py-8 overflow-y-auto space-y-6">
-                                                    
+
                                                     <div className="space-y-2">
                                                         <InputLabel value="Product Showcase" className="text-[10px] font-black uppercase text-slate-400 tracking-widest" />
                                                         <div className={`mt-2 flex justify-center rounded-[2rem] border-2 border-dashed transition-all overflow-hidden relative ${preview ? 'border-indigo-400 h-56' : 'border-slate-300 py-10'}`}>
@@ -459,32 +454,32 @@ export default function Index({ auth, products, categories }) {
                                                         </div>
                                                     </div>
 
-                                                 <div>
-                                                    <InputLabel htmlFor="description" value="Description" className="text-[10px] font-black uppercase text-slate-400 tracking-widest" />
-                                                    
-                                                    {/* Gumamit ng textarea para sa multi-line support */}
-                                                    <textarea
-                                                        id="description"
-                                                        value={data.description}
-                                                        onChange={(e) => setData('description', e.target.value)}
-                                                        className="mt-2 block w-full bg-slate-50 border-slate-200 focus:border-indigo-600 focus:ring-indigo-600 rounded-2xl min-h-[120px] py-3 px-4 text-sm transition-all"
-                                                        placeholder="Enter product details, material info, or care instructions..."
-                                                        required
-                                                    />
-                                                    
-                                                    <InputError message={errors.description} />
-                                                </div>
+                                                    <div>
+                                                        <InputLabel htmlFor="description" value="Description" className="text-[10px] font-black uppercase text-slate-400 tracking-widest" />
+
+                                                        {/* Gumamit ng textarea para sa multi-line support */}
+                                                        <textarea
+                                                            id="description"
+                                                            value={data.description}
+                                                            onChange={(e) => setData('description', e.target.value)}
+                                                            className="mt-2 block w-full bg-slate-50 border-slate-200 focus:border-indigo-600 focus:ring-indigo-600 rounded-2xl min-h-[120px] py-3 px-4 text-sm transition-all"
+                                                            placeholder="Enter product details, material info, or care instructions..."
+                                                            required
+                                                        />
+
+                                                        <InputError message={errors.description} />
+                                                    </div>
 
                                                     <div className="pt-10 flex gap-3">
-                                                        <button 
-                                                            type="button" 
+                                                        <button
+                                                            type="button"
                                                             onClick={() => setIsOpen(false)}
                                                             className="flex-1 px-6 py-4 border-2 border-slate-100 text-slate-400 font-bold rounded-2xl hover:bg-slate-50 transition uppercase text-xs tracking-widest"
                                                         >
                                                             Cancel
                                                         </button>
-                                                        <PrimaryButton 
-                                                            className="flex-[2] justify-center py-4 bg-indigo-600 rounded-2xl shadow-xl shadow-indigo-100 uppercase text-xs tracking-widest font-black" 
+                                                        <PrimaryButton
+                                                            className="flex-[2] justify-center py-4 bg-indigo-600 rounded-2xl shadow-xl shadow-indigo-100 uppercase text-xs tracking-widest font-black"
                                                             disabled={processing}
                                                         >
                                                             {processing ? 'Uploading...' : 'Confirm & Save'}
@@ -529,7 +524,7 @@ export default function Index({ auth, products, categories }) {
                                         <Dialog.Title className="text-2xl font-black text-slate-900 mb-6">
                                             {editingCategory ? 'Edit Category' : 'Add Category'}
                                         </Dialog.Title>
-                                        
+
                                         <form onSubmit={submitCategory} className="space-y-6">
                                             <div>
                                                 <InputLabel htmlFor="category" value="Category Name" className="text-[10px] font-black uppercase text-slate-400 tracking-widest" />

@@ -5,14 +5,15 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Category;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+
+use Illuminate\Support\Facades\File;
 use Inertia\Inertia;
 
 class ProductController extends Controller
 {
     public function index()
     {
-        return Inertia::render('Products/Index', [
+        return Inertia::render('Admin/Products/Index', [
             'products' => Product::with('category')->latest()->get(),
             'categories' => Category::withCount('products')->get(),
         ]);
@@ -20,27 +21,30 @@ class ProductController extends Controller
 
     public function show(Product $product)
     {
-        return Inertia::render('Products/Show', [
+        return Inertia::render('Admin/Products/Show', [
             'product' => $product->load('category'),
-            'categories' => Category::all(),
-            'description' => $product->description, // Idagdag ito para maipasa ang description sa view
+            // 'categories' => Category::all(), // Not strictly needed for read-only view unless implicit editing
         ]);
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'product' => 'required|string|max:150',
+            'title' => 'nullable', // Handle possible mismatch if frontend sends 'title' or 'name', but we need 'product'
+            'product' => 'required|string|max:150', // Renamed back to product
             'category_id' => 'required|exists:categories,id',
-            'status' => 'required|in:active,inactive',
+            'status' => 'required|in:active,inactive', // String status
             'price' => 'required|numeric|min:0|max:99999999.99',
-            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:2048',
-            'description' => 'nullable|string|max:500', // Idagdag ito para i-validate ang description
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:10240',
+            'description' => 'nullable|string', 
         ]);
 
         $imagePath = null;
         if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('products', 'public');
+            $file = $request->file('image');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('img'), $filename);
+            $imagePath = 'img/' . $filename;
         }
 
         Product::create([
@@ -49,10 +53,10 @@ class ProductController extends Controller
             'status' => $validated['status'],
             'price' => $validated['price'],
             'image_path' => $imagePath,
-            'description' => $validated['description'], // Idagdag ito para ma-save ang description
+            'description' => $validated['description'],
         ]);
 
-        return redirect()->route('products.index')->with('success', 'Product successfully added!');
+        return redirect()->route('admin.products.index')->with('success', 'Product successfully added!');
     }
 
     public function update(Request $request, Product $product)
@@ -62,8 +66,8 @@ class ProductController extends Controller
             'category_id' => 'required|exists:categories,id',
             'status' => 'required|in:active,inactive',
             'price' => 'required|numeric|min:0|max:99999999.99',
-            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:2048',
-            'description' => 'nullable|string|max:500', // Idagdag ito para i-validate ang description
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:10240',
+            'description' => 'nullable|string',
         ]);
 
         $product->product = $validated['product'];
@@ -73,10 +77,14 @@ class ProductController extends Controller
         $product->description = $validated['description'];
 
         if ($request->hasFile('image')) {
-            if ($product->image_path && Storage::disk('public')->exists($product->image_path)) {
-                Storage::disk('public')->delete($product->image_path);
+            if ($product->image_path && File::exists(public_path($product->image_path))) {
+                File::delete(public_path($product->image_path));
             }
-            $product->image_path = $request->file('image')->store('products', 'public');
+            
+            $file = $request->file('image');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('img'), $filename);
+            $product->image_path = 'img/' . $filename;
         }
 
         $product->save();
@@ -84,14 +92,16 @@ class ProductController extends Controller
         return redirect()->back()->with('success', 'Product updated successfully!');
     }
 
+
+
     public function destroy(Product $product)
     {
-        if ($product->image_path && Storage::disk('public')->exists($product->image_path)) {
-            Storage::disk('public')->delete($product->image_path);
+        if ($product->image_path && File::exists(public_path($product->image_path))) {
+            File::delete(public_path($product->image_path));
         }
         
         $product->delete();
         
-        return redirect()->route('products.index')->with('success', 'Product deleted successfully!');
+        return redirect()->route('admin.products.index')->with('success', 'Product deleted successfully!');
     }
 }

@@ -17,22 +17,26 @@ export default function AuthenticatedLayout({ header, children }) {
     // Build Navigation based on role_id (1=Admin, 2=Staff, 3=Customer)
     const navigation = useMemo(() => {
         const items = [
-            { 
-                name: 'Dashboard', 
-                href: route('dashboard'), 
-                icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', 
-                current: route().current('dashboard') 
+            {
+                name: 'Dashboard',
+                href: route('dashboard'),
+                icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6',
+                current: route().current('dashboard')
             },
         ];
 
         // Admin Role (role_id === 1)
         if (user.role_id === 1) {
             items.push(
-                { name: 'Users', href: route('admin.users.index'), icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z', current: route().current('admin.users.*') },
-                { name: 'Products', href: route().has('products.index') ? route('products.index') : '#', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', current: route().current('products.*') },
+                { name: 'Products', href: route('admin.products.index'), icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', current: route().current('admin.products.*') },
+                { name: 'Orders', href: route().has('admin.orders.index') ? route('admin.orders.index') : '#', icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4', current: route().current('admin.orders.*') },
                 { name: 'Reports', href: route().has('admin.reports') ? route('admin.reports') : '#', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0_1-2-2z', current: route().current('admin.reports') },
+                // Separator
+                { separator: 'Users Management' },
+                { name: 'Users', href: route('admin.users.index'), icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z', current: route().current('admin.users.*') },
+                { name: 'Profile', href: route('profile.edit'), icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z', current: route().current('profile.edit') },
             );
-        } 
+        }
         // Staff Role (role_id === 2)
         else if (user.role_id === 2) {
             items.push(
@@ -45,7 +49,7 @@ export default function AuthenticatedLayout({ header, children }) {
         // Customer Role (role_id === 3)
         else if (user.role_id === 3) {
             items.push(
-                { name: 'My Orders', href: route().has('orders.index') ? route('orders.index') : '#', icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2', current: route().current('orders.*') },       );
+                { name: 'My Orders', href: route().has('orders.index') ? route('orders.index') : '#', icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2', current: route().current('orders.*') },);
         }
         return items;
     }, [user.role_id]);
@@ -60,8 +64,8 @@ export default function AuthenticatedLayout({ header, children }) {
         <div className="flex h-screen bg-slate-50 font-sans antialiased overflow-hidden">
             {/* Mobile Sidebar Overlay */}
             {sidebarOpen && (
-                <div 
-                    className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm lg:hidden" 
+                <div
+                    className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm lg:hidden"
                     onClick={() => setSidebarOpen(false)}
                 />
             )}
@@ -76,22 +80,27 @@ export default function AuthenticatedLayout({ header, children }) {
                     </div>
 
                     <nav className="flex-1 px-6 space-y-2 overflow-y-auto">
-                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-4 mb-4">Main Navigation</div>
-                        {navigation.map((item) => (
-                            <Link
-                                key={item.name}
-                                href={item.href}
-                                className={`flex items-center px-4 py-3.5 text-sm font-bold rounded-2xl transition-all duration-200 group ${
-                                    item.current
+                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-4">Main Navigation</div>
+                        {navigation.map((item, index) => (
+                            item.separator ? (
+                                <div key={index} className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-4 mb-6 mt-4">
+                                    {item.separator}
+                                </div>
+                            ) : (
+                                <Link
+                                    key={item.href}
+                                    href={item.href}
+                                    className={`flex items-center px-4 py-3.5 text-sm font-bold rounded-2xl transition-all duration-200 group ${item.current
                                         ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-100 translate-x-1'
                                         : 'text-slate-500 hover:bg-slate-50 hover:text-indigo-600'
-                                }`}
-                            >
-                                <svg className={`mr-3 h-5 w-5 ${item.current ? 'text-white' : 'text-slate-400 group-hover:text-indigo-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
-                                </svg>
-                                {item.name}
-                            </Link>
+                                        }`}
+                                >
+                                    <svg className={`mr-3 h-5 w-5 ${item.current ? 'text-white' : 'text-slate-400 group-hover:text-indigo-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+                                    </svg>
+                                    {item.name}
+                                </Link>
+                            )
                         ))}
                     </nav>
 
@@ -107,8 +116,8 @@ export default function AuthenticatedLayout({ header, children }) {
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col min-w-0">
                 <header className="h-24 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-6 lg:px-10 z-40 shrink-0">
-                    <button 
-                        onClick={() => setSidebarOpen(true)} 
+                    <button
+                        onClick={() => setSidebarOpen(true)}
                         className="lg:hidden p-2 text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors"
                         aria-label="Open Menu"
                     >
@@ -160,10 +169,10 @@ export default function AuthenticatedLayout({ header, children }) {
                                         <p className="text-sm font-black text-slate-900 leading-none group-hover:text-indigo-600 transition">{fullName}</p>
                                         <p className="text-[9px] font-black uppercase tracking-[0.2em] text-indigo-500 mt-1.5">{getRoleLabel(user.role_id)}</p>
                                     </div>
-                                    <img 
-                                        className="h-11 w-11 rounded-2xl border-2 border-white shadow-md group-hover:shadow-indigo-100 transition-all object-cover" 
-                                        src={`https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=6366f1&color=fff&bold=true&font-size=0.33`} 
-                                        alt={fullName} 
+                                    <img
+                                        className="h-11 w-11 rounded-2xl border-2 border-white shadow-md group-hover:shadow-indigo-100 transition-all object-cover"
+                                        src={`https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=6366f1&color=fff&bold=true&font-size=0.33`}
+                                        alt={fullName}
                                     />
                                 </button>
                             </Dropdown.Trigger>
@@ -176,13 +185,14 @@ export default function AuthenticatedLayout({ header, children }) {
                 </header>
 
                 <main className="flex-1 overflow-x-hidden overflow-y-auto scroll-smooth">
-                    <div className="container mx-auto px-6 lg:px-10 py-8 lg:py-10 max-w-7xl">
+                    <div className="container mx-auto px-4 lg:px-6 py-8 lg:py-10 max-w-full">
                         {children}
                     </div>
                 </main>
             </div>
 
-            <style dangerouslySetInnerHTML={{ __html: `
+            <style dangerouslySetInnerHTML={{
+                __html: `
                 ::-webkit-scrollbar { width: 6px; }
                 ::-webkit-scrollbar-track { background: transparent; }
                 ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }

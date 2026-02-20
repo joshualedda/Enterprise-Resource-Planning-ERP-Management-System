@@ -33,39 +33,44 @@ class UsersController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'first_name'  => 'required|string|max:255',
-            'middle_name' => 'nullable|string|max:255',
-            'last_name'   => 'required|string|max:255',
-            'email'       => 'required|string|email|max:255|unique:users',
-            'role_id'     => 'required|exists:roles,id', // Sinisiguro na valid ang ID sa roles table
+            'first_name'  => 'required|string|max:80',
+            'middle_name' => 'nullable|string|max:80',
+            'last_name'   => 'required|string|max:80',
+            'email'       => 'required|string|email|max:191|unique:users',
+            'role_id'     => 'required|exists:roles,id',
             'password'    => ['required', 'confirmed', Password::defaults()],
         ]);
 
-        $user = User::create([
-            'first_name'  => $validated['first_name'],
-            'middle_name' => $validated['middle_name'],
-            'last_name'   => $validated['last_name'],
-            'email'       => $validated['email'],
-            'role_id'     => $validated['role_id'], 
-            'password'    => Hash::make($validated['password']),
+        User::create([
+            'first_name'        => $validated['first_name'],
+            'middle_name'       => $validated['middle_name'],
+            'last_name'         => $validated['last_name'],
+            'email'             => $validated['email'],
+            'role_id'           => $validated['role_id'],
+            'password'          => Hash::make($validated['password']),
+            'email_verified_at' => now(), // Auto-verify since admin created it
         ]);
 
-        event(new Registered($user));
-
-        return back()->with('success', "User successfully added.");
+        return back()->with('success', "User successfully created.");
     }
 
     public function update(Request $request, User $user)
     {
         $validated = $request->validate([
-            'first_name'  => 'required|string|max:255',
-            'middle_name' => 'nullable|string|max:255',
-            'last_name'   => 'required|string|max:255',
-            'email'       => 'required|string|email|max:255|unique:users,email,'.$user->id,
+            'first_name'  => 'required|string|max:80',
+            'middle_name' => 'nullable|string|max:80',
+            'last_name'   => 'required|string|max:80',
+            'email'       => 'required|string|email|max:191|unique:users,email,'.$user->id,
             'role_id'     => 'required|exists:roles,id',
         ]);
 
-        $user->fill($validated);
+        $user->fill([
+            'first_name'  => $validated['first_name'],
+            'middle_name' => $validated['middle_name'],
+            'last_name'   => $validated['last_name'],
+            'email'       => $validated['email'],
+            'role_id'     => $validated['role_id'],
+        ]);
 
         if ($request->filled('password')) {
             $request->validate([

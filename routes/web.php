@@ -17,6 +17,7 @@ use App\Http\Controllers\Customer\StorefrontController;
 use App\Http\Controllers\Staff\OrderManagementController;
 use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\Admin\ReportsController;
+use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 
 /*
 |--------------------------------------------------------------------------
@@ -38,18 +39,30 @@ Route::post('/api/check-email', function (Request $request) {
 */
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    // General Dashboard
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    // General Dashboard (for admin)
+    // General Dashboard (for admin)
+    Route::get('/dashboard', function () {
+        return redirect()->route('dashboard');
+    });
+    Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // --- ADMIN ROUTES (Dito ang fix para sa admin.users.index) ---
     Route::prefix('admin')->name('admin.')->group(function () {
-        // Users Management
-        Route::get('/users', [UsersController::class, 'index'])->name('users.index');
+        Route::resource('/users', UsersController::class);
+        Route::resource('/products', ProductController::class)->except(['create', 'edit']);
+        Route::get('/reports', [ReportsController::class, 'index'])->name('reports');
+        Route::get('/reports/pdf', [ReportsController::class, 'generatePDF'])->name('reports.pdf');
+        Route::get('/reports/excel', [ReportsController::class, 'generateExcel'])->name('reports.excel');
+        
+        // Orders (Transactions)
+        Route::resource('/orders', AdminOrderController::class)->only(['index', 'show', 'update']);
     });
 
-Route::get('/admin/reports', [ReportsController::class, 'index'])->name('admin.reports');
-Route::get('/admin/reports/pdf', [ReportsController::class, 'generatePDF'])->name('admin.reports.pdf');
-Route::get('/admin/reports/excel', [ReportsController::class, 'generateExcel'])->name('admin.reports.excel');
+
+
+
+
+
     // --- STAFF / ORDER MANAGEMENT ---
     Route::get('/staff/orders', [OrderManagementController::class, 'index'])->name('staff.orders.index');
     Route::patch('/staff/orders/{transaction}/update-status', [OrderManagementController::class, 'updateStatus'])->name('staff.orders.update');
@@ -60,10 +73,12 @@ Route::get('/admin/reports/excel', [ReportsController::class, 'generateExcel'])-
     Route::post('/checkout/place-order', [OrderController::class, 'placeOrder'])->name('checkout.place');
     Route::post('/ratings/bulk', [RatingController::class, 'bulkStore']);
 
+
     // --- INVENTORY & PRODUCTS ---
     Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
     Route::post('/inventory/adjust', [InventoryController::class, 'adjust'])->name('inventory.adjust');
-    Route::resource('products', ProductController::class)->except(['create', 'edit']);
+
+
 
     // --- PROFILE ---
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

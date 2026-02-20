@@ -19,8 +19,12 @@ class Product extends Model
         'status'
     ];
 
+    protected $casts = [
+        'price' => 'decimal:2',
+    ];
+
     protected $appends = [
-        'stock_count', 
+        'stock_count',
         'image_url', 
         'restock_date'
     ];
@@ -34,9 +38,10 @@ class Product extends Model
     {
         return $this->hasOne(Inventory::class)->latestOfMany();
     }
-
+    
     public function getStockCountAttribute()
     {
+        // Fallback or use Inventory model if exists, otherwise 0
         $in = Inventory::where('product_id', $this->id)->where('type', 'in')->sum('quantity');
         $out = Inventory::where('product_id', $this->id)->where('type', 'out')->sum('quantity');
         
@@ -54,7 +59,7 @@ class Product extends Model
     {
         return Attribute::make(
             get: fn () => $this->image_path 
-                ? asset('storage/' . $this->image_path) 
+                ? asset($this->image_path) 
                 : asset('images/default-product.png'),
         );
     }
