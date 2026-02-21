@@ -14,10 +14,13 @@ use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\RatingController;
 use App\Http\Controllers\Customer\OrderController;
 use App\Http\Controllers\Customer\StorefrontController;
+use App\Http\Controllers\Customer\UserDashboardController;
+use App\Http\Controllers\Customer\CartController;
 use App\Http\Controllers\Staff\OrderManagementController;
 use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\Admin\ReportsController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
+use App\Http\Controllers\Admin\InventoryController as AdminInventoryController;
 
 /*
 |--------------------------------------------------------------------------
@@ -39,24 +42,41 @@ Route::post('/api/check-email', function (Request $request) {
 */
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    // General Dashboard (for admin)
-    // General Dashboard (for admin)
     Route::get('/dashboard', function () {
         return redirect()->route('dashboard');
     });
     Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
-    // --- ADMIN ROUTES (Dito ang fix para sa admin.users.index) ---
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::resource('/users', UsersController::class);
         Route::resource('/products', ProductController::class)->except(['create', 'edit']);
         Route::get('/reports', [ReportsController::class, 'index'])->name('reports');
         Route::get('/reports/pdf', [ReportsController::class, 'generatePDF'])->name('reports.pdf');
         Route::get('/reports/excel', [ReportsController::class, 'generateExcel'])->name('reports.excel');
-        
-        // Orders (Transactions)
         Route::resource('/orders', AdminOrderController::class)->only(['index', 'show', 'update']);
+        // Inventory
+        Route::get('/inventory', [AdminInventoryController::class, 'index'])->name('inventory.index');
+        Route::get('/inventory/{product}', [AdminInventoryController::class, 'show'])->name('inventory.show');
+        Route::post('/inventory/adjust', [AdminInventoryController::class, 'adjust'])->name('inventory.adjust');
+        Route::delete('/inventory/log/{inventory}', [AdminInventoryController::class, 'destroy'])->name('inventory.log.destroy');
     });
+
+
+    // Test Save
+
+    // --- User Customer Routes ---
+    Route::get('/customer/dashboard', [UserDashboardController::class, 'index'])->name('customer.dashboard');
+    Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+    Route::get('/api/orders/{id}/receipt', [OrderController::class, 'getReceipt']);
+    Route::post('/checkout/place-order', [OrderController::class, 'placeOrder'])->name('checkout.place');
+    Route::post('/ratings/bulk', [RatingController::class, 'bulkStore']);
+
+    // --- Cart Routes ---
+    Route::get('/customer/products', [CartController::class, 'index'])->name('customer.products');
+    Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
+    Route::patch('/cart/{productId}', [CartController::class, 'update'])->name('cart.update');
+    Route::delete('/cart/{productId}', [CartController::class, 'remove'])->name('cart.remove');
+    Route::post('/cart/clear', [CartController::class, 'clear'])->name('cart.clear');
+    Route::get('/api/cart', [CartController::class, 'get'])->name('cart.get');
 
 
 
@@ -67,11 +87,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/staff/orders', [OrderManagementController::class, 'index'])->name('staff.orders.index');
     Route::patch('/staff/orders/{transaction}/update-status', [OrderManagementController::class, 'updateStatus'])->name('staff.orders.update');
 
-    // --- CUSTOMER ORDERS & RATINGS ---
-    Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
-    Route::get('/api/orders/{id}/receipt', [OrderController::class, 'getReceipt']);
-    Route::post('/checkout/place-order', [OrderController::class, 'placeOrder'])->name('checkout.place');
-    Route::post('/ratings/bulk', [RatingController::class, 'bulkStore']);
 
 
     // --- INVENTORY & PRODUCTS ---
