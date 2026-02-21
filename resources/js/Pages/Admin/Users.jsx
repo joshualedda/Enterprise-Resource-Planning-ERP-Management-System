@@ -300,7 +300,7 @@ export default function Index({ auth, users = [], roles = [] }) {
                     <div>
                         <button
                             onClick={() => openModal('create')}
-                            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm transition-all active:scale-95"
+                            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm shadow-emerald-100 transition-all active:scale-95"
                         >
                             <Plus size={18} />
                             New Member
@@ -310,7 +310,7 @@ export default function Index({ auth, users = [], roles = [] }) {
 
                 {/* 2. Stat Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <StatCard label="Total Users" value={stats.total} icon={Users} color="bg-indigo-500" trend={{ isPositive: true, value: 12 }} />
+                    <StatCard label="Total Users" value={stats.total} icon={Users} color="bg-emerald-500" trend={{ isPositive: true, value: 12 }} />
                     <StatCard label="Staff Members" value={stats.staff} icon={Shield} color="bg-purple-500" trend={{ isPositive: true, value: 5 }} />
                     <StatCard label="Active Customers" value={stats.customers} icon={UserCheck} color="bg-emerald-500" trend={{ isPositive: false, value: 2 }} />
                 </div>
@@ -424,7 +424,7 @@ export default function Index({ auth, users = [], roles = [] }) {
                                                 </p>
                                                 <button
                                                     onClick={() => { setSearch(''); setRoleFilter('All'); }}
-                                                    className="px-5 py-2 bg-indigo-50 text-indigo-600 text-xs font-bold rounded-xl hover:bg-indigo-100 transition-colors"
+                                                    className="px-5 py-2 bg-emerald-50 text-emerald-600 text-xs font-bold rounded-xl hover:bg-emerald-100 transition-colors"
                                                 >
                                                     Clear Filters
                                                 </button>
@@ -454,7 +454,7 @@ export default function Index({ auth, users = [], roles = [] }) {
                                     <button
                                         key={index}
                                         onClick={() => setCurrentPage(page)}
-                                        className={`w-10 h-10 rounded-lg text-sm font-bold transition ${currentPage === page ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'text-slate-600 hover:bg-slate-50 border border-transparent hover:border-slate-200'}`}
+                                        className={`w-10 h-10 rounded-lg text-sm font-bold transition ${currentPage === page ? 'bg-emerald-600 text-white shadow-md shadow-emerald-100' : 'text-slate-600 hover:bg-slate-50 border border-transparent hover:border-slate-200'}`}
                                     >
                                         {page}
                                     </button>
@@ -596,7 +596,7 @@ export default function Index({ auth, users = [], roles = [] }) {
                             <SecondaryButton onClick={() => setShowModal(false)} className="!rounded-xl !px-5">
                                 Cancel
                             </SecondaryButton>
-                            <PrimaryButton className="!rounded-xl !px-6 !bg-indigo-600 hover:!bg-indigo-700 !text-white" disabled={processing}>
+                            <PrimaryButton className="!rounded-xl !px-6 !bg-emerald-600 hover:!bg-emerald-700 !text-white" disabled={processing}>
                                 {modalMode === 'create' ? 'Create Account' : 'Save Changes'}
                             </PrimaryButton>
                         </div>

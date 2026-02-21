@@ -14,12 +14,12 @@ import { TrendingDown, Filter, AlertCircle } from 'lucide-react';
 
 // --- MOCK DATA ---
 const mockFunnelData = [
-    { stage: "Placed", count: 320, fill: "#6366f1" },
-    { stage: "Paid", count: 250, fill: "#6366f1" },
-    { stage: "Packed", count: 220, fill: "#6366f1" },
-    { stage: "Shipped", count: 190, fill: "#6366f1" },
-    { stage: "Delivered", count: 175, fill: "#6366f1" },
-    { stage: "Completed", count: 160, fill: "#6366f1" },
+    { stage: "Placed", count: 320, fill: "#6ee7b7" },
+    { stage: "Paid", count: 250, fill: "#34d399" },
+    { stage: "Packed", count: 220, fill: "#10b981" },
+    { stage: "Shipped", count: 190, fill: "#059669" },
+    { stage: "Delivered", count: 175, fill: "#047857" },
+    { stage: "Completed", count: 160, fill: "#065f46" },
 ];
 
 const dropOffData = [
@@ -65,7 +65,7 @@ export default function OrderStatusFunnel({ data = mockFunnelData, dropOffs = dr
                     <p className="font-black text-slate-800 mb-1">{label}</p>
                     <div className="flex justify-between items-center mb-2">
                         <span className="text-xs text-slate-500 font-bold uppercase">Count</span>
-                        <span className="text-lg font-black text-indigo-600">{d.count}</span>
+                        <span className="text-lg font-black text-emerald-600">{d.count}</span>
                     </div>
                     {d.stage !== 'Placed' && (
                         <>
@@ -96,7 +96,7 @@ export default function OrderStatusFunnel({ data = mockFunnelData, dropOffs = dr
                 </div>
                 <h3 className="text-slate-900 font-bold mb-1">No Funnel Data</h3>
                 <p className="text-slate-500 text-xs mb-6">Not enough orders to generate a funnel.</p>
-                <button className="px-5 py-2 bg-indigo-50 text-indigo-600 text-xs font-bold rounded-xl hover:bg-indigo-100 transition-colors">
+                <button className="px-5 py-2 bg-emerald-50 text-emerald-600 text-xs font-bold rounded-xl hover:bg-emerald-100 transition-colors">
                     View Orders
                 </button>
             </div>
@@ -109,7 +109,7 @@ export default function OrderStatusFunnel({ data = mockFunnelData, dropOffs = dr
             <div className="flex justify-between items-start mb-6">
                 <div>
                     <h3 className="text-lg font-black text-slate-800 flex items-center gap-2">
-                        <Filter className="text-indigo-500" size={18} />
+                        <Filter className="text-emerald-500" size={18} />
                         Order Funnel
                     </h3>
                     <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mt-1">Pipeline Performance</p>

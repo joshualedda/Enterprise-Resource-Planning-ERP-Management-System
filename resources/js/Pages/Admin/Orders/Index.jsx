@@ -253,7 +253,7 @@ export default function Index({ auth, orders = [] }) {
                                                 </p>
                                                 <button
                                                     onClick={() => { setSearch(''); setStatusFilter('All'); }}
-                                                    className="px-5 py-2 bg-indigo-50 text-indigo-600 text-xs font-bold rounded-xl hover:bg-indigo-100 transition-colors"
+                                                    className="px-5 py-2 bg-emerald-50 text-emerald-600 text-xs font-bold rounded-xl hover:bg-emerald-100 transition-colors"
                                                 >
                                                     Clear Filters
                                                 </button>
@@ -283,7 +283,7 @@ export default function Index({ auth, orders = [] }) {
                                     <button
                                         key={index}
                                         onClick={() => setCurrentPage(page)}
-                                        className={`w-10 h-10 rounded-lg text-sm font-bold transition ${currentPage === page ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'text-slate-600 hover:bg-slate-50 border border-transparent hover:border-slate-200'}`}
+                                        className={`w-10 h-10 rounded-lg text-sm font-bold transition ${currentPage === page ? 'bg-emerald-600 text-white shadow-md shadow-emerald-100' : 'text-slate-600 hover:bg-slate-50 border border-transparent hover:border-slate-200'}`}
                                     >
                                         {page}
                                     </button>

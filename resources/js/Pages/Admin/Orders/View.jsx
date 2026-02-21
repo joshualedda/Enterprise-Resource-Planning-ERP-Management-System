@@ -201,7 +201,7 @@ export default function View({ auth, order }) {
                                         <div>
                                             <p className="font-bold text-slate-900">{order.user.first_name} {order.user.last_name}</p>
                                             <p className="text-xs text-slate-500">{order.user.email}</p>
-                                            <span className="inline-block mt-1 px-2 py-0.5 rounded text-[10px] bg-indigo-50 text-indigo-600 font-bold uppercase tracking-wider">
+                                            <span className="inline-block mt-1 px-2 py-0.5 rounded text-[10px] bg-emerald-50 text-emerald-600 font-bold uppercase tracking-wider">
                                                 Registered
                                             </span>
                                         </div>

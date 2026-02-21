@@ -71,33 +71,65 @@ const MOCK_TOP_PRODUCTS = [
 
 // --- COMPONENTS ---
 
-// 1. KPI Card
-const KPICard = ({ title, value, icon: Icon, colorClass, trend, subtext }) => (
-    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow relative overflow-hidden group">
-        <div className="flex justify-between items-start mb-4">
-            <div className={`p-3 rounded-xl ${colorClass} bg-opacity-10 text-opacity-100`}>
-                <Icon className={`w-6 h-6 ${colorClass.replace('bg-', 'text-')}`} />
-            </div>
-            {trend && (
-                <div className={`flex items-center gap-1 text-xs font-bold ${trend.isPositive ? 'text-emerald-500' : 'text-rose-500'} bg-slate-50 px-2 py-1 rounded-full`}>
-                    {trend.isPositive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-                    {trend.value}%
+// 1. KPI Card — Premium Redesign
+const KPICard = ({ title, value, icon: Icon, colorClass, trend, subtext }) => {
+    // Derive tinted bg from the base color class e.g. "bg-emerald-500" → "bg-emerald-50"
+    const base = colorClass.split(' ')[0]; // e.g. "bg-emerald-500"
+    const tinted = base.replace('-500', '-50').replace('-600', '-50').replace('-400', '-50');
+    const textCol = base.replace('bg-', 'text-');
+
+    return (
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 relative overflow-hidden flex flex-col">
+            {/* Left accent bar */}
+            <div className={`absolute left-0 top-0 bottom-0 w-[3px] ${base} rounded-l-2xl`} />
+
+            <div className="px-5 pt-5 pb-4 ml-1 flex-1 flex flex-col gap-3">
+                {/* Top: label + icon chip */}
+                <div className="flex items-start justify-between">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.18em] leading-tight pt-0.5">
+                        {title}
+                    </p>
+                    <div className={`w-10 h-10 rounded-xl ${tinted} flex items-center justify-center flex-shrink-0 ml-2`}>
+                        <Icon className={`w-5 h-5 ${textCol}`} />
+                    </div>
                 </div>
-            )}
+
+                {/* Value */}
+                <div className="text-[2rem] font-black text-slate-900 tracking-tight leading-none">
+                    {value}
+                </div>
+
+                {/* Subtext */}
+                {subtext && (
+                    <p className="text-[11px] text-slate-400 font-medium leading-snug -mt-1">
+                        {subtext}
+                    </p>
+                )}
+
+                {/* Bottom: trend */}
+                <div className="mt-auto pt-2 border-t border-slate-50 flex items-center gap-2">
+                    {trend ? (
+                        <>
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black ${trend.isPositive ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-500'}`}>
+                                {trend.isPositive ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
+                                {trend.value}%
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-medium">vs last period</span>
+                        </>
+                    ) : (
+                        <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider">No trend data</span>
+                    )}
+                </div>
+            </div>
         </div>
-        <div>
-            <h3 className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">{title}</h3>
-            <div className="text-3xl font-black text-slate-800 tracking-tight">{value}</div>
-            {subtext && <p className="text-xs text-slate-400 mt-2 font-medium">{subtext}</p>}
-        </div>
-    </div>
-);
+    );
+};
 
 // 2. Action Button
 const ActionBtn = ({ icon: Icon, label, onClick, color = 'indigo' }) => (
     <button
         onClick={onClick}
-        className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-600 font-bold text-xs hover:bg-slate-50 hover:border-indigo-200 hover:text-indigo-600 transition-all shadow-sm active:scale-95 whitespace-nowrap"
+        className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-600 font-bold text-xs hover:bg-slate-50 hover:border-emerald-200 hover:text-emerald-600 transition-all shadow-sm active:scale-95 whitespace-nowrap"
     >
         <Icon size={16} />
         {label}
@@ -180,7 +212,7 @@ function AdminDashboard({ products, orders, topProducts, currentFilter }) {
                     {['Today', 'Week', 'Month', 'Year'].map((f) => (
                         <button
                             key={f}
-                            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${currentFilter === f.toLowerCase() ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${currentFilter === f.toLowerCase() ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                         >
                             {f}
                         </button>
@@ -194,14 +226,14 @@ function AdminDashboard({ products, orders, topProducts, currentFilter }) {
                     title="Total Revenue"
                     value={formatPrice(totalRevenue)}
                     icon={DollarSign}
-                    colorClass="bg-indigo-500 text-white"
+                    colorClass="bg-emerald-500 text-white"
                     trend={getMockTrend()}
                 />
                 <KPICard
                     title="Total Orders"
                     value={displayOrders.length}
                     icon={ShoppingBag}
-                    colorClass="bg-blue-500 text-white"
+                    colorClass="bg-teal-500 text-white"
                     trend={getMockTrend()}
                     subtext={`${orderStats.pending} Pending Processing`}
                 />
@@ -239,7 +271,7 @@ function AdminDashboard({ products, orders, topProducts, currentFilter }) {
                     <div className="bg-white p-6 rounded-[1.5rem] border border-slate-100 shadow-sm overflow-hidden">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="font-black text-lg text-slate-800">Recent Orders</h3>
-                            <button className="text-indigo-600 text-xs font-bold hover:underline">View All</button>
+                            <button className="text-emerald-600 text-xs font-bold hover:underline">View All</button>
                         </div>
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse">
@@ -256,7 +288,7 @@ function AdminDashboard({ products, orders, topProducts, currentFilter }) {
                                 <tbody className="divide-y divide-slate-50 text-sm">
                                     {displayOrders.slice(0, 5).map((order, i) => (
                                         <tr key={i} className="group hover:bg-slate-50 transition-colors">
-                                            <td className="py-4 px-4 font-bold text-indigo-600">#{order.transaction?.reference_no || order.id}</td>
+                                            <td className="py-4 px-4 font-bold text-emerald-600">#{order.transaction?.reference_no || order.id}</td>
                                             <td className="py-4 px-4 font-bold text-slate-700">{order.transaction?.user?.name || 'Walk-in Customer'}</td>
                                             <td className="py-4 px-4 text-slate-500 text-xs">{new Date(order.created_at).toLocaleDateString()}</td>
                                             <td className="py-4 px-4">
@@ -307,7 +339,7 @@ function AdminDashboard({ products, orders, topProducts, currentFilter }) {
                     <div className="bg-white p-6 rounded-[1.5rem] border border-slate-100 shadow-sm">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="font-black text-sm uppercase tracking-wider text-slate-400">Top Products</h3>
-                            <button className="text-xs text-indigo-600 font-bold">See All</button>
+                            <button className="text-xs text-emerald-600 font-bold">See All</button>
                         </div>
                         <div className="space-y-4">
                             {displayTopProducts.length > 0 ? displayTopProducts.slice(0, 4).map((p, i) => (
@@ -316,11 +348,11 @@ function AdminDashboard({ products, orders, topProducts, currentFilter }) {
                                         {p.image ? <img src={p.image} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-xs">📦</div>}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-xs font-black text-slate-700 truncate group-hover:text-indigo-600 transition-colors">{p.name}</p>
+                                        <p className="text-xs font-black text-slate-700 truncate group-hover:text-emerald-600 transition-colors">{p.name}</p>
                                         <p className="text-[10px] text-slate-400 font-bold">{p.count} units sold</p>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-xs font-black text-indigo-600">{formatPrice(p.price || 0)}</p>
+                                        <p className="text-xs font-black text-emerald-600">{formatPrice(p.price || 0)}</p>
                                     </div>
                                 </div>
                             )) : (
@@ -340,54 +372,13 @@ function AdminDashboard({ products, orders, topProducts, currentFilter }) {
     );
 }
 
-// Reuse existing Staff/Customer dashboards for now (or placeholder to avoid errors if they were used in the main component)
-// For brevity, I'll allow the Layout to switch, but since the user focused on Admin, I'm keeping the original Staff/Customer dashboards from previous version logic
-// actually, I need to include them to prevent errors.
-
-function StaffDashboard({ orders = [], currentFilter }) {
-    // ... (Keeping exact same code as before for Staff to ensure no unrelated regression)
-    const totalRevenue = useMemo(() => {
-        if (!Array.isArray(orders)) return 0;
-        return orders.reduce((sum, order) => sum + (parseFloat(order.price_at_sale) * (parseInt(order.quantity) || 1)), 0);
-    }, [orders]);
-    return (
-        <div className="space-y-8 animate-in fade-in duration-700">
-            <header className="flex flex-col md:flex-row justify-between items-end gap-4">
-                <div>
-                    <h1 className="text-4xl font-black text-slate-900 tracking-tight leading-none">Store Operations</h1>
-                    <p className="text-slate-500 font-medium italic mt-2 uppercase text-[10px] tracking-widest">Active Shift • <span className="text-indigo-600 font-black">{currentFilter}</span></p>
-                </div>
-            </header>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm"><h3 className="text-slate-400 text-xs font-black uppercase">Revenue</h3><p className="text-4xl font-black">{formatPrice(totalRevenue)}</p></div>
-                <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm"><h3 className="text-slate-400 text-xs font-black uppercase">Orders</h3><p className="text-4xl font-black">{orders.length}</p></div>
-            </div>
-        </div>
-    );
-}
-
-function CustomerDashboard({ orders = [], currentFilter }) {
-    // ... (Minimal placeholder to keep it working)
-    return (
-        <div className="max-w-5xl mx-auto space-y-10 animate-in slide-in-from-bottom-4 duration-700">
-            <h1 className="text-4xl font-black text-slate-900 tracking-tight leading-none">My Ledger</h1>
-            <p>Welcome back, Customer.</p>
-        </div>
-    );
-}
-
-
-// --- MAIN EXPORT ---
+// --- MAIN EXPORT (Admin only — role 3 redirects to Customer/Dashboard via controller) ---
 export default function Dashboard({ auth, orders = [], products = 0, topProducts = [], currentFilter = 'today' }) {
-    const roleId = auth.user.role_id;
-
     return (
         <AuthenticatedLayout user={auth.user}>
             <Head title="Dashboard" />
             <div className="mx-auto px-2 sm:px-4 lg:px-6 py-8">
-                {roleId === 1 && <AdminDashboard products={products} orders={orders} topProducts={topProducts} currentFilter={currentFilter} />}
-                {roleId === 2 && <StaffDashboard orders={orders} currentFilter={currentFilter} />}
-                {roleId === 3 && <CustomerDashboard orders={orders} currentFilter={currentFilter} />}
+                <AdminDashboard products={products} orders={orders} topProducts={topProducts} currentFilter={currentFilter} />
             </div>
         </AuthenticatedLayout>
     );

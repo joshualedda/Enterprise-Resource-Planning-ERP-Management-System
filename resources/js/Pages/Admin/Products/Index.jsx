@@ -280,7 +280,7 @@ export default function Index({ auth, products = [], categories = [] }) {
                         {activeTab === 'products' ? (
                             <button
                                 onClick={() => openProductModal()}
-                                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm transition-all active:scale-95"
+                                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm shadow-emerald-100 transition-all active:scale-95"
                             >
                                 <Plus size={18} />
                                 New Product
@@ -288,7 +288,7 @@ export default function Index({ auth, products = [], categories = [] }) {
                         ) : (
                             <button
                                 onClick={() => openCategoryModal()}
-                                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm transition-all active:scale-95"
+                                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm shadow-emerald-100 transition-all active:scale-95"
                             >
                                 <Plus size={18} />
                                 New Category
@@ -302,7 +302,7 @@ export default function Index({ auth, products = [], categories = [] }) {
                 {/* 2. Inventory Summary Cards */}
                 {activeTab === 'products' && (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                        <StatCard label="Total Products" value={stats.total} icon={Package} color="bg-indigo-500" />
+                        <StatCard label="Total Products" value={stats.total} icon={Package} color="bg-emerald-500" />
                         <StatCard label="In Stock" value={stats.inStock} icon={CheckCircle2} color="bg-emerald-500" />
                         <StatCard label="Low Stock" value={stats.lowStock} icon={AlertTriangle} color="bg-amber-500" />
                         <StatCard label="Out of Stock" value={stats.outOfStock} icon={XCircle} color="bg-rose-500" />
@@ -452,7 +452,7 @@ export default function Index({ auth, products = [], categories = [] }) {
                                                 <button
                                                     key={index}
                                                     onClick={() => setCurrentPage(page)}
-                                                    className={`w-10 h-10 rounded-lg text-sm font-bold transition ${currentPage === page ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'text-slate-600 hover:bg-slate-50 border border-transparent hover:border-slate-200'}`}
+                                                    className={`w-10 h-10 rounded-lg text-sm font-bold transition ${currentPage === page ? 'bg-emerald-600 text-white shadow-md shadow-emerald-100' : 'text-slate-600 hover:bg-slate-50 border border-transparent hover:border-slate-200'}`}
                                                 >
                                                     {page}
                                                 </button>
@@ -495,7 +495,7 @@ export default function Index({ auth, products = [], categories = [] }) {
                                     <p className="text-sm text-slate-500 mt-1">{cat.products_count || 0} Products</p>
                                 </div>
                                 <div className="flex gap-2 mt-4 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => openCategoryModal(cat)} className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-600 hover:text-white transition"><Edit3 size={14} /></button>
+                                    <button onClick={() => openCategoryModal(cat)} className="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-600 hover:text-white transition"><Edit3 size={14} /></button>
                                     <button onClick={() => deleteCategory(cat.id)} className="p-2 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-600 hover:text-white transition"><Trash2 size={14} /></button>
                                 </div>
                             </div>
@@ -647,7 +647,7 @@ export default function Index({ auth, products = [], categories = [] }) {
 
                                         <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
                                             <button type="button" onClick={() => setIsProductModalOpen(false)} className="px-6 py-2.5 rounded-xl text-slate-500 font-bold hover:bg-slate-50 transition">Cancel</button>
-                                            <PrimaryButton className="!rounded-xl !px-6 !py-2.5 !bg-indigo-600" disabled={productForm.processing}>
+                                            <PrimaryButton className="!rounded-xl !px-6 !py-2.5 !bg-emerald-600 hover:!bg-emerald-700" disabled={productForm.processing}>
                                                 {productForm.processing ? 'Saving...' : 'Save Product'}
                                             </PrimaryButton>
                                         </div>

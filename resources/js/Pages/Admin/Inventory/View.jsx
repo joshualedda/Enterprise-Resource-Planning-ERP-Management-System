@@ -103,7 +103,7 @@ export default function InventoryView({ auth, product, logs = [], current_stock 
                         {/* Details */}
                         <div className="md:col-span-3 p-6 md:p-8 flex flex-col justify-between">
                             <div>
-                                <span className="bg-indigo-50 text-indigo-600 px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider">
+                                <span className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider">
                                     {product.category?.category || 'Uncategorized'}
                                 </span>
                                 <h1 className="text-3xl font-black text-slate-900 mt-3 mb-1 leading-tight">{product.product}</h1>

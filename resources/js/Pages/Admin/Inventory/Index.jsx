@@ -248,7 +248,7 @@ export default function InventoryIndex({ auth, products = [] }) {
 
                 {/* Stat Cards */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <StatCard label="Total Products" value={stats.total} icon={Package} color="bg-indigo-500" />
+                    <StatCard label="Total Products" value={stats.total} icon={Package} color="bg-emerald-500" />
                     <StatCard label="In Stock" value={stats.inStock} icon={CheckCircle2} color="bg-emerald-500" />
                     <StatCard label="Low Stock" value={stats.lowStock} icon={AlertTriangle} color="bg-amber-500" />
                     <StatCard label="Out of Stock" value={stats.outOf} icon={XCircle} color="bg-rose-500" />
@@ -350,7 +350,7 @@ export default function InventoryIndex({ auth, products = [] }) {
                                                 <div className="flex items-center justify-end gap-2">
                                                     <button
                                                         onClick={() => setAdjusting(product)}
-                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-600 text-[10px] font-black rounded-lg uppercase hover:bg-indigo-600 hover:text-white transition-all"
+                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 text-[10px] font-black rounded-lg uppercase hover:bg-emerald-600 hover:text-white transition-all"
                                                     >
                                                         Adjust
                                                     </button>
@@ -374,7 +374,7 @@ export default function InventoryIndex({ auth, products = [] }) {
                                                 </div>
                                                 <h3 className="text-slate-900 font-bold mb-1">No products found</h3>
                                                 <p className="text-slate-500 text-xs mb-6">Try adjusting your filters.</p>
-                                                <button onClick={() => { setSearch(''); setStock('All'); }} className="px-5 py-2 bg-indigo-50 text-indigo-600 text-xs font-bold rounded-xl hover:bg-indigo-100 transition-colors">
+                                                <button onClick={() => { setSearch(''); setStock('All'); }} className="px-5 py-2 bg-emerald-50 text-emerald-600 text-xs font-bold rounded-xl hover:bg-emerald-100 transition-colors">
                                                     Clear Filters
                                                 </button>
                                             </div>

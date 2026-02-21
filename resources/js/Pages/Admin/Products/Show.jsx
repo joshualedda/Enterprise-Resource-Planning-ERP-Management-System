@@ -56,7 +56,7 @@ export default function Show({ auth, product }) {
                         <div className="p-5 md:p-8 flex flex-col">
                             <div className="mb-auto">
                                 <div className="flex items-start justify-between mb-4">
-                                    <span className="bg-indigo-50 text-indigo-600 px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider">
+                                    <span className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider">
                                         {product.category?.category || 'Uncategorized'}
                                     </span>
                                     <div className="flex items-center gap-2">

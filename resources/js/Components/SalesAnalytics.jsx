@@ -88,7 +88,7 @@ export default function SalesAnalytics() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                 <div>
                     <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                        <TrendingUp className="text-indigo-600" size={20} />
+                        <TrendingUp className="text-emerald-600" size={20} />
                         Sales Analytics
                     </h2>
                     <p className="text-sm text-slate-500 mt-1">Revenue vs Order Volume Overview</p>
@@ -102,8 +102,8 @@ export default function SalesAnalytics() {
                                 key={range}
                                 onClick={() => setTimeRange(range)}
                                 className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${timeRange === range
-                                        ? 'bg-white text-indigo-600 shadow-sm'
-                                        : 'text-slate-500 hover:text-slate-700'
+                                    ? 'bg-white text-emerald-600 shadow-sm'
+                                    : 'text-slate-500 hover:text-slate-700'
                                     }`}
                             >
                                 {range}
@@ -116,7 +116,7 @@ export default function SalesAnalytics() {
                         <span className="text-xs font-bold text-slate-500">Compare</span>
                         <button
                             onClick={() => setShowComparison(!showComparison)}
-                            className={`w-9 h-5 rounded-full p-1 transition-colors duration-200 ease-in-out ${showComparison ? 'bg-indigo-600' : 'bg-slate-200'}`}
+                            className={`w-9 h-5 rounded-full p-1 transition-colors duration-200 ease-in-out ${showComparison ? 'bg-emerald-600' : 'bg-slate-200'}`}
                         >
                             <div className={`w-3 h-3 bg-white rounded-full shadow-sm transform transition-transform duration-200 ease-in-out ${showComparison ? 'translate-x-4' : 'translate-x-0'}`} />
                         </button>
@@ -126,8 +126,8 @@ export default function SalesAnalytics() {
 
             {/* Summary Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div className="p-4 bg-indigo-50 rounded-xl border border-indigo-100">
-                    <p className="text-xs font-bold text-indigo-500 uppercase tracking-wider mb-1">Total Revenue</p>
+                <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-100">
+                    <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1">Total Revenue</p>
                     <p className="text-2xl font-black text-slate-900">{formatCurrency(stats.totalRevenue)}</p>
                 </div>
                 <div className="p-4 bg-sky-50 rounded-xl border border-sky-100">
@@ -153,8 +153,8 @@ export default function SalesAnalytics() {
                     <ComposedChart data={data} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                         <defs>
                             <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2} />
-                                <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                                <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
+                                <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                             </linearGradient>
                         </defs>
 
@@ -232,7 +232,7 @@ export default function SalesAnalytics() {
                             type="monotone"
                             dataKey="revenue"
                             name="Revenue"
-                            stroke="#6366f1"
+                            stroke="#10b981"
                             strokeWidth={3}
                             fillOpacity={1}
                             fill="url(#colorRevenue)"

@@ -82,7 +82,7 @@ const ProductCard = ({ product, onAddToCart }) => {
             <div className="flex-1">
                 <div className="flex justify-between items-start gap-2 mb-1">
                     <h3 className="font-bold text-slate-800 text-sm leading-tight line-clamp-2">{product.product}</h3>
-                    <p className="font-black text-indigo-600 text-sm whitespace-nowrap">{fmt(product.price)}</p>
+                    <p className="font-black text-slate-800 text-sm whitespace-nowrap">{fmt(product.price)}</p>
                 </div>
                 <div className="flex items-center justify-between text-xs mb-3">
                     <span className="text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
@@ -115,7 +115,7 @@ const ProductCard = ({ product, onAddToCart }) => {
                     </div>
                     <button
                         onClick={() => { onAddToCart(product, qty); setQty(1); }}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black rounded-xl transition-all active:scale-95 shadow-sm"
+                        className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl transition-all active:scale-95 shadow-sm shadow-emerald-100"
                     >
                         <ShoppingCart size={13} />
                         Add to Cart
@@ -154,8 +154,8 @@ const CartDrawer = ({ cart, onUpdateQty, onRemove, onClear, onCheckout, isOpen, 
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-slate-100">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-50 rounded-xl">
-                            <ShoppingCart size={20} className="text-indigo-600" />
+                        <div className="p-2 bg-emerald-50 rounded-xl">
+                            <ShoppingCart size={20} className="text-emerald-600" />
                         </div>
                         <div>
                             <h2 className="font-black text-slate-900 text-lg">My Cart</h2>
@@ -190,7 +190,7 @@ const CartDrawer = ({ cart, onUpdateQty, onRemove, onClear, onCheckout, isOpen, 
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-black text-slate-800 truncate">{item.product}</p>
-                                    <p className="text-xs font-bold text-indigo-600">{fmt(item.price)}</p>
+                                    <p className="text-xs font-bold text-slate-500">{fmt(item.price)}</p>
                                     {/* Qty Controls */}
                                     <div className="flex items-center gap-2 mt-2">
                                         <div className="flex items-center border border-slate-200 rounded-lg bg-white overflow-hidden">
@@ -227,11 +227,11 @@ const CartDrawer = ({ cart, onUpdateQty, onRemove, onClear, onCheckout, isOpen, 
                     <div className="p-6 border-t border-slate-100 space-y-4 bg-slate-50/50">
                         <div className="flex justify-between items-center">
                             <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Order Total</span>
-                            <span className="text-2xl font-black text-indigo-600">{fmt(total)}</span>
+                            <span className="text-2xl font-black text-emerald-600">{fmt(total)}</span>
                         </div>
                         <button
                             onClick={onCheckout}
-                            className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-sm rounded-2xl shadow-lg shadow-indigo-200 transition-all active:scale-95"
+                            className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm rounded-2xl shadow-lg shadow-emerald-100 transition-all active:scale-95"
                         >
                             Place Order
                         </button>
@@ -387,7 +387,7 @@ export default function BrowseProducts({ auth, products = [], categories = [], c
                     </div>
                     <button
                         onClick={() => setCartOpen(true)}
-                        className="relative flex items-center gap-2.5 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-sm rounded-2xl shadow-lg shadow-indigo-200 transition-all active:scale-95"
+                        className="relative flex items-center gap-2.5 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm rounded-2xl shadow-lg shadow-emerald-100 transition-all active:scale-95"
                     >
                         <ShoppingCart size={18} />
                         My Cart
@@ -401,7 +401,7 @@ export default function BrowseProducts({ auth, products = [], categories = [], c
 
                 {/* ── 2. Stat Cards ── */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <StatCard label="Total Products" value={stats.total} icon={Package} color="bg-indigo-500" />
+                    <StatCard label="Total Products" value={stats.total} icon={Package} color="bg-emerald-500" />
                     <StatCard label="In Stock" value={stats.inStock} icon={CheckCircle2} color="bg-emerald-500" />
                     <StatCard label="Low Stock" value={stats.lowStock} icon={AlertTriangle} color="bg-amber-500" />
                     <StatCard label="Out of Stock" value={stats.outOf} icon={XCircle} color="bg-rose-500" />
@@ -410,13 +410,13 @@ export default function BrowseProducts({ auth, products = [], categories = [], c
                 {/* ── 3. Search & Filter Bar ── */}
                 <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col xl:flex-row gap-4 items-center justify-between">
                     <div className="relative w-full xl:w-96 group">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={16} />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors" size={16} />
                         <input
                             type="text"
                             placeholder="Search products..."
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border-transparent focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 rounded-xl text-sm font-medium transition-all"
+                            className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border-transparent focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 rounded-xl text-sm font-medium transition-all"
                         />
                     </div>
 
@@ -424,7 +424,7 @@ export default function BrowseProducts({ auth, products = [], categories = [], c
                         <select
                             value={categoryFilter}
                             onChange={e => setCat(e.target.value)}
-                            className="pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer hover:border-indigo-300 transition-colors"
+                            className="pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 focus:ring-emerald-500 focus:border-emerald-500 cursor-pointer hover:border-emerald-300 transition-colors"
                         >
                             <option value="All">All Categories</option>
                             {categories.map(c => <option key={c.id} value={c.id}>{c.category}</option>)}
@@ -433,7 +433,7 @@ export default function BrowseProducts({ auth, products = [], categories = [], c
                         <select
                             value={stockFilter}
                             onChange={e => setStock(e.target.value)}
-                            className="pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer hover:border-indigo-300 transition-colors"
+                            className="pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 focus:ring-emerald-500 focus:border-emerald-500 cursor-pointer hover:border-emerald-300 transition-colors"
                         >
                             <option value="All">All Availability</option>
                             <option value="In Stock">In Stock</option>
@@ -444,7 +444,7 @@ export default function BrowseProducts({ auth, products = [], categories = [], c
                         <select
                             value={sortBy}
                             onChange={e => setSortBy(e.target.value)}
-                            className="pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer hover:border-indigo-300 transition-colors"
+                            className="pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 focus:ring-emerald-500 focus:border-emerald-500 cursor-pointer hover:border-emerald-300 transition-colors"
                         >
                             <option value="Newest">Newest First</option>
                             <option value="Price High">Price: High to Low</option>
@@ -488,7 +488,7 @@ export default function BrowseProducts({ auth, products = [], categories = [], c
                         <p className="text-slate-500 text-sm mb-6 max-w-xs mx-auto">Try adjusting your search or filters.</p>
                         <button
                             onClick={() => { setSearch(''); setCat('All'); setStock('All'); }}
-                            className="px-5 py-2 bg-indigo-50 text-indigo-600 text-xs font-bold rounded-xl hover:bg-indigo-100 transition-colors"
+                            className="px-5 py-2 bg-emerald-50 text-emerald-600 text-xs font-bold rounded-xl hover:bg-emerald-100 transition-colors"
                         >
                             Clear Filters
                         </button>

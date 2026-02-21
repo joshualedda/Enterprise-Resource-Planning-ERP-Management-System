@@ -209,7 +209,7 @@ export default function Reports({ auth, orders, filters }) {
                                     className={`
                                         min-w-[40px] h-10 flex items-center justify-center px-3 rounded-lg text-sm font-bold transition-all
                                         ${link.active
-                                            ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
+                                            ? 'bg-emerald-600 text-white shadow-md shadow-emerald-100'
                                             : 'text-slate-600 hover:bg-slate-50 border border-transparent hover:border-slate-200'
                                         }
                                         ${!link.url ? 'opacity-50 cursor-not-allowed hover:bg-transparent' : ''}
