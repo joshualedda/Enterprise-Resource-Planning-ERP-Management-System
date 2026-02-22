@@ -11,17 +11,21 @@ return new class extends Migration
      */
     public function up(): void
     {
-    Schema::create('user_information', function (Blueprint $table) {
+        Schema::create('user_information', function (Blueprint $table) {
             $table->id();
-            $table->string('first_name', 100);
-            $table->string('last_name', 100);
+            
+            // User and Role Relationship
+            $table->foreignId('user_id')->unique()->constrained()->onDelete('cascade');
+            $table->foreignId('role_id')->constrained()->onDelete('cascade');
+            
+            // Basic Info
             $table->string('phone_number', 20)->nullable();
-            $table->text('address')->nullable();
-            
-            // Optional: Para sa Traceability/Farmer Profile
-            $table->string('province')->nullable();
-            $table->string('city_municipality')->nullable();
-            
+
+            // Location Hierarchy (Foreign Keys)
+            $table->foreignId('province_id')->nullable()->constrained()->onDelete('set null');
+            $table->foreignId('municipality_id')->nullable()->constrained()->onDelete('set null');
+            $table->foreignId('barangay_id')->nullable()->constrained()->onDelete('set null');
+
             $table->timestamps();
         });
     }

@@ -197,13 +197,13 @@ export default function CustomerDashboard({ auth }) {
                 </div>
 
                 {/* ── 3. Quick Actions ── */}
-                <div className="flex flex-wrap gap-3 py-2 border-y border-slate-100 my-4">
+                {/* <div className="flex flex-wrap gap-3 py-2 border-y border-slate-100 my-4">
                     <ActionBtn icon={ShoppingCart} label="Browse Products" href="/" />
                     <ActionBtn icon={Package} label="My Orders" href={route().has('orders.index') ? route('orders.index') : '#'} />
                     <ActionBtn icon={Heart} label="Wishlist" href="#" />
                     <ActionBtn icon={Gift} label="Redeem Points" href="#" />
                     <ActionBtn icon={Eye} label="Track Shipment" href="#" />
-                </div>
+                </div> */}
 
                 {/* ── 4. Main Two-Column Grid ── */}
                 <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">

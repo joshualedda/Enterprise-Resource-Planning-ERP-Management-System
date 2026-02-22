@@ -293,8 +293,7 @@ export default function AuthenticatedLayout({ header, children }) {
                             <ApplicationLogo size="xs" className="!w-8 !h-8" />
                         </div>
                         <div>
-                            <p className="text-base font-black text-slate-800 leading-none tracking-tight">D'Sericore</p>
-                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">ERP System</p>
+                            <p className="text-base font-black text-slate-800 leading-none tracking-tight">D'SERICORE</p>
                         </div>
                     </Link>
                 </div>

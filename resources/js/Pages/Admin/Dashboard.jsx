@@ -255,11 +255,11 @@ function AdminDashboard({ products, orders, topProducts, currentFilter }) {
 
             {/* 3. Quick Actions */}
             <div className="flex flex-wrap gap-3 py-2 border-y border-slate-100 my-4">
-                <ActionBtn icon={Plus} label="Add Product" onClick={() => handleAction('add-product')} />
+                {/* <ActionBtn icon={Plus} label="Add Product" onClick={() => handleAction('add-product')} /> */}
                 <ActionBtn icon={FileText} label="View Orders" onClick={() => handleAction('view-orders')} />
                 <ActionBtn icon={Tag} label="Create Discount" onClick={() => handleAction('discount')} />
                 <ActionBtn icon={Download} label="Export Report" onClick={() => handleAction('export')} />
-                <ActionBtn icon={RefreshCw} label="Restock Inventory" onClick={() => handleAction('restock')} />
+                {/* <ActionBtn icon={RefreshCw} label="Restock Inventory" onClick={() => handleAction('restock')} /> */}
             </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">

@@ -10,11 +10,11 @@ return new class extends Migration {
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete(); 
-            $table->string('reference_no')->unique(); // e.g. DSERI-2026-0001
+            $table->string('reference_no')->unique(); // e.g. SRDI-2026-(random numbers)
             $table->decimal('total_amount', 15, 2);
             $table->string('receipt_path')->nullable(); // Para sa image ng physical receipt
             $table->string('transacted_by')->nullable(); // Pangalan ng staff
-            $table->enum('status', ['pending', 'paid', 'cancelled', 'completed'])->default('pending');
+            $table->enum('status', ['Pending', 'In Process', 'Completed', 'Cancelled'])->default('pending');
             $table->timestamps();
         });
     }
