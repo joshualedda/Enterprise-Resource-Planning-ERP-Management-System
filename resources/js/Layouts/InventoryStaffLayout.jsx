@@ -17,10 +17,21 @@ const roleConfig = {
     1: { label: 'Administrator', color: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-600' },
     2: { label: 'Staff Member', color: 'bg-blue-100 text-blue-700', dot: 'bg-blue-500' },
     3: { label: 'Customer', color: 'bg-teal-100 text-teal-700', dot: 'bg-teal-500' },
+    4: { label: 'Staff Member', color: 'bg-blue-100 text-blue-700', dot: 'bg-blue-500' },
 };
 
 function getInitials(first, last) {
     return `${(first?.[0] || '').toUpperCase()}${(last?.[0] || '').toUpperCase()}` || '?';
+}
+
+function isRouteActive(href, currentPath) {
+    if (!href || href === '#') return false;
+    try {
+        const urlObj = new URL(href, window.location.origin);
+        return urlObj.pathname === currentPath.split('?')[0];
+    } catch {
+        return false;
+    }
 }
 
 function useClock() {
@@ -46,7 +57,6 @@ function NotificationPanel({ serverNotifs = [] }) {
     useOutsideClick(ref, () => setOpen(false));
 
     const unread = notifs.filter(n => n.unread).length;
-
     const markAll = () => setNotifs(n => n.map(x => ({ ...x, unread: false })));
     const dismiss = (id) => setNotifs(n => n.filter(x => x.id !== id));
 
@@ -137,7 +147,6 @@ function UserMenu({ user, fullName, roleInfo }) {
     useOutsideClick(ref, () => setOpen(false));
 
     const initials = getInitials(user.first_name, user.last_name);
-
     const logout = () => router.post(route('logout'));
 
     return (
@@ -219,45 +228,21 @@ function UserMenu({ user, fullName, roleInfo }) {
 }
 
 // ---------------------------------------------------------------------------
-// ROUTE HELPERS & SIDEBAR COMPONENTS
+// SIDEBAR COMPONENTS
 // ---------------------------------------------------------------------------
-function isRouteActive(href, currentUrl) {
-    if (!href || href === '#') return false;
-    try {
-        const targetPath = new URL(href).pathname;
-        return currentUrl === targetPath || currentUrl.startsWith(targetPath + '/');
-    } catch {
-        return false;
-    }
-}
-
-function SidebarGroup({ item, currentUrl, isCollapsed }) {
-    const isActive = item.children?.some(child => isRouteActive(child.href, currentUrl));
+function SidebarGroup({ item, currentUrl }) {
+    const isActive = item.children.some(child => isRouteActive(child.href, currentUrl));
     const [open, setOpen] = useState(isActive);
 
     const toggle = () => setOpen(!open);
-
-    if (isCollapsed) {
-        return (
-            <div className="mb-1 block group/tooltip relative">
-                <button className={`w-full flex items-center justify-center py-2.5 rounded-xl transition-all duration-200 ${isActive ? 'bg-emerald-50 text-emerald-600' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
-                    <svg className={`w-5 h-5 flex-shrink-0 transition-colors ${isActive ? 'text-emerald-600' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
-                    </svg>
-                </button>
-                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-slate-800 text-white text-xs font-medium rounded-md opacity-0 pointer-events-none group-hover/tooltip:opacity-100 transition-opacity whitespace-nowrap z-50">
-                    {item.name}
-                </div>
-            </div>
-        );
-    }
 
     return (
         <div className="mb-1 block">
             <button
                 onClick={toggle}
-                className={`w-full flex items-center justify-between px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 group ${isActive ? 'text-emerald-800 bg-emerald-50' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
-                    }`}
+                className={`w-full flex items-center justify-between px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 group ${
+                    isActive ? 'text-emerald-800 bg-emerald-50' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                }`}
             >
                 <div className="flex items-center gap-3">
                     <svg className={`w-[18px] h-[18px] flex-shrink-0 transition-colors ${isActive ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -265,152 +250,171 @@ function SidebarGroup({ item, currentUrl, isCollapsed }) {
                     </svg>
                     <span>{item.name}</span>
                 </div>
-                {item.children && (
-                    <svg className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-                    </svg>
-                )}
+                <svg className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                </svg>
             </button>
-            {item.children && (
-                <div className={`grid transition-all duration-300 ease-in-out ${open ? 'grid-rows-[1fr] opacity-100 mt-1' : 'grid-rows-[0fr] opacity-0'}`}>
-                    <div className="overflow-hidden">
-                        <div className="pl-11 pr-3 py-1 space-y-1">
-                            {item.children.map(child => {
-                                const isChildActive = isRouteActive(child.href, currentUrl);
-                                return (
-                                    <Link
-                                        key={child.name}
-                                        href={child.href}
-                                        className={`block px-3 py-2 rounded-xl text-xs font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${isChildActive
-                                                ? 'bg-emerald-600 text-white shadow-sm font-bold'
-                                                : 'text-slate-500 hover:bg-emerald-50 hover:text-emerald-700'
-                                            }`}
-                                    >
-                                        {child.name}
-                                    </Link>
-                                );
-                            })}
-                        </div>
+            <div className={`grid transition-all duration-300 ease-in-out ${open ? 'grid-rows-[1fr] opacity-100 mt-1' : 'grid-rows-[0fr] opacity-0'}`}>
+                <div className="overflow-hidden">
+                    <div className="pl-11 pr-3 py-1 space-y-1">
+                        {item.children.map(child => {
+                            const isChildActive = isRouteActive(child.href, currentUrl);
+                            return (
+                                <Link
+                                    key={child.name}
+                                    href={child.href}
+                                    className={`block px-3 py-2 rounded-xl text-xs font-medium transition-all duration-200 ${
+                                        isChildActive
+                                            ? 'bg-emerald-600 text-white shadow-sm font-bold'
+                                            : 'text-slate-500 hover:bg-emerald-50 hover:text-emerald-700'
+                                    }`}
+                                >
+                                    {child.name}
+                                </Link>
+                            );
+                        })}
                     </div>
                 </div>
-            )}
+            </div>
         </div>
     );
 }
 
-function SidebarItem({ item, currentUrl, isCollapsed }) {
+function SidebarItem({ item, currentUrl }) {
     const isActive = isRouteActive(item.href, currentUrl);
-    
-    if (isCollapsed) {
-        return (
-            <Link
-                href={item.href}
-                className={`flex items-center justify-center py-2.5 rounded-xl transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 group/tooltip relative mb-1 ${isActive ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}
-            >
-                <svg className={`w-5 h-5 flex-shrink-0 transition-colors ${isActive ? 'text-emerald-200' : 'text-slate-400 group-hover:text-emerald-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
-                </svg>
-                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-slate-800 text-white text-xs font-medium rounded-md opacity-0 pointer-events-none group-hover/tooltip:opacity-100 transition-opacity whitespace-nowrap z-50">
-                    {item.name}
-                </div>
-                {item.badge && !isActive && <span className="absolute top-1 right-2 w-2 h-2 rounded-full bg-rose-500" />}
-            </Link>
-        );
-    }
-
     return (
         <Link
             href={item.href}
-            className={`flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 group mb-1 ${isActive
+            className={`flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 group mb-1 ${
+                isActive
                     ? 'bg-emerald-600 text-white shadow-sm font-bold'
                     : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
-                }`}
+            }`}
         >
             <svg className={`w-[18px] h-[18px] flex-shrink-0 transition-colors ${isActive ? 'text-emerald-200' : 'text-slate-400 group-hover:text-emerald-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
             </svg>
-            <span className="truncate flex-1">{item.name}</span>
-            {item.badge && (
-                <span className={`flex-shrink-0 ml-auto inline-flex items-center justify-center px-2 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-full ${isActive ? 'bg-white/20 text-white' : 'bg-rose-100 text-rose-600'}`}>
-                    {item.badge}
-                </span>
-            )}
+            <span className="truncate">{item.name}</span>
         </Link>
     );
 }
 
 // ---------------------------------------------------------------------------
-// MAIN LAYOUT
+// MAIN STAFF LAYOUT
 // ---------------------------------------------------------------------------
-export default function AuthenticatedLayout({ header, children }) {
-    const { url: currentUrl, props } = usePage();
-    const { auth } = props;
+export default function InventoryStaffLayout({ header, children }) {
+    const { auth } = usePage().props;
     const user = auth.user;
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const now = useClock();
 
     const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.name || 'User';
-    const roleInfo = roleConfig[user.role_id] || { label: 'User', color: 'bg-slate-100 text-slate-600', dot: 'bg-slate-400' };
+    const roleInfo = roleConfig[user.role_id] || { label: 'Staff Member', color: 'bg-blue-100 text-blue-700', dot: 'bg-blue-500' };
 
-    const notifications = props.notifications || [];
+    const notifications = usePage().props.notifications || [];
+    const { url: currentUrl } = usePage();
 
-    // Build Navigation based on exactly what user specified
-    const navigation = useMemo(() => {
-        // Safe check for missing properties like pending orders
-        const pendingOrders = props.pendingOrdersCount || null;
-        const newReports = props.newReportsCount || null;
-
-        const items = [];
-
-        if (user.role_id === 1) {
-            // EXACT Admin items requested
-            items.push(
-                { separator: 'Navigation' },
-                { name: 'Dashboard', href: route().has('admin.dashboard') ? route('admin.dashboard') : '#', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-                { name: 'Products', href: route().has('admin.products.index') ? route('admin.products.index') : '#', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
-                { 
-                    name: 'Orders', 
-                    href: route().has('admin.orders.index') ? route('admin.orders.index') : '#', 
-                    icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
-                    badge: pendingOrders ? pendingOrders : null 
-                },
-                { 
-                    name: 'Reports', 
-                    icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
-                    children: [
-                        { name: 'All Reports', href: route().has('admin.reports') ? route('admin.reports') : '#' }
-                    ]
-                },
-                { separator: 'Inventory' },
-                { name: 'Inventory', href: route().has('admin.inventory.index') ? route('admin.inventory.index') : '#', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' },
-                { separator: 'Users' },
-                { name: 'Users', href: route().has('admin.users.index') ? route('admin.users.index') : '#', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z' },
-                { name: 'Profile', href: route('profile.edit'), icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
-            );
-        } else if (user.role_id === 4) {
-            // ── STAFF / INVENTORY (Fallback if they hit here somehow) ──
-            items.push(
-                { name: 'Dashboard', href: route().has('staff.inventory.dashboard') ? route('staff.inventory.dashboard') : '#', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' }
-            );
-        } else if (user.role_id === 3) {
-            // ── CUSTOMER ──
-            items.push(
-                { name: 'Dashboard', href: route().has('customer.dashboard') ? route('customer.dashboard') : '#', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-                { name: 'My Orders', href: route().has('customer.orders.index') ? route('customer.orders.index') : '#', icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4' },
-                { name: 'Browse Products', href: route().has('customer.products') ? route('customer.products') : '#', icon: 'M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z' },
-                { name: 'Profile', href: route('profile.edit'), icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
-            );
-        }
-        return items;
-    }, [user.role_id, props.pendingOrdersCount, props.newReportsCount]);
+    const navigation = useMemo(() => [
+        {
+            name: 'Dashboard',
+            href: route().has('staff.inventory.dashboard') ? route('staff.inventory.dashboard') : '#',
+            icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6',
+        },
+        { separator: 'Main' },
+        {
+            name: 'Products',
+            icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
+            children: [
+                { name: 'All Products', href: route().has('staff.products.index') ? route('staff.products.index') : '#' },
+                { name: 'Categories', href: '#' },
+                { name: 'Units', href: '#' },
+                { name: 'Batches', href: '#' },
+            ]
+        },
+        {
+            name: 'Warehouses',
+            icon: 'M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z',
+            children: [
+                { name: 'Warehouses', href: '#' },
+                { name: 'Locations', href: '#' },
+                { name: 'Warehouse Stock View', href: '#' },
+            ]
+        },
+        {
+            name: 'Stock Management',
+            icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
+            children: [
+                { name: 'Stock Levels', href: '#' },
+                { name: 'Stock Movements', href: '#' },
+                { name: 'Stock Reservations', href: '#' },
+                { name: 'Opening Balances', href: '#' },
+            ]
+        },
+        {
+            name: 'Purchasing',
+            icon: 'M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z',
+            children: [
+                { name: 'Suppliers', href: '#' },
+                { name: 'Purchase Orders', href: '#' },
+                { name: 'Goods Receipts', href: '#' },
+            ]
+        },
+        {
+            name: 'Transfers',
+            icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4',
+            children: [
+                { name: 'Stock Transfers', href: '#' },
+                { name: 'Transfer History', href: '#' },
+            ]
+        },
+        {
+            name: 'Adjustments',
+            icon: 'M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4',
+            children: [
+                { name: 'Stock Adjustments', href: '#' },
+                { name: 'Adjustment History', href: '#' },
+            ]
+        },
+        { separator: 'Work' },
+        {
+            name: 'Tasks',
+            href: route().has('staff.inventory.tasks') ? route('staff.inventory.tasks') : '#',
+            icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
+        },
+        {
+            name: 'Reports',
+            icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
+            children: [
+                { name: 'Stock Summary Report', href: '#' },
+                { name: 'Movement Report', href: '#' },
+                { name: 'Inventory Valuation Report', href: '#' },
+                { name: 'Low Stock Report', href: '#' },
+                { name: 'Expiry Report', href: '#' },
+            ]
+        },
+        { separator: 'Account' },
+        {
+            name: 'Profile',
+            href: route().has('staff.inventory.profile') ? route('staff.inventory.profile') : '#',
+            icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
+        },
+    ], []);
 
     const dayStr = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
     const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
-    // Dynamic breadcrumb: use the active nav item's name, fall back to the header prop
-    const activeNavItem = navigation.find(item => !item.separator && item.current);
-    const pageTitle = activeNavItem?.name || header || 'Dashboard';
+    let pageTitle = header || 'Staff Panel';
+    
+    // Attempt to match the current item natively from the hierarchy
+    const activeItem = navigation.find(n => !n.separator && (n.children ? n.children.some(c => isRouteActive(c.href, currentUrl)) : isRouteActive(n.href, currentUrl)));
+    if (activeItem) {
+        if (activeItem.children) {
+            const childActive = activeItem.children.find(c => isRouteActive(c.href, currentUrl));
+            pageTitle = childActive ? childActive.name : activeItem.name;
+        } else {
+            pageTitle = activeItem.name;
+        }
+    }
 
     return (
         <div className="flex h-screen bg-slate-50 font-sans antialiased overflow-hidden">
@@ -421,63 +425,62 @@ export default function AuthenticatedLayout({ header, children }) {
             )}
 
             {/* ── SIDEBAR ── */}
-            <aside className={`fixed inset-y-0 left-0 z-50 bg-white border-r border-slate-100 shadow-xl shadow-slate-200/60 flex flex-col transform transition-all duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:static lg:inset-0 ${sidebarCollapsed ? 'w-[88px]' : 'w-[268px]'}`}>
+            <aside className={`fixed inset-y-0 left-0 z-50 w-[268px] bg-white border-r border-slate-100 shadow-xl shadow-slate-200/60 flex flex-col transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
 
                 {/* Logo area */}
-                <div className={`pt-6 pb-5 flex items-center ${sidebarCollapsed ? 'justify-center px-4' : 'px-5 gap-2.5'}`}>
+                <div className="px-5 pt-6 pb-5">
                     <Link href="/" className="flex items-center gap-2.5">
                         <div className="w-8 h-8 flex-shrink-0">
                             <ApplicationLogo size="xs" className="!w-8 !h-8" />
                         </div>
-                        {!sidebarCollapsed && (
-                            <div>
-                                <p className="text-base font-black text-slate-800 leading-none tracking-tight">D'SERICORE</p>
-                            </div>
-                        )}
+                        <div>
+                            <p className="text-base font-black text-slate-800 leading-none tracking-tight">D'SERICORE</p>
+                        </div>
                     </Link>
                 </div>
 
                 {/* Nav links */}
                 <nav className="flex-1 px-4 space-y-0.5 overflow-y-auto pb-4 pt-1">
+                    {/* Nav section label */}
+                    <div className="px-3 mb-2">
+                        <span className="text-[9px] font-black text-slate-300 uppercase tracking-[0.25em]">Navigation</span>
+                    </div>
                     {navigation.map((item, index) =>
                         item.separator ? (
-                            <div key={index} className={`pt-6 pb-3 ${sidebarCollapsed ? 'px-1 text-center' : 'px-3'}`}>
-                                <span className={`font-black text-slate-400 uppercase tracking-widest ${sidebarCollapsed ? 'text-[8px]' : 'text-[10px]'}`}>
-                                    {sidebarCollapsed ? '• • •' : item.separator}
-                                </span>
+                            <div key={index} className="pt-5 pb-2 px-3">
+                                <span className="text-xs font-black text-slate-400 uppercase tracking-wide">{item.separator}</span>
                             </div>
                         ) : item.children ? (
-                            <SidebarGroup key={item.name} item={item} currentUrl={currentUrl} isCollapsed={sidebarCollapsed} />
+                            <SidebarGroup key={item.name} item={item} currentUrl={currentUrl} />
                         ) : (
-                            <SidebarItem key={item.name} item={item} currentUrl={currentUrl} isCollapsed={sidebarCollapsed} />
+                            <SidebarItem key={item.name} item={item} currentUrl={currentUrl} />
                         )
                     )}
                 </nav>
 
                 {/* Sidebar Footer – User card */}
-                <div className={`px-4 pb-5 transition-all ${sidebarCollapsed ? 'opacity-0 hidden' : 'opacity-100 block'}`}>
-                    <div className="relative overflow-hidden bg-gradient-to-br from-emerald-600 to-green-800 rounded-2xl p-3.5 text-white flex items-center justify-between group">
+                <div className="px-4 pb-5">
+                    <div className="relative overflow-hidden bg-gradient-to-br from-emerald-600 to-green-800 rounded-2xl p-4 text-white">
                         {/* decorative blob */}
                         <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/10" />
                         <div className="absolute -bottom-4 -left-4 w-20 h-20 rounded-full bg-white/5" />
 
                         <div className="relative flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center font-black text-sm flex-shrink-0">
+                            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center font-black text-base flex-shrink-0">
                                 {getInitials(user.first_name, user.last_name)}
                             </div>
-                            <div className="min-w-0 pr-2">
+                            <div className="min-w-0">
                                 <p className="text-xs font-black leading-tight truncate">{fullName}</p>
-                                <span className="inline-flex mt-0.5 items-center gap-1 text-[9px] font-black uppercase text-emerald-100 tracking-wider font-medium truncate">
+                                <span className="inline-flex mt-1 items-center gap-1 bg-white/20 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                                     {roleInfo.label}
                                 </span>
                             </div>
                         </div>
 
-                        <Link href={route('profile.edit')} className="relative z-10 w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors flex-shrink-0" title="View Profile">
-                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 12h14M12 5l7 7-7 7" />
-                            </svg>
-                        </Link>
+                        <div className="relative mt-3 pt-3 border-t border-white/15 flex items-center justify-between">
+                            <span className="text-[10px] font-bold text-emerald-200">System Online</span>
+                        </div>
                     </div>
                 </div>
             </aside>
@@ -488,21 +491,10 @@ export default function AuthenticatedLayout({ header, children }) {
                 {/* ── TOP NAVBAR ── */}
                 <header className="flex-shrink-0 h-[70px] bg-white border-b border-slate-100 shadow-sm flex items-center gap-4 px-4 md:px-6 z-30">
 
-                    {/* Desktop Toggle (hide on mobile) */}
-                    <button
-                        onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                        className="hidden lg:flex items-center justify-center w-9 h-9 rounded-xl bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-emerald-600 border border-slate-100 transition-colors flex-shrink-0"
-                        aria-label="Toggle sidebar"
-                    >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d={sidebarCollapsed ? "M4 6h16M4 12h16M4 18h16" : "M4 6h16M4 12h8m-8 6h16"} />
-                        </svg>
-                    </button>
-
-                    {/* Mobile Hamburger (hide on desktop) */}
+                    {/* Hamburger (mobile) */}
                     <button
                         onClick={() => setSidebarOpen(true)}
-                        className="lg:hidden flex items-center justify-center w-9 h-9 rounded-xl bg-slate-50 text-slate-500 hover:bg-slate-100 border border-slate-100 transition-colors flex-shrink-0"
+                        className="lg:hidden flex items-center justify-center w-9 h-9 rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors flex-shrink-0"
                         aria-label="Open menu"
                     >
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

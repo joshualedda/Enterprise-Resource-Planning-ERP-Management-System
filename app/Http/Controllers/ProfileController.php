@@ -44,7 +44,12 @@ class ProfileController extends Controller
 
         $request->user()->save();
 
-        return Redirect::route('profile.edit');
+        // Redirect back to the correct profile page based on role
+        return match ((int) $request->user()->role_id) {
+            1 => Redirect::route('admin.profile.index'),
+            4 => Redirect::route('staff.inventory.profile'),
+            default => Redirect::route('profile.edit'),
+        };
     }
 
     /**
