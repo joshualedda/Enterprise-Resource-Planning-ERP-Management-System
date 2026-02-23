@@ -1,4 +1,4 @@
-import StaffLayout from '@/Layouts/StaffLayout';
+import InventoryStaffLayout from '@/Layouts/InventoryStaffLayout';
 import { Head } from '@inertiajs/react';
 import DeleteUserForm from '@/Pages/Profile/Partials/DeleteUserForm';
 import UpdatePasswordForm from '@/Pages/Profile/Partials/UpdatePasswordForm';
@@ -6,7 +6,7 @@ import UpdateProfileInformationForm from '@/Pages/Profile/Partials/UpdateProfile
 
 export default function StaffProfile({ mustVerifyEmail, status }) {
     return (
-        <StaffLayout>
+        <InventoryStaffLayout>
             <Head title="Profile" />
 
             <div className="space-y-6 animate-in fade-in duration-500">
@@ -29,6 +29,6 @@ export default function StaffProfile({ mustVerifyEmail, status }) {
                     <DeleteUserForm className="max-w-xl" />
                 </div>
             </div>
-        </StaffLayout>
+        </InventoryStaffLayout>
     );
 }

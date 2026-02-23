@@ -1,4 +1,4 @@
-import StaffLayout from '@/Layouts/StaffLayout';
+import InventoryStaffLayout from '@/Layouts/InventoryStaffLayout';
 import { Head } from '@inertiajs/react';
 
 export default function StaffTasks() {
@@ -9,7 +9,7 @@ export default function StaffTasks() {
     ];
 
     return (
-        <StaffLayout>
+        <InventoryStaffLayout>
             <Head title="Tasks" />
 
             <div className="space-y-6 animate-in fade-in duration-500">
@@ -69,6 +69,6 @@ export default function StaffTasks() {
                     ))}
                 </div>
             </div>
-        </StaffLayout>
+        </InventoryStaffLayout>
     );
 }

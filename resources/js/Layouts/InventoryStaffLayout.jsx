@@ -24,6 +24,16 @@ function getInitials(first, last) {
     return `${(first?.[0] || '').toUpperCase()}${(last?.[0] || '').toUpperCase()}` || '?';
 }
 
+function isRouteActive(href, currentPath) {
+    if (!href || href === '#') return false;
+    try {
+        const urlObj = new URL(href, window.location.origin);
+        return urlObj.pathname === currentPath.split('?')[0];
+    } catch {
+        return false;
+    }
+}
+
 function useClock() {
     const [now, setNow] = useState(new Date());
     useEffect(() => { const t = setInterval(() => setNow(new Date()), 60000); return () => clearInterval(t); }, []);
@@ -218,9 +228,81 @@ function UserMenu({ user, fullName, roleInfo }) {
 }
 
 // ---------------------------------------------------------------------------
+// SIDEBAR COMPONENTS
+// ---------------------------------------------------------------------------
+function SidebarGroup({ item, currentUrl }) {
+    const isActive = item.children.some(child => isRouteActive(child.href, currentUrl));
+    const [open, setOpen] = useState(isActive);
+
+    const toggle = () => setOpen(!open);
+
+    return (
+        <div className="mb-1 block">
+            <button
+                onClick={toggle}
+                className={`w-full flex items-center justify-between px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 group ${
+                    isActive ? 'text-emerald-800 bg-emerald-50' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                }`}
+            >
+                <div className="flex items-center gap-3">
+                    <svg className={`w-[18px] h-[18px] flex-shrink-0 transition-colors ${isActive ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+                    </svg>
+                    <span>{item.name}</span>
+                </div>
+                <svg className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                </svg>
+            </button>
+            <div className={`grid transition-all duration-300 ease-in-out ${open ? 'grid-rows-[1fr] opacity-100 mt-1' : 'grid-rows-[0fr] opacity-0'}`}>
+                <div className="overflow-hidden">
+                    <div className="pl-11 pr-3 py-1 space-y-1">
+                        {item.children.map(child => {
+                            const isChildActive = isRouteActive(child.href, currentUrl);
+                            return (
+                                <Link
+                                    key={child.name}
+                                    href={child.href}
+                                    className={`block px-3 py-2 rounded-xl text-xs font-medium transition-all duration-200 ${
+                                        isChildActive
+                                            ? 'bg-emerald-600 text-white shadow-sm font-bold'
+                                            : 'text-slate-500 hover:bg-emerald-50 hover:text-emerald-700'
+                                    }`}
+                                >
+                                    {child.name}
+                                </Link>
+                            );
+                        })}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function SidebarItem({ item, currentUrl }) {
+    const isActive = isRouteActive(item.href, currentUrl);
+    return (
+        <Link
+            href={item.href}
+            className={`flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 group mb-1 ${
+                isActive
+                    ? 'bg-emerald-600 text-white shadow-sm font-bold'
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
+            }`}
+        >
+            <svg className={`w-[18px] h-[18px] flex-shrink-0 transition-colors ${isActive ? 'text-emerald-200' : 'text-slate-400 group-hover:text-emerald-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+            </svg>
+            <span className="truncate">{item.name}</span>
+        </Link>
+    );
+}
+
+// ---------------------------------------------------------------------------
 // MAIN STAFF LAYOUT
 // ---------------------------------------------------------------------------
-export default function StaffLayout({ header, children }) {
+export default function InventoryStaffLayout({ header, children }) {
     const { auth } = usePage().props;
     const user = auth.user;
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -230,84 +312,109 @@ export default function StaffLayout({ header, children }) {
     const roleInfo = roleConfig[user.role_id] || { label: 'Staff Member', color: 'bg-blue-100 text-blue-700', dot: 'bg-blue-500' };
 
     const notifications = usePage().props.notifications || [];
+    const { url: currentUrl } = usePage();
 
     const navigation = useMemo(() => [
         {
             name: 'Dashboard',
             href: route().has('staff.inventory.dashboard') ? route('staff.inventory.dashboard') : '#',
             icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6',
-            current: route().current('staff.inventory.dashboard'),
         },
         { separator: 'Main' },
         {
             name: 'Products',
-            href: '#',
             icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
-            current: false,
-            child: true,
+            children: [
+                { name: 'All Products', href: route().has('staff.products.index') ? route('staff.products.index') : '#' },
+                { name: 'Categories', href: '#' },
+                { name: 'Units', href: '#' },
+                { name: 'Batches', href: '#' },
+            ]
         },
         {
             name: 'Warehouses',
-            href: '#',
             icon: 'M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z',
-            current: false,
-            child: true,
+            children: [
+                { name: 'Warehouses', href: '#' },
+                { name: 'Locations', href: '#' },
+                { name: 'Warehouse Stock View', href: '#' },
+            ]
         },
         {
             name: 'Stock Management',
-            href: '#',
-            icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
-            current: false,
-            child: true,
+            icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
+            children: [
+                { name: 'Stock Levels', href: '#' },
+                { name: 'Stock Movements', href: '#' },
+                { name: 'Stock Reservations', href: '#' },
+                { name: 'Opening Balances', href: '#' },
+            ]
         },
         {
             name: 'Purchasing',
-            href: '#',
-            icon: 'M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z',
-            current: false,
-            child: true,
+            icon: 'M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z',
+            children: [
+                { name: 'Suppliers', href: '#' },
+                { name: 'Purchase Orders', href: '#' },
+                { name: 'Goods Receipts', href: '#' },
+            ]
         },
         {
             name: 'Transfers',
-            href: '#',
             icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4',
-            current: false,
-            child: true,
+            children: [
+                { name: 'Stock Transfers', href: '#' },
+                { name: 'Transfer History', href: '#' },
+            ]
         },
         {
             name: 'Adjustments',
-            href: '#',
             icon: 'M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4',
-            current: false,
-            child: true,
+            children: [
+                { name: 'Stock Adjustments', href: '#' },
+                { name: 'Adjustment History', href: '#' },
+            ]
         },
         { separator: 'Work' },
         {
             name: 'Tasks',
             href: route().has('staff.inventory.tasks') ? route('staff.inventory.tasks') : '#',
             icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
-            current: route().current('staff.inventory.tasks'),
         },
         {
             name: 'Reports',
-            href: route().has('staff.inventory.reports') ? route('staff.inventory.reports') : '#',
             icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
-            current: route().current('staff.inventory.reports'),
+            children: [
+                { name: 'Stock Summary Report', href: '#' },
+                { name: 'Movement Report', href: '#' },
+                { name: 'Inventory Valuation Report', href: '#' },
+                { name: 'Low Stock Report', href: '#' },
+                { name: 'Expiry Report', href: '#' },
+            ]
         },
         { separator: 'Account' },
         {
             name: 'Profile',
             href: route().has('staff.inventory.profile') ? route('staff.inventory.profile') : '#',
             icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
-            current: route().current('staff.inventory.profile'),
         },
     ], []);
 
     const dayStr = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
     const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
-    const activeNavItem = navigation.find(item => !item.separator && item.current);
-    const pageTitle = activeNavItem?.name || header || 'Staff Panel';
+    let pageTitle = header || 'Staff Panel';
+    
+    // Attempt to match the current item natively from the hierarchy
+    const activeItem = navigation.find(n => !n.separator && (n.children ? n.children.some(c => isRouteActive(c.href, currentUrl)) : isRouteActive(n.href, currentUrl)));
+    if (activeItem) {
+        if (activeItem.children) {
+            const childActive = activeItem.children.find(c => isRouteActive(c.href, currentUrl));
+            pageTitle = childActive ? childActive.name : activeItem.name;
+        } else {
+            pageTitle = activeItem.name;
+        }
+    }
 
     return (
         <div className="flex h-screen bg-slate-50 font-sans antialiased overflow-hidden">
@@ -332,48 +439,21 @@ export default function StaffLayout({ header, children }) {
                     </Link>
                 </div>
 
-                {/* Nav section label */}
-                <div className="px-7 mb-2">
-                    <span className="text-[9px] font-black text-slate-300 uppercase tracking-[0.25em]">Navigation</span>
-                </div>
-
                 {/* Nav links */}
-                <nav className="flex-1 px-4 space-y-0.5 overflow-y-auto pb-4">
+                <nav className="flex-1 px-4 space-y-0.5 overflow-y-auto pb-4 pt-1">
+                    {/* Nav section label */}
+                    <div className="px-3 mb-2">
+                        <span className="text-[9px] font-black text-slate-300 uppercase tracking-[0.25em]">Navigation</span>
+                    </div>
                     {navigation.map((item, index) =>
                         item.separator ? (
                             <div key={index} className="pt-5 pb-2 px-3">
-                                <span className="text-[9px] font-black text-slate-300 uppercase tracking-[0.25em]">{item.separator}</span>
+                                <span className="text-xs font-black text-slate-400 uppercase tracking-wide">{item.separator}</span>
                             </div>
-                        ) : item.child ? (
-                            <Link
-                                key={index}
-                                href={item.href}
-                                className={`flex items-center gap-2.5 pl-5 pr-3 py-2 text-xs font-semibold rounded-xl transition-all duration-200 group ml-2 ${item.current
-                                    ? 'bg-emerald-600 text-white shadow-sm'
-                                    : 'text-slate-400 hover:bg-emerald-50/60 hover:text-emerald-600'
-                                    }`}
-                            >
-                                <svg className={`w-[15px] h-[15px] flex-shrink-0 transition-colors ${item.current ? 'text-emerald-200' : 'text-slate-300 group-hover:text-emerald-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
-                                </svg>
-                                <span className="truncate">{item.name}</span>
-                                {item.current && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-300 flex-shrink-0" />}
-                            </Link>
+                        ) : item.children ? (
+                            <SidebarGroup key={item.name} item={item} currentUrl={currentUrl} />
                         ) : (
-                            <Link
-                                key={item.href}
-                                href={item.href}
-                                className={`flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-xl transition-all duration-200 group ${item.current
-                                    ? 'bg-emerald-600 text-white shadow-sm'
-                                    : 'text-slate-500 hover:bg-emerald-50/60 hover:text-emerald-700'
-                                    }`}
-                            >
-                                <svg className={`w-[18px] h-[18px] flex-shrink-0 transition-colors ${item.current ? 'text-emerald-200' : 'text-slate-400 group-hover:text-emerald-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
-                                </svg>
-                                <span className="truncate">{item.name}</span>
-                                {item.current && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-300 flex-shrink-0" />}
-                            </Link>
+                            <SidebarItem key={item.name} item={item} currentUrl={currentUrl} />
                         )
                     )}
                 </nav>

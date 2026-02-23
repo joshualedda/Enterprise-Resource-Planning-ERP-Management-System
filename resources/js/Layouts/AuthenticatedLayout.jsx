@@ -219,67 +219,191 @@ function UserMenu({ user, fullName, roleInfo }) {
 }
 
 // ---------------------------------------------------------------------------
+// ROUTE HELPERS & SIDEBAR COMPONENTS
+// ---------------------------------------------------------------------------
+function isRouteActive(href, currentUrl) {
+    if (!href || href === '#') return false;
+    try {
+        const targetPath = new URL(href).pathname;
+        return currentUrl === targetPath || currentUrl.startsWith(targetPath + '/');
+    } catch {
+        return false;
+    }
+}
+
+function SidebarGroup({ item, currentUrl, isCollapsed }) {
+    const isActive = item.children?.some(child => isRouteActive(child.href, currentUrl));
+    const [open, setOpen] = useState(isActive);
+
+    const toggle = () => setOpen(!open);
+
+    if (isCollapsed) {
+        return (
+            <div className="mb-1 block group/tooltip relative">
+                <button className={`w-full flex items-center justify-center py-2.5 rounded-xl transition-all duration-200 ${isActive ? 'bg-emerald-50 text-emerald-600' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
+                    <svg className={`w-5 h-5 flex-shrink-0 transition-colors ${isActive ? 'text-emerald-600' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+                    </svg>
+                </button>
+                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-slate-800 text-white text-xs font-medium rounded-md opacity-0 pointer-events-none group-hover/tooltip:opacity-100 transition-opacity whitespace-nowrap z-50">
+                    {item.name}
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="mb-1 block">
+            <button
+                onClick={toggle}
+                className={`w-full flex items-center justify-between px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 group ${isActive ? 'text-emerald-800 bg-emerald-50' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                    }`}
+            >
+                <div className="flex items-center gap-3">
+                    <svg className={`w-[18px] h-[18px] flex-shrink-0 transition-colors ${isActive ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+                    </svg>
+                    <span>{item.name}</span>
+                </div>
+                {item.children && (
+                    <svg className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                    </svg>
+                )}
+            </button>
+            {item.children && (
+                <div className={`grid transition-all duration-300 ease-in-out ${open ? 'grid-rows-[1fr] opacity-100 mt-1' : 'grid-rows-[0fr] opacity-0'}`}>
+                    <div className="overflow-hidden">
+                        <div className="pl-11 pr-3 py-1 space-y-1">
+                            {item.children.map(child => {
+                                const isChildActive = isRouteActive(child.href, currentUrl);
+                                return (
+                                    <Link
+                                        key={child.name}
+                                        href={child.href}
+                                        className={`block px-3 py-2 rounded-xl text-xs font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${isChildActive
+                                                ? 'bg-emerald-600 text-white shadow-sm font-bold'
+                                                : 'text-slate-500 hover:bg-emerald-50 hover:text-emerald-700'
+                                            }`}
+                                    >
+                                        {child.name}
+                                    </Link>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function SidebarItem({ item, currentUrl, isCollapsed }) {
+    const isActive = isRouteActive(item.href, currentUrl);
+    
+    if (isCollapsed) {
+        return (
+            <Link
+                href={item.href}
+                className={`flex items-center justify-center py-2.5 rounded-xl transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 group/tooltip relative mb-1 ${isActive ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}
+            >
+                <svg className={`w-5 h-5 flex-shrink-0 transition-colors ${isActive ? 'text-emerald-200' : 'text-slate-400 group-hover:text-emerald-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+                </svg>
+                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-slate-800 text-white text-xs font-medium rounded-md opacity-0 pointer-events-none group-hover/tooltip:opacity-100 transition-opacity whitespace-nowrap z-50">
+                    {item.name}
+                </div>
+                {item.badge && !isActive && <span className="absolute top-1 right-2 w-2 h-2 rounded-full bg-rose-500" />}
+            </Link>
+        );
+    }
+
+    return (
+        <Link
+            href={item.href}
+            className={`flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 group mb-1 ${isActive
+                    ? 'bg-emerald-600 text-white shadow-sm font-bold'
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
+                }`}
+        >
+            <svg className={`w-[18px] h-[18px] flex-shrink-0 transition-colors ${isActive ? 'text-emerald-200' : 'text-slate-400 group-hover:text-emerald-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+            </svg>
+            <span className="truncate flex-1">{item.name}</span>
+            {item.badge && (
+                <span className={`flex-shrink-0 ml-auto inline-flex items-center justify-center px-2 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-full ${isActive ? 'bg-white/20 text-white' : 'bg-rose-100 text-rose-600'}`}>
+                    {item.badge}
+                </span>
+            )}
+        </Link>
+    );
+}
+
+// ---------------------------------------------------------------------------
 // MAIN LAYOUT
 // ---------------------------------------------------------------------------
 export default function AuthenticatedLayout({ header, children }) {
-    const { auth } = usePage().props;
+    const { url: currentUrl, props } = usePage();
+    const { auth } = props;
     const user = auth.user;
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const now = useClock();
 
     const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.name || 'User';
     const roleInfo = roleConfig[user.role_id] || { label: 'User', color: 'bg-slate-100 text-slate-600', dot: 'bg-slate-400' };
 
-    const notifications = usePage().props.notifications || [];
+    const notifications = props.notifications || [];
 
-    // Build Navigation based on role
+    // Build Navigation based on exactly what user specified
     const navigation = useMemo(() => {
-        // role_id = 1 → admin.dashboard, role_id = 3 → customer.dashboard, others → /dashboard
-        const dashboardHref = {
-            1: route().has('admin.dashboard') ? route('admin.dashboard') : '#',
-            3: route().has('customer.dashboard') ? route('customer.dashboard') : '#',
-            4: route().has('staff.inventory.dashboard') ? route('staff.inventory.dashboard') : '#',
-        }[user.role_id] ?? '#';
+        // Safe check for missing properties like pending orders
+        const pendingOrders = props.pendingOrdersCount || null;
+        const newReports = props.newReportsCount || null;
 
-        const dashboardCurrent = {
-            1: route().current('admin.dashboard'),
-            3: route().current('customer.dashboard'),
-            4: route().current('staff.*'),
-        }[user.role_id] ?? false;
-
-        const items = [
-            { name: 'Dashboard', href: dashboardHref, current: dashboardCurrent, icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-        ];
+        const items = [];
 
         if (user.role_id === 1) {
-            // ── ADMIN ──
+            // EXACT Admin items requested
             items.push(
-                { name: 'Products', href: route().has('admin.products.index') ? route('admin.products.index') : '#', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', current: route().current('admin.products.*') },
-                { name: 'Orders', href: route().has('admin.orders.index') ? route('admin.orders.index') : '#', icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4', current: route().current('admin.orders.*') },
-                { name: 'Reports', href: route().has('admin.reports') ? route('admin.reports') : '#', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z', current: route().current('admin.reports') },
+                { separator: 'Navigation' },
+                { name: 'Dashboard', href: route().has('admin.dashboard') ? route('admin.dashboard') : '#', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
+                { name: 'Products', href: route().has('admin.products.index') ? route('admin.products.index') : '#', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
+                { 
+                    name: 'Orders', 
+                    href: route().has('admin.orders.index') ? route('admin.orders.index') : '#', 
+                    icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
+                    badge: pendingOrders ? pendingOrders : null 
+                },
+                { 
+                    name: 'Reports', 
+                    icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
+                    children: [
+                        { name: 'All Reports', href: route().has('admin.reports') ? route('admin.reports') : '#' }
+                    ]
+                },
                 { separator: 'Inventory' },
-                { name: 'Inventory', href: route().has('admin.inventory.index') ? route('admin.inventory.index') : '#', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10', current: route().current('admin.inventory.*') },
+                { name: 'Inventory', href: route().has('admin.inventory.index') ? route('admin.inventory.index') : '#', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' },
                 { separator: 'Users' },
-                { name: 'Users', href: route().has('admin.users.index') ? route('admin.users.index') : '#', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z', current: route().current('admin.users.*') },
-                { name: 'Profile', href: route('profile.edit'), icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z', current: route().current('profile.edit') },
+                { name: 'Users', href: route().has('admin.users.index') ? route('admin.users.index') : '#', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z' },
+                { name: 'Profile', href: route('profile.edit'), icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
             );
         } else if (user.role_id === 4) {
-            // ── STAFF / INVENTORY ──
+            // ── STAFF / INVENTORY (Fallback if they hit here somehow) ──
             items.push(
-                { name: 'Orders', href: route().has('staff.orders.index') ? route('staff.orders.index') : '#', icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4', current: route().current('staff.orders.*') },
-                { name: 'Inventory', href: route().has('admin.inventory.index') ? route('admin.inventory.index') : '#', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10', current: route().current('staff.inventory.*') },
-                { name: 'Tasks', href: route().has('tasks.index') ? route('tasks.index') : '#', icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4', current: route().current('tasks.*') },
+                { name: 'Dashboard', href: route().has('staff.inventory.dashboard') ? route('staff.inventory.dashboard') : '#', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' }
             );
         } else if (user.role_id === 3) {
             // ── CUSTOMER ──
             items.push(
-                { name: 'My Orders', href: route().has('customer.orders.index') ? route('customer.orders.index') : '#', icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4', current: route().current('customer.orders.*') },
-                { name: 'Browse Products', href: route().has('customer.products') ? route('customer.products') : '#', icon: 'M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z', current: route().current('customer.products') },
-                { name: 'Profile', href: route('profile.edit'), icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z', current: route().current('profile.edit') },
+                { name: 'Dashboard', href: route().has('customer.dashboard') ? route('customer.dashboard') : '#', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
+                { name: 'My Orders', href: route().has('customer.orders.index') ? route('customer.orders.index') : '#', icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4' },
+                { name: 'Browse Products', href: route().has('customer.products') ? route('customer.products') : '#', icon: 'M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z' },
+                { name: 'Profile', href: route('profile.edit'), icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
             );
         }
         return items;
-    }, [user.role_id]);
+    }, [user.role_id, props.pendingOrdersCount, props.newReportsCount]);
 
     const dayStr = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
     const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
@@ -297,74 +421,63 @@ export default function AuthenticatedLayout({ header, children }) {
             )}
 
             {/* ── SIDEBAR ── */}
-            <aside className={`fixed inset-y-0 left-0 z-50 w-[268px] bg-white border-r border-slate-100 shadow-xl shadow-slate-200/60 flex flex-col transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
+            <aside className={`fixed inset-y-0 left-0 z-50 bg-white border-r border-slate-100 shadow-xl shadow-slate-200/60 flex flex-col transform transition-all duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:static lg:inset-0 ${sidebarCollapsed ? 'w-[88px]' : 'w-[268px]'}`}>
 
                 {/* Logo area */}
-                <div className="px-5 pt-6 pb-5">
+                <div className={`pt-6 pb-5 flex items-center ${sidebarCollapsed ? 'justify-center px-4' : 'px-5 gap-2.5'}`}>
                     <Link href="/" className="flex items-center gap-2.5">
                         <div className="w-8 h-8 flex-shrink-0">
                             <ApplicationLogo size="xs" className="!w-8 !h-8" />
                         </div>
-                        <div>
-                            <p className="text-base font-black text-slate-800 leading-none tracking-tight">D'SERICORE</p>
-                        </div>
+                        {!sidebarCollapsed && (
+                            <div>
+                                <p className="text-base font-black text-slate-800 leading-none tracking-tight">D'SERICORE</p>
+                            </div>
+                        )}
                     </Link>
                 </div>
 
-                {/* Nav section label */}
-                <div className="px-7 mb-2">
-                    <span className="text-[9px] font-black text-slate-300 uppercase tracking-[0.25em]">Navigation</span>
-                </div>
-
                 {/* Nav links */}
-                <nav className="flex-1 px-4 space-y-0.5 overflow-y-auto pb-4">
+                <nav className="flex-1 px-4 space-y-0.5 overflow-y-auto pb-4 pt-1">
                     {navigation.map((item, index) =>
                         item.separator ? (
-                            <div key={index} className="pt-5 pb-2 px-3">
-                                <span className="text-[9px] font-black text-slate-300 uppercase tracking-[0.25em]">{item.separator}</span>
+                            <div key={index} className={`pt-6 pb-3 ${sidebarCollapsed ? 'px-1 text-center' : 'px-3'}`}>
+                                <span className={`font-black text-slate-400 uppercase tracking-widest ${sidebarCollapsed ? 'text-[8px]' : 'text-[10px]'}`}>
+                                    {sidebarCollapsed ? '• • •' : item.separator}
+                                </span>
                             </div>
+                        ) : item.children ? (
+                            <SidebarGroup key={item.name} item={item} currentUrl={currentUrl} isCollapsed={sidebarCollapsed} />
                         ) : (
-                            <Link
-                                key={item.href}
-                                href={item.href}
-                                className={`flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-xl transition-all duration-200 group ${item.current
-                                    ? 'bg-emerald-600 text-white shadow-sm'
-                                    : 'text-slate-500 hover:bg-emerald-50/60 hover:text-emerald-700'
-                                    }`}
-                            >
-                                <svg className={`w-[18px] h-[18px] flex-shrink-0 transition-colors ${item.current ? 'text-emerald-200' : 'text-slate-400 group-hover:text-emerald-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
-                                </svg>
-                                <span className="truncate">{item.name}</span>
-                                {item.current && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-300 flex-shrink-0" />}
-                            </Link>
+                            <SidebarItem key={item.name} item={item} currentUrl={currentUrl} isCollapsed={sidebarCollapsed} />
                         )
                     )}
                 </nav>
 
                 {/* Sidebar Footer – User card */}
-                <div className="px-4 pb-5">
-                    <div className="relative overflow-hidden bg-gradient-to-br from-emerald-600 to-green-800 rounded-2xl p-4 text-white">
+                <div className={`px-4 pb-5 transition-all ${sidebarCollapsed ? 'opacity-0 hidden' : 'opacity-100 block'}`}>
+                    <div className="relative overflow-hidden bg-gradient-to-br from-emerald-600 to-green-800 rounded-2xl p-3.5 text-white flex items-center justify-between group">
                         {/* decorative blob */}
                         <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/10" />
                         <div className="absolute -bottom-4 -left-4 w-20 h-20 rounded-full bg-white/5" />
 
                         <div className="relative flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center font-black text-base flex-shrink-0">
+                            <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center font-black text-sm flex-shrink-0">
                                 {getInitials(user.first_name, user.last_name)}
                             </div>
-                            <div className="min-w-0">
+                            <div className="min-w-0 pr-2">
                                 <p className="text-xs font-black leading-tight truncate">{fullName}</p>
-                                <span className="inline-flex mt-1 items-center gap-1 bg-white/20 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                                <span className="inline-flex mt-0.5 items-center gap-1 text-[9px] font-black uppercase text-emerald-100 tracking-wider font-medium truncate">
                                     {roleInfo.label}
                                 </span>
                             </div>
                         </div>
 
-                        <div className="relative mt-3 pt-3 border-t border-white/15 flex items-center justify-between">
-                            <span className="text-[10px] font-bold text-emerald-200">System Online</span>
-                        </div>
+                        <Link href={route('profile.edit')} className="relative z-10 w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors flex-shrink-0" title="View Profile">
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 12h14M12 5l7 7-7 7" />
+                            </svg>
+                        </Link>
                     </div>
                 </div>
             </aside>
@@ -375,10 +488,21 @@ export default function AuthenticatedLayout({ header, children }) {
                 {/* ── TOP NAVBAR ── */}
                 <header className="flex-shrink-0 h-[70px] bg-white border-b border-slate-100 shadow-sm flex items-center gap-4 px-4 md:px-6 z-30">
 
-                    {/* Hamburger (mobile) */}
+                    {/* Desktop Toggle (hide on mobile) */}
+                    <button
+                        onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                        className="hidden lg:flex items-center justify-center w-9 h-9 rounded-xl bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-emerald-600 border border-slate-100 transition-colors flex-shrink-0"
+                        aria-label="Toggle sidebar"
+                    >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d={sidebarCollapsed ? "M4 6h16M4 12h16M4 18h16" : "M4 6h16M4 12h8m-8 6h16"} />
+                        </svg>
+                    </button>
+
+                    {/* Mobile Hamburger (hide on desktop) */}
                     <button
                         onClick={() => setSidebarOpen(true)}
-                        className="lg:hidden flex items-center justify-center w-9 h-9 rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors flex-shrink-0"
+                        className="lg:hidden flex items-center justify-center w-9 h-9 rounded-xl bg-slate-50 text-slate-500 hover:bg-slate-100 border border-slate-100 transition-colors flex-shrink-0"
                         aria-label="Open menu"
                     >
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

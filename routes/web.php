@@ -16,6 +16,9 @@ use App\Http\Controllers\Customer\OrderController;
 use App\Http\Controllers\Customer\UserDashboardController;
 use App\Http\Controllers\Customer\CartController;
 use App\Http\Controllers\Staff\OrderManagementController;
+use App\Http\Controllers\Staff\InventoryDashboardController;
+use App\Http\Controllers\Staff\InventoryTasksController;
+use App\Http\Controllers\Staff\InventoryReportsController;
 use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\Admin\ReportsController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
@@ -115,48 +118,74 @@ Route::middleware(['auth', 'verified'])->prefix('customer')->name('customer.')->
 | Prefix: /staff/inventory/...
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'verified'])->prefix('staff')->name('staff.')->group(function () {
+Route::middleware(['auth', 'verified'])
+    ->prefix('staff')
+    ->name('staff.')
+    ->group(function () {
 
-    // Inventory Department
-    Route::prefix('inventory')->name('inventory.')->group(function () {
-        Route::get('/dashboard', fn() => Inertia::render('Staff/Inventory/Dashboard', [
-            'products' => \App\Models\Product::with('category')->get(),
-        ]))->name('dashboard');
+        Route::prefix('inventory')->name('inventory.')->group(function () {
 
-        Route::get('/tasks', fn() => Inertia::render('Staff/Inventory/Tasks'))->name('tasks');
+            Route::controller(InventoryDashboardController::class)->group(function () {
+                Route::get('dashboard', 'index')->name('dashboard');
+            });
 
-        Route::get('/reports', function (\Illuminate\Http\Request $request) {
-            $query = \App\Models\Order::with(['transaction', 'product', 'user']);
-            if ($request->search) {
-                $query->where(function($q) use ($request) {
-                    $q->whereHas('transaction', fn($t) => $t->where('reference_no', 'like', "%{$request->search}%"))
-                      ->orWhereHas('product', fn($p) => $p->where('product', 'like', "%{$request->search}%"));
-                });
-            }
-            if ($request->start_date && $request->end_date) {
-                $query->whereBetween('created_at', [$request->start_date . ' 00:00:00', $request->end_date . ' 23:59:59']);
-            }
-            return Inertia::render('Staff/Inventory/Reports', [
-                'orders'  => $query->latest()->paginate(10)->withQueryString(),
-                'filters' => $request->only(['search', 'start_date', 'end_date']),
-            ]);
-        })->name('reports');
-        Route::get('/reports/pdf', [ReportsController::class, 'generatePDF'])->name('reports.pdf');
-        Route::get('/reports/excel', [ReportsController::class, 'generateExcel'])->name('reports.excel');
+            Route::controller(InventoryTasksController::class)->group(function () {
+                Route::get('tasks', 'index')->name('tasks');
+            });
 
-        Route::get('/profile', function (\Illuminate\Http\Request $request) {
-            return Inertia::render('Staff/Inventory/Profile', [
-                'mustVerifyEmail' => $request->user() instanceof \Illuminate\Contracts\Auth\MustVerifyEmail,
-                'status'          => session('status'),
-            ]);
-        })->name('profile');
-        Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-        Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+            Route::controller(InventoryReportsController::class)->group(function () {
+                Route::get('reports', 'index')->name('reports');
+                Route::get('reports/pdf', 'pdf')->name('reports.pdf');
+                Route::get('reports/excel', 'excel')->name('reports.excel');
+            });
+
+            Route::controller(ProfileController::class)->group(function () {
+                Route::get('profile', 'edit')->name('profile');
+                Route::patch('profile', 'update')->name('profile.update');
+                Route::delete('profile', 'destroy')->name('profile.destroy');
+            });
+        });
+
+        Route::controller(OrderManagementController::class)->group(function () {
+            Route::get('orders', 'index')->name('orders.index');
+            Route::patch('orders/{transaction}/update-status', 'updateStatus')->name('orders.update');
+        });
     });
 
-    // Order Management → staff.orders.index / staff.orders.update
-    Route::get('/orders', [OrderManagementController::class, 'index'])->name('orders.index');
-    Route::patch('/orders/{transaction}/update-status', [OrderManagementController::class, 'updateStatus'])->name('orders.update');
-});
+/*
+|--------------------------------------------------------------------------
+| Staff — Production Department Routes — role_id = 5
+| Prefix: /staff/production/...
+|--------------------------------------------------------------------------
+*/
+    Route::middleware(['auth', 'verified'])
+    ->prefix('staff')
+    ->name('staff.')
+    ->group(function () {
+
+        Route::prefix('production')->name('production')->group(function () {
+
+            Route::controller(ProductionDashboardController::class)->group(function () {
+                Route::get('dashboard', 'index')->name('dashboard');
+            });
+
+            Route::controller(ProductionTasksController::class)->group(function () {
+                Route::get('tasks', 'index')->name('tasks');
+            });
+
+            Route::controller(ProductionReportsController::class)->group(function () {
+                Route::get('reports', 'index')->name('reports');
+                Route::get('reports/pdf', 'pdf')->name('reports.pdf');
+                Route::get('reports/excel', 'excel')->name('reports.excel');
+            });
+
+            Route::controller(ProfileController::class)->group(function () {
+                Route::get('profile', 'edit')->name('profile');
+                Route::patch('profile', 'update')->name('profile.update');
+                Route::delete('profile', 'destroy')->name('profile.destroy');
+            });
+        });
+
+    });
 
 require __DIR__.'/auth.php';

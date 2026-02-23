@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import StaffLayout from '@/Layouts/StaffLayout';
+import InventoryStaffLayout from '@/Layouts/InventoryStaffLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import pickBy from 'lodash/pickBy';
 import {
@@ -39,7 +39,7 @@ export default function StaffReports({ auth, orders, filters }) {
         new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(amount);
 
     return (
-        <StaffLayout>
+        <InventoryStaffLayout>
             <Head title="Reports" />
 
             <div className="space-y-6 animate-in fade-in duration-500">
@@ -196,6 +196,6 @@ export default function StaffReports({ auth, orders, filters }) {
                     </div>
                 )}
             </div>
-        </StaffLayout>
+        </InventoryStaffLayout>
     );
 }

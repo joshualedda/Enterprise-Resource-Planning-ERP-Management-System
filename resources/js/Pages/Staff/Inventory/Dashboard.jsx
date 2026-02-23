@@ -1,4 +1,4 @@
-import StaffLayout from '@/Layouts/StaffLayout';
+import InventoryStaffLayout from '@/Layouts/InventoryStaffLayout';
 import { Head, Link } from '@inertiajs/react';
 import ProductList from '@/Components/ProductList';
 
@@ -6,7 +6,7 @@ export default function Dashboard({ auth, products }) {
     const lowStockProducts = products?.filter(p => p.stock <= 10) || [];
 
     return (
-        <StaffLayout header="Inventory Overview">
+        <InventoryStaffLayout header="Inventory Overview">
             <Head title="Inventory Dashboard" />
 
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -154,6 +154,6 @@ export default function Dashboard({ auth, products }) {
                     <ProductList products={products || []} />
                 </div>
             </div>
-        </StaffLayout>
+        </InventoryStaffLayout>
     );
 }
