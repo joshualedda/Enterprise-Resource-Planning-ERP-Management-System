@@ -34,7 +34,7 @@
         "react-sweetalert2": "^0.6.0",
         "react-toast": "^1.0.3",
         "recharts": "^3.7.0",
-        "sweetalert2": "^11.26.18",
+        "sweetalert2": "^11.26.20",
         "swipe": "^1.7.7",
         "swiper": "^12.1.0"
     }

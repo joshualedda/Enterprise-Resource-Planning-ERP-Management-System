@@ -1,9 +1,9 @@
-# npm install swipe
-# npm install @heroicon/react
-# npm install axios
-# npm install react-hot-toast
-# npm install sweetalert2 react-hot-toast
-# npm install date-fns
-# composer require barryvdh/laravel-dompdf maatwebsite/excel
-# npm install recharts
-# npm install lodash
+npm install swipe
+npm install @heroicons/react
+npm install axios
+npm install react-hot-toast
+npm install sweetalert2 react-hot-toast
+npm install date-fns
+composer require barryvdh/laravel-dompdf maatwebsite/excel
+npm install recharts
+npm install lodash
