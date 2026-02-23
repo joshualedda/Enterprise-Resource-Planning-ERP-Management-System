@@ -17,6 +17,7 @@ const roleConfig = {
     1: { label: 'Administrator', color: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-600' },
     2: { label: 'Staff Member', color: 'bg-blue-100 text-blue-700', dot: 'bg-blue-500' },
     3: { label: 'Customer', color: 'bg-teal-100 text-teal-700', dot: 'bg-teal-500' },
+    4: { label: 'Staff Member', color: 'bg-blue-100 text-blue-700', dot: 'bg-blue-500' },
 };
 
 function getInitials(first, last) {
@@ -46,7 +47,6 @@ function NotificationPanel({ serverNotifs = [] }) {
     useOutsideClick(ref, () => setOpen(false));
 
     const unread = notifs.filter(n => n.unread).length;
-
     const markAll = () => setNotifs(n => n.map(x => ({ ...x, unread: false })));
     const dismiss = (id) => setNotifs(n => n.filter(x => x.id !== id));
 
@@ -137,7 +137,6 @@ function UserMenu({ user, fullName, roleInfo }) {
     useOutsideClick(ref, () => setOpen(false));
 
     const initials = getInitials(user.first_name, user.last_name);
-
     const logout = () => router.post(route('logout'));
 
     return (
@@ -219,74 +218,96 @@ function UserMenu({ user, fullName, roleInfo }) {
 }
 
 // ---------------------------------------------------------------------------
-// MAIN LAYOUT
+// MAIN STAFF LAYOUT
 // ---------------------------------------------------------------------------
-export default function AuthenticatedLayout({ header, children }) {
+export default function StaffLayout({ header, children }) {
     const { auth } = usePage().props;
     const user = auth.user;
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const now = useClock();
 
     const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.name || 'User';
-    const roleInfo = roleConfig[user.role_id] || { label: 'User', color: 'bg-slate-100 text-slate-600', dot: 'bg-slate-400' };
+    const roleInfo = roleConfig[user.role_id] || { label: 'Staff Member', color: 'bg-blue-100 text-blue-700', dot: 'bg-blue-500' };
 
     const notifications = usePage().props.notifications || [];
 
-    // Build Navigation based on role
-    const navigation = useMemo(() => {
-        // role_id = 1 → admin.dashboard, role_id = 3 → customer.dashboard, others → /dashboard
-        const dashboardHref = {
-            1: route().has('admin.dashboard') ? route('admin.dashboard') : '#',
-            3: route().has('customer.dashboard') ? route('customer.dashboard') : '#',
-            4: route().has('staff.inventory.dashboard') ? route('staff.inventory.dashboard') : '#',
-        }[user.role_id] ?? '#';
-
-        const dashboardCurrent = {
-            1: route().current('admin.dashboard'),
-            3: route().current('customer.dashboard'),
-            4: route().current('staff.*'),
-        }[user.role_id] ?? false;
-
-        const items = [
-            { name: 'Dashboard', href: dashboardHref, current: dashboardCurrent, icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-        ];
-
-        if (user.role_id === 1) {
-            // ── ADMIN ──
-            items.push(
-                { name: 'Products', href: route().has('admin.products.index') ? route('admin.products.index') : '#', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', current: route().current('admin.products.*') },
-                { name: 'Orders', href: route().has('admin.orders.index') ? route('admin.orders.index') : '#', icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4', current: route().current('admin.orders.*') },
-                { name: 'Reports', href: route().has('admin.reports') ? route('admin.reports') : '#', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z', current: route().current('admin.reports') },
-                { separator: 'Inventory' },
-                { name: 'Inventory', href: route().has('admin.inventory.index') ? route('admin.inventory.index') : '#', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10', current: route().current('admin.inventory.*') },
-                { separator: 'Users' },
-                { name: 'Users', href: route().has('admin.users.index') ? route('admin.users.index') : '#', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z', current: route().current('admin.users.*') },
-                { name: 'Profile', href: route('profile.edit'), icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z', current: route().current('profile.edit') },
-            );
-        } else if (user.role_id === 4) {
-            // ── STAFF / INVENTORY ──
-            items.push(
-                { name: 'Orders', href: route().has('staff.orders.index') ? route('staff.orders.index') : '#', icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4', current: route().current('staff.orders.*') },
-                { name: 'Inventory', href: route().has('admin.inventory.index') ? route('admin.inventory.index') : '#', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10', current: route().current('staff.inventory.*') },
-                { name: 'Tasks', href: route().has('tasks.index') ? route('tasks.index') : '#', icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4', current: route().current('tasks.*') },
-            );
-        } else if (user.role_id === 3) {
-            // ── CUSTOMER ──
-            items.push(
-                { name: 'My Orders', href: route().has('customer.orders.index') ? route('customer.orders.index') : '#', icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4', current: route().current('customer.orders.*') },
-                { name: 'Browse Products', href: route().has('customer.products') ? route('customer.products') : '#', icon: 'M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z', current: route().current('customer.products') },
-                { name: 'Profile', href: route('profile.edit'), icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z', current: route().current('profile.edit') },
-            );
-        }
-        return items;
-    }, [user.role_id]);
+    const navigation = useMemo(() => [
+        {
+            name: 'Dashboard',
+            href: route().has('staff.inventory.dashboard') ? route('staff.inventory.dashboard') : '#',
+            icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6',
+            current: route().current('staff.inventory.dashboard'),
+        },
+        { separator: 'Main' },
+        {
+            name: 'Products',
+            href: '#',
+            icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
+            current: false,
+            child: true,
+        },
+        {
+            name: 'Warehouses',
+            href: '#',
+            icon: 'M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z',
+            current: false,
+            child: true,
+        },
+        {
+            name: 'Stock Management',
+            href: '#',
+            icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
+            current: false,
+            child: true,
+        },
+        {
+            name: 'Purchasing',
+            href: '#',
+            icon: 'M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z',
+            current: false,
+            child: true,
+        },
+        {
+            name: 'Transfers',
+            href: '#',
+            icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4',
+            current: false,
+            child: true,
+        },
+        {
+            name: 'Adjustments',
+            href: '#',
+            icon: 'M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4',
+            current: false,
+            child: true,
+        },
+        { separator: 'Work' },
+        {
+            name: 'Tasks',
+            href: route().has('staff.inventory.tasks') ? route('staff.inventory.tasks') : '#',
+            icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
+            current: route().current('staff.inventory.tasks'),
+        },
+        {
+            name: 'Reports',
+            href: route().has('staff.inventory.reports') ? route('staff.inventory.reports') : '#',
+            icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
+            current: route().current('staff.inventory.reports'),
+        },
+        { separator: 'Account' },
+        {
+            name: 'Profile',
+            href: route().has('staff.inventory.profile') ? route('staff.inventory.profile') : '#',
+            icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
+            current: route().current('staff.inventory.profile'),
+        },
+    ], []);
 
     const dayStr = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
     const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
-    // Dynamic breadcrumb: use the active nav item's name, fall back to the header prop
     const activeNavItem = navigation.find(item => !item.separator && item.current);
-    const pageTitle = activeNavItem?.name || header || 'Dashboard';
+    const pageTitle = activeNavItem?.name || header || 'Staff Panel';
 
     return (
         <div className="flex h-screen bg-slate-50 font-sans antialiased overflow-hidden">
@@ -323,6 +344,21 @@ export default function AuthenticatedLayout({ header, children }) {
                             <div key={index} className="pt-5 pb-2 px-3">
                                 <span className="text-[9px] font-black text-slate-300 uppercase tracking-[0.25em]">{item.separator}</span>
                             </div>
+                        ) : item.child ? (
+                            <Link
+                                key={index}
+                                href={item.href}
+                                className={`flex items-center gap-2.5 pl-5 pr-3 py-2 text-xs font-semibold rounded-xl transition-all duration-200 group ml-2 ${item.current
+                                    ? 'bg-emerald-600 text-white shadow-sm'
+                                    : 'text-slate-400 hover:bg-emerald-50/60 hover:text-emerald-600'
+                                    }`}
+                            >
+                                <svg className={`w-[15px] h-[15px] flex-shrink-0 transition-colors ${item.current ? 'text-emerald-200' : 'text-slate-300 group-hover:text-emerald-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+                                </svg>
+                                <span className="truncate">{item.name}</span>
+                                {item.current && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-300 flex-shrink-0" />}
+                            </Link>
                         ) : (
                             <Link
                                 key={item.href}
