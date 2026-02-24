@@ -50,6 +50,8 @@ class ProfileController extends Controller
             4 => Redirect::route('staff.inventory.profile'),
             5 => Redirect::route('staff.productionprofile'),
             6 => Redirect::route('staff.accountingprofile'),
+            7 => Redirect::route('staff.cashierprofile'),
+            8 => Redirect::route('staff.marketing-salesprofile'),
             default => Redirect::route('profile.edit'),
         };
     }

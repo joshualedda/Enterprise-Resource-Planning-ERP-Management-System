@@ -3,6 +3,8 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import InventoryStaffLayout from '@/Layouts/InventoryStaffLayout';
 import ProductionStaffLayout from '@/Layouts/ProductionStaffLayout';
 import AccountingStaffLayout from '@/Layouts/AccountingStaffLayout';
+import CashierStaffLayout from '@/Layouts/CashierStaffLayout';
+import MarketingSalesStaffLayout from '@/Layouts/MarketingSalesStaffLayout';
 import { Head, router, usePage } from '@inertiajs/react';
 
 export default function OrderManage({ auth, orders }) {
@@ -10,9 +12,11 @@ export default function OrderManage({ auth, orders }) {
     const roleId = Number((auth || pageAuth)?.user?.role_id);
     const Layout =
         roleId === 4 ? InventoryStaffLayout :
-            roleId === 5 ? ProductionStaffLayout :
-                roleId === 6 ? AccountingStaffLayout :
-                AuthenticatedLayout;
+        roleId === 5 ? ProductionStaffLayout :
+        roleId === 6 ? AccountingStaffLayout :
+        roleId === 7 ? CashierStaffLayout :
+        roleId === 8 ? MarketingSalesStaffLayout :
+        AuthenticatedLayout;
 
     const [processingId, setProcessingId] = useState(null);
     const [activeTab, setActiveTab] = useState('In Process');

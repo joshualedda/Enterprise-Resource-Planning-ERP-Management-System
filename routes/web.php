@@ -25,6 +25,12 @@ use App\Http\Controllers\Staff\Production\ProductionReportsController;
 use App\Http\Controllers\Staff\Accounting\AccountingDashboardController;
 use App\Http\Controllers\Staff\Accounting\AccountingTasksController;
 use App\Http\Controllers\Staff\Accounting\AccountingReportsController;
+use App\Http\Controllers\Staff\Cashier\CashierDashboardController;
+use App\Http\Controllers\Staff\Cashier\CashierTasksController;
+use App\Http\Controllers\Staff\Cashier\CashierReportsController;
+use App\Http\Controllers\Staff\MarketingSales\MarketingSalesDashboardController;
+use App\Http\Controllers\Staff\MarketingSales\MarketingSalesTasksController;
+use App\Http\Controllers\Staff\MarketingSales\MarketingSalesReportsController;
 use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\Admin\ReportsController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
@@ -57,6 +63,8 @@ Route::middleware(['auth', 'verified'])->get('/dashboard', function () {
         4 => redirect()->route('staff.inventory.dashboard'),
         5 => redirect()->route('staff.productiondashboard'),
         6 => redirect()->route('staff.accountingdashboard'),
+        7 => redirect()->route('staff.cashierdashboard'),
+        8 => redirect()->route('staff.marketing-salesdashboard'),
         default => redirect()->route('storefront'),
     };
 })->name('dashboard');
@@ -233,5 +241,86 @@ Route::middleware(['auth', 'verified'])
         });
 
     });
+
+
+
+/*
+|--------------------------------------------------------------------------
+| Staff — Production Department Routes — role_id = 6
+| Prefix: /staff/cashier/...
+|--------------------------------------------------------------------------
+*/
+     Route::middleware(['auth', 'verified'])
+    ->prefix('staff')
+    ->name('staff.')
+    ->group(function () {
+
+        Route::prefix('cashier')->name('cashier')->group(function () {
+
+            Route::controller(CashierDashboardController::class)->group(function () {
+                Route::get('dashboard', 'index')->name('dashboard');
+            });
+
+            Route::controller(CashierTasksController::class)->group(function () {
+                Route::get('tasks', 'index')->name('tasks');
+            });
+
+            Route::controller(CashierReportsController::class)->group(function () {
+                Route::get('reports', 'index')->name('reports');
+                Route::get('reports/pdf', 'pdf')->name('reports.pdf');
+                Route::get('reports/excel', 'excel')->name('reports.excel');
+            });
+
+            // Reusing the profile
+            Route::controller(ProfileController::class)->group(function () {
+                Route::get('profile', 'edit')->name('profile');
+                Route::patch('profile', 'update')->name('profile.update');
+                Route::delete('profile', 'destroy')->name('profile.destroy');
+            });
+        });
+
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Staff — Production Department Routes — role_id = 8
+| Prefix: /staff/marketing-sales/...
+|--------------------------------------------------------------------------
+*/
+
+     Route::middleware(['auth', 'verified'])
+    ->prefix('staff')
+    ->name('staff.')
+    ->group(function () {
+
+        Route::prefix('marketing-sales')->name('marketing-sales')->group(function () {
+
+            Route::controller(MarketingSalesDashboardController::class)->group(function () {
+                Route::get('dashboard', 'index')->name('dashboard');
+            });
+
+            Route::controller(MarketingSalesTasksController::class)->group(function () {
+                Route::get('tasks', 'index')->name('tasks');
+            });
+
+            Route::controller(MarketingSalesReportsController::class)->group(function () {
+                Route::get('reports', 'index')->name('reports');
+                Route::get('reports/pdf', 'pdf')->name('reports.pdf');
+                Route::get('reports/excel', 'excel')->name('reports.excel');
+            });
+
+            // Reusing the profile
+            Route::controller(ProfileController::class)->group(function () {
+                Route::get('profile', 'edit')->name('profile');
+                Route::patch('profile', 'update')->name('profile.update');
+                Route::delete('profile', 'destroy')->name('profile.destroy');
+            });
+        });
+
+    });
+
+
+
+
 
 require __DIR__.'/auth.php';
