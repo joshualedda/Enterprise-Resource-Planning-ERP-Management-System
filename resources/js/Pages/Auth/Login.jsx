@@ -94,8 +94,8 @@ export default function Login({ status, canResetPassword }) {
                     </label>
                 </div>
 
-                <PrimaryButton 
-                    className="w-full justify-center py-3.5 bg-indigo-600 hover:bg-indigo-700 shadow-md hover:shadow-indigo-200 transition-all active:scale-[0.98] rounded-xl text-base font-bold" 
+                <PrimaryButton
+                    className="w-full justify-center py-3.5 bg-indigo-600 hover:bg-indigo-700 shadow-md hover:shadow-indigo-200 transition-all active:scale-[0.98] rounded-xl text-base font-bold"
                     disabled={processing}
                 >
                     {processing ? (

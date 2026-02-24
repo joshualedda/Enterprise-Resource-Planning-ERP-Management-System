@@ -240,9 +240,8 @@ function SidebarGroup({ item, currentUrl }) {
         <div className="mb-1 block">
             <button
                 onClick={toggle}
-                className={`w-full flex items-center justify-between px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 group ${
-                    isActive ? 'text-emerald-800 bg-emerald-50' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
-                }`}
+                className={`w-full flex items-center justify-between px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 group ${isActive ? 'text-emerald-800 bg-emerald-50' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                    }`}
             >
                 <div className="flex items-center gap-3">
                     <svg className={`w-[18px] h-[18px] flex-shrink-0 transition-colors ${isActive ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -263,11 +262,10 @@ function SidebarGroup({ item, currentUrl }) {
                                 <Link
                                     key={child.name}
                                     href={child.href}
-                                    className={`block px-3 py-2 rounded-xl text-xs font-medium transition-all duration-200 ${
-                                        isChildActive
+                                    className={`block px-3 py-2 rounded-xl text-xs font-medium transition-all duration-200 ${isChildActive
                                             ? 'bg-emerald-600 text-white shadow-sm font-bold'
                                             : 'text-slate-500 hover:bg-emerald-50 hover:text-emerald-700'
-                                    }`}
+                                        }`}
                                 >
                                     {child.name}
                                 </Link>
@@ -285,11 +283,10 @@ function SidebarItem({ item, currentUrl }) {
     return (
         <Link
             href={item.href}
-            className={`flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 group mb-1 ${
-                isActive
+            className={`flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 group mb-1 ${isActive
                     ? 'bg-emerald-600 text-white shadow-sm font-bold'
                     : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
-            }`}
+                }`}
         >
             <svg className={`w-[18px] h-[18px] flex-shrink-0 transition-colors ${isActive ? 'text-emerald-200' : 'text-slate-400 group-hover:text-emerald-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
@@ -404,7 +401,7 @@ export default function InventoryStaffLayout({ header, children }) {
     const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
     let pageTitle = header || 'Staff Panel';
-    
+
     // Attempt to match the current item natively from the hierarchy
     const activeItem = navigation.find(n => !n.separator && (n.children ? n.children.some(c => isRouteActive(c.href, currentUrl)) : isRouteActive(n.href, currentUrl)));
     if (activeItem) {
@@ -435,6 +432,7 @@ export default function InventoryStaffLayout({ header, children }) {
                         </div>
                         <div>
                             <p className="text-base font-black text-slate-800 leading-none tracking-tight">D'SERICORE</p>
+                            <p className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest mt-0.5">Inventory</p>
                         </div>
                     </Link>
                 </div>

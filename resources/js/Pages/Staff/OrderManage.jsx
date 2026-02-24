@@ -1,8 +1,19 @@
 import React, { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, router } from '@inertiajs/react';
+import InventoryStaffLayout from '@/Layouts/InventoryStaffLayout';
+import ProductionStaffLayout from '@/Layouts/ProductionStaffLayout';
+import AccountingStaffLayout from '@/Layouts/AccountingStaffLayout';
+import { Head, router, usePage } from '@inertiajs/react';
 
 export default function OrderManage({ auth, orders }) {
+    const { auth: pageAuth } = usePage().props;
+    const roleId = Number((auth || pageAuth)?.user?.role_id);
+    const Layout =
+        roleId === 4 ? InventoryStaffLayout :
+            roleId === 5 ? ProductionStaffLayout :
+                roleId === 6 ? AccountingStaffLayout :
+                AuthenticatedLayout;
+
     const [processingId, setProcessingId] = useState(null);
     const [activeTab, setActiveTab] = useState('In Process');
 
@@ -90,12 +101,12 @@ export default function OrderManage({ auth, orders }) {
         printWindow.document.close();
     };
 
-    const filteredOrders = orders.data.filter(order => 
+    const filteredOrders = orders.data.filter(order =>
         activeTab === 'All' ? true : order.status === activeTab
     );
 
     return (
-        <AuthenticatedLayout header="Order Management">
+        <Layout>
             <Head title="Order Management" />
 
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
@@ -144,7 +155,7 @@ export default function OrderManage({ auth, orders }) {
 
                         <div className="flex gap-2 w-full lg:w-auto">
                             {order.status === 'In Process' && (
-                                <button 
+                                <button
                                     onClick={() => handleStatusUpdate(order.id, 'Ready to Pickup')}
                                     disabled={processingId === order.id}
                                     className="flex-1 lg:flex-none px-6 py-3 bg-indigo-600 text-white text-[10px] font-black rounded-2xl uppercase hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
@@ -155,13 +166,13 @@ export default function OrderManage({ auth, orders }) {
 
                             {order.status === 'Ready to Pickup' && (
                                 <>
-                                    <button 
+                                    <button
                                         onClick={() => handlePrint(order)}
                                         className="px-6 py-3 bg-slate-900 text-white text-[10px] font-black rounded-2xl uppercase hover:bg-black transition-all"
                                     >
                                         Print Receipt
                                     </button>
-                                    <button 
+                                    <button
                                         onClick={() => handleStatusUpdate(order.id, 'Product Received')}
                                         disabled={processingId === order.id}
                                         className="px-6 py-3 bg-emerald-600 text-white text-[10px] font-black rounded-2xl uppercase hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100"
@@ -186,6 +197,6 @@ export default function OrderManage({ auth, orders }) {
                     </div>
                 )}
             </div>
-        </AuthenticatedLayout>
+        </Layout>
     );
 }

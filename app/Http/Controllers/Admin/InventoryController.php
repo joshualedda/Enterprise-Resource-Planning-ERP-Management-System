@@ -10,9 +10,7 @@ use Inertia\Inertia;
 
 class InventoryController extends Controller
 {
-    /**
-     * List all products with their current stock levels + inventory logs.
-     */
+    
     public function index()
     {
         $products = Product::with(['category', 'inventories' => function ($q) {

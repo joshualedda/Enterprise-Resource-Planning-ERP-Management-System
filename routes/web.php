@@ -19,6 +19,12 @@ use App\Http\Controllers\Staff\OrderManagementController;
 use App\Http\Controllers\Staff\InventoryDashboardController;
 use App\Http\Controllers\Staff\InventoryTasksController;
 use App\Http\Controllers\Staff\InventoryReportsController;
+use App\Http\Controllers\Staff\Production\ProductionDashboardController;
+use App\Http\Controllers\Staff\Production\ProductionTasksController;
+use App\Http\Controllers\Staff\Production\ProductionReportsController;
+use App\Http\Controllers\Staff\Accounting\AccountingDashboardController;
+use App\Http\Controllers\Staff\Accounting\AccountingTasksController;
+use App\Http\Controllers\Staff\Accounting\AccountingReportsController;
 use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\Admin\ReportsController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
@@ -49,6 +55,8 @@ Route::middleware(['auth', 'verified'])->get('/dashboard', function () {
         1 => redirect()->route('admin.dashboard'),
         3 => redirect()->route('customer.dashboard'),
         4 => redirect()->route('staff.inventory.dashboard'),
+        5 => redirect()->route('staff.productiondashboard'),
+        6 => redirect()->route('staff.accountingdashboard'),
         default => redirect()->route('storefront'),
     };
 })->name('dashboard');
@@ -179,6 +187,44 @@ Route::middleware(['auth', 'verified'])
                 Route::get('reports/excel', 'excel')->name('reports.excel');
             });
 
+            // Reusing the profile
+            Route::controller(ProfileController::class)->group(function () {
+                Route::get('profile', 'edit')->name('profile');
+                Route::patch('profile', 'update')->name('profile.update');
+                Route::delete('profile', 'destroy')->name('profile.destroy');
+            });
+        });
+
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Staff — Production Department Routes — role_id = 6
+| Prefix: /staff/accouting/...
+|--------------------------------------------------------------------------
+*/
+     Route::middleware(['auth', 'verified'])
+    ->prefix('staff')
+    ->name('staff.')
+    ->group(function () {
+
+        Route::prefix('accounting')->name('accounting')->group(function () {
+
+            Route::controller(AccountingDashboardController::class)->group(function () {
+                Route::get('dashboard', 'index')->name('dashboard');
+            });
+
+            Route::controller(AccountingTasksController::class)->group(function () {
+                Route::get('tasks', 'index')->name('tasks');
+            });
+
+            Route::controller(AccountingReportsController::class)->group(function () {
+                Route::get('reports', 'index')->name('reports');
+                Route::get('reports/pdf', 'pdf')->name('reports.pdf');
+                Route::get('reports/excel', 'excel')->name('reports.excel');
+            });
+
+            // Reusing the profile
             Route::controller(ProfileController::class)->group(function () {
                 Route::get('profile', 'edit')->name('profile');
                 Route::patch('profile', 'update')->name('profile.update');

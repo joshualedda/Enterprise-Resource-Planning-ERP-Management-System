@@ -48,6 +48,8 @@ class ProfileController extends Controller
         return match ((int) $request->user()->role_id) {
             1 => Redirect::route('admin.profile.index'),
             4 => Redirect::route('staff.inventory.profile'),
+            5 => Redirect::route('staff.productionprofile'),
+            6 => Redirect::route('staff.accountingprofile'),
             default => Redirect::route('profile.edit'),
         };
     }

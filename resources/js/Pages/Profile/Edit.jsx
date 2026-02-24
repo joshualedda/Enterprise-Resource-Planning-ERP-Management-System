@@ -1,5 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import InventoryStaffLayout from '@/Layouts/InventoryStaffLayout';
+import ProductionStaffLayout from '@/Layouts/ProductionStaffLayout';
+import AccountingStaffLayout from '@/Layouts/AccountingStaffLayout';
 import { Head, usePage } from '@inertiajs/react';
 import DeleteUserForm from './Partials/DeleteUserForm';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm';
@@ -7,18 +9,16 @@ import UpdateProfileInformationForm from './Partials/UpdateProfileInformationFor
 
 export default function Edit({ mustVerifyEmail, status }) {
     const { auth } = usePage().props;
-    const isStaff = Number(auth.user.role_id) === 2 || Number(auth.user.role_id) === 4;
-    
-    const Layout = isStaff ? InventoryStaffLayout : AuthenticatedLayout;
+    const roleId = Number(auth.user.role_id);
+
+    const Layout =
+        roleId === 4 ? InventoryStaffLayout :
+            roleId === 5 ? ProductionStaffLayout :
+                roleId === 6 ? AccountingStaffLayout :
+                    AuthenticatedLayout;
 
     return (
-        <Layout
-            header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    Profile
-                </h2>
-            }
-        >
+        <Layout>
             <Head title="Profile" />
 
             <div className="py-12">

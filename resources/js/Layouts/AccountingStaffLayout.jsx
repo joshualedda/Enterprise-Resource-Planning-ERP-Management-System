@@ -14,11 +14,12 @@ function useOutsideClick(ref, handler) {
 }
 
 const roleConfig = {
-    1: { label: 'Administrator', color: 'bg-violet-100 text-violet-700', dot: 'bg-violet-600' },
-    2: { label: 'Staff Member', color: 'bg-blue-100 text-blue-700', dot: 'bg-blue-500' },
-    3: { label: 'Customer', color: 'bg-teal-100 text-teal-700', dot: 'bg-teal-500' },
-    4: { label: 'Inventory Staff', color: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500' },
+    1: { label: 'Administrator',    color: 'bg-violet-100 text-violet-700', dot: 'bg-violet-600' },
+    2: { label: 'Staff Member',     color: 'bg-blue-100 text-blue-700',     dot: 'bg-blue-500'   },
+    3: { label: 'Customer',         color: 'bg-teal-100 text-teal-700',     dot: 'bg-teal-500'   },
+    4: { label: 'Inventory Staff',  color: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500' },
     5: { label: 'Production Staff', color: 'bg-violet-100 text-violet-700', dot: 'bg-violet-500' },
+    6: { label: 'Accounting Staff', color: 'bg-amber-100 text-amber-700',   dot: 'bg-amber-500'  },
 };
 
 function getInitials(first, last) {
@@ -45,10 +46,10 @@ function useClock() {
 // NOTIFICATION PANEL
 // ---------------------------------------------------------------------------
 const sampleNotifs = [
-    { id: 1, icon: '🏭', title: 'New production order', body: 'PO-2026-001 needs approval.', time: '5m ago', unread: true },
-    { id: 2, icon: '⚠️', title: 'Material shortage', body: 'Raw silk thread is critically low.', time: '20m ago', unread: true },
-    { id: 3, icon: '✅', title: 'Run #45 completed', body: 'Output posted successfully.', time: '1h ago', unread: false },
-    { id: 4, icon: '🔍', title: 'QC inspection pending', body: 'Batch B-24 awaits review.', time: '3h ago', unread: false },
+    { id: 1, icon: '📊', title: 'Trial Balance ready',  body: 'Q1 trial balance has been generated.',  time: '5m ago',  unread: true  },
+    { id: 2, icon: '⚠️', title: 'Overdue invoice',      body: 'INV-2026-014 is 7 days overdue.',        time: '30m ago', unread: true  },
+    { id: 3, icon: '✅', title: 'Payment posted',        body: 'GCash payment for ORD-20248 posted.',   time: '1h ago',  unread: false },
+    { id: 4, icon: '📋', title: 'New journal entry',     body: 'Auto-recurring entry JE-045 posted.',   time: '3h ago',  unread: false },
 ];
 
 function NotificationPanel({ serverNotifs = [] }) {
@@ -65,7 +66,7 @@ function NotificationPanel({ serverNotifs = [] }) {
         <div ref={ref} className="relative">
             <button
                 onClick={() => setOpen(o => !o)}
-                className={`relative flex items-center justify-center w-10 h-10 rounded-xl transition-all ${open ? 'bg-violet-600 text-white shadow-lg shadow-violet-200' : 'bg-slate-100 text-slate-500 hover:bg-violet-50 hover:text-violet-600'}`}
+                className={`relative flex items-center justify-center w-10 h-10 rounded-xl transition-all ${open ? 'bg-amber-500 text-white shadow-lg shadow-amber-200' : 'bg-slate-100 text-slate-500 hover:bg-amber-50 hover:text-amber-600'}`}
                 aria-label="Notifications"
             >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -87,19 +88,19 @@ function NotificationPanel({ serverNotifs = [] }) {
                             {unread > 0 && <span className="bg-rose-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">{unread} new</span>}
                         </div>
                         {unread > 0 && (
-                            <button onClick={markAll} className="text-[10px] font-black text-violet-600 hover:text-violet-800 uppercase tracking-wider transition-colors">
+                            <button onClick={markAll} className="text-[10px] font-black text-amber-600 hover:text-amber-800 uppercase tracking-wider transition-colors">
                                 Mark all read
                             </button>
                         )}
                     </div>
                     <div className="max-h-72 overflow-y-auto divide-y divide-slate-50">
                         {notifs.map(n => (
-                            <div key={n.id} className={`flex items-start gap-3 px-4 py-3.5 hover:bg-slate-50 transition-colors group ${n.unread ? 'bg-violet-50/30' : ''}`}>
+                            <div key={n.id} className={`flex items-start gap-3 px-4 py-3.5 hover:bg-slate-50 transition-colors group ${n.unread ? 'bg-amber-50/40' : ''}`}>
                                 <div className="text-xl flex-shrink-0 mt-0.5">{n.icon}</div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-1.5">
                                         <p className="text-xs font-black text-slate-800 leading-tight truncate">{n.title}</p>
-                                        {n.unread && <span className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-violet-500" />}
+                                        {n.unread && <span className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-amber-500" />}
                                     </div>
                                     <p className="text-[11px] text-slate-400 font-medium mt-0.5 leading-snug">{n.body}</p>
                                     <p className="text-[10px] text-slate-300 font-bold mt-1 uppercase tracking-wider">{n.time}</p>
@@ -119,7 +120,7 @@ function NotificationPanel({ serverNotifs = [] }) {
                         )}
                     </div>
                     <div className="px-4 py-3 bg-slate-50/80 border-t border-slate-100">
-                        <button className="w-full text-center text-[10px] font-black text-violet-600 hover:text-violet-700 uppercase tracking-wider transition-colors">
+                        <button className="w-full text-center text-[10px] font-black text-amber-600 hover:text-amber-700 uppercase tracking-wider transition-colors">
                             View All Notifications
                         </button>
                     </div>
@@ -147,7 +148,7 @@ function UserMenu({ user, fullName, roleInfo }) {
                 className="flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-slate-100 transition-all focus:outline-none group"
             >
                 <div className="relative">
-                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-purple-700 flex items-center justify-center text-white font-black text-sm shadow-md shadow-violet-200 group-hover:shadow-violet-300 transition-shadow">
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center text-white font-black text-sm shadow-md shadow-amber-200 group-hover:shadow-amber-300 transition-shadow">
                         {initials}
                     </div>
                     <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${roleInfo.dot}`} />
@@ -163,12 +164,12 @@ function UserMenu({ user, fullName, roleInfo }) {
 
             {open && (
                 <div className="absolute right-0 top-[calc(100%+10px)] w-64 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                    <div className="px-5 py-4 bg-gradient-to-br from-violet-600 to-purple-800 text-white">
+                    <div className="px-5 py-4 bg-gradient-to-br from-amber-500 to-orange-600 text-white">
                         <div className="flex items-center gap-3">
                             <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center font-black text-xl">{initials}</div>
                             <div>
                                 <p className="font-black text-sm leading-tight">{fullName}</p>
-                                <p className="text-[10px] text-violet-200 font-bold mt-0.5">{user.email}</p>
+                                <p className="text-[10px] text-amber-100 font-bold mt-0.5">{user.email}</p>
                                 <span className="mt-1.5 inline-flex px-2 py-0.5 rounded-full bg-white/20 text-[9px] font-black uppercase tracking-wider">
                                     {roleInfo.label}
                                 </span>
@@ -177,11 +178,11 @@ function UserMenu({ user, fullName, roleInfo }) {
                     </div>
                     <div className="py-2 px-2">
                         <Link
-                            href={route().has('staff.productionprofile') ? route('staff.productionprofile') : '#'}
+                            href={route().has('staff.accountingprofile') ? route('staff.accountingprofile') : '#'}
                             onClick={() => setOpen(false)}
-                            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-violet-600 transition-all text-sm font-bold group"
+                            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-amber-600 transition-all text-sm font-bold group"
                         >
-                            <svg className="w-4 h-4 text-slate-400 group-hover:text-violet-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg className="w-4 h-4 text-slate-400 group-hover:text-amber-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                             </svg>
                             My Profile
@@ -212,11 +213,10 @@ function SidebarGroup({ item, currentUrl }) {
         <div className="mb-1 block">
             <button
                 onClick={() => setOpen(!open)}
-                className={`w-full flex items-center justify-between px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 group ${isActive ? 'text-violet-800 bg-violet-50' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
-                    }`}
+                className={`w-full flex items-center justify-between px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 group ${isActive ? 'text-amber-800 bg-amber-50' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}
             >
                 <div className="flex items-center gap-3">
-                    <svg className={`w-[18px] h-[18px] flex-shrink-0 transition-colors ${isActive ? 'text-violet-600' : 'text-slate-400 group-hover:text-violet-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className={`w-[18px] h-[18px] flex-shrink-0 transition-colors ${isActive ? 'text-amber-600' : 'text-slate-400 group-hover:text-amber-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
                     </svg>
                     <span>{item.name}</span>
@@ -235,8 +235,8 @@ function SidebarGroup({ item, currentUrl }) {
                                     key={child.name}
                                     href={child.href}
                                     className={`block px-3 py-2 rounded-xl text-xs font-medium transition-all duration-200 ${isChildActive
-                                            ? 'bg-violet-600 text-white shadow-sm font-bold'
-                                            : 'text-slate-500 hover:bg-violet-50 hover:text-violet-700'
+                                            ? 'bg-amber-500 text-white shadow-sm font-bold'
+                                            : 'text-slate-500 hover:bg-amber-50 hover:text-amber-700'
                                         }`}
                                 >
                                     {child.name}
@@ -256,11 +256,11 @@ function SidebarItem({ item, currentUrl }) {
         <Link
             href={item.href}
             className={`flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 group mb-1 ${isActive
-                    ? 'bg-violet-600 text-white shadow-sm font-bold'
+                    ? 'bg-amber-500 text-white shadow-sm font-bold'
                     : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
                 }`}
         >
-            <svg className={`w-[18px] h-[18px] flex-shrink-0 transition-colors ${isActive ? 'text-violet-200' : 'text-slate-400 group-hover:text-violet-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className={`w-[18px] h-[18px] flex-shrink-0 transition-colors ${isActive ? 'text-amber-100' : 'text-slate-400 group-hover:text-amber-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
             </svg>
             <span className="truncate">{item.name}</span>
@@ -269,76 +269,105 @@ function SidebarItem({ item, currentUrl }) {
 }
 
 // ---------------------------------------------------------------------------
-// MAIN PRODUCTION STAFF LAYOUT
+// MAIN ACCOUNTING STAFF LAYOUT
 // ---------------------------------------------------------------------------
-export default function ProductionStaffLayout({ header, children }) {
+export default function AccountingStaffLayout({ header, children }) {
     const { auth } = usePage().props;
     const user = auth.user;
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const now = useClock();
 
     const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.name || 'User';
-    const roleInfo = roleConfig[user.role_id] || { label: 'Production Staff', color: 'bg-violet-100 text-violet-700', dot: 'bg-violet-500' };
+    const roleInfo = roleConfig[user.role_id] || { label: 'Accounting Staff', color: 'bg-amber-100 text-amber-700', dot: 'bg-amber-500' };
     const notifications = usePage().props.notifications || [];
     const { url: currentUrl } = usePage();
 
     const navigation = useMemo(() => [
         {
             name: 'Dashboard',
-            href: route().has('staff.productiondashboard') ? route('staff.productiondashboard') : '#',
+            href: route().has('staff.accountingdashboard') ? route('staff.accountingdashboard') : '#',
             icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6',
         },
         { separator: 'Main' },
         {
-            name: 'Production Orders',
-            icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2',
-            children: [
-                { name: 'All Orders', href: '#' },
-                { name: 'Create Order', href: '#' },
-                { name: 'Pending Approval', href: '#' },
-                { name: 'In Progress', href: '#' },
-                { name: 'Completed', href: '#' },
-            ],
-        },
-        {
-            name: 'Bill of Materials (BOM)',
+            name: 'Chart of Accounts',
             icon: 'M4 6h16M4 10h16M4 14h16M4 18h16',
             children: [
-                { name: 'BOM List', href: '#' },
-                { name: 'Create BOM', href: '#' },
+                { name: 'Accounts List',  href: '#' },
+                { name: 'Account Types',  href: '#' },
             ],
         },
         {
-            name: 'Production Runs',
-            icon: 'M13 10V3L4 14h7v7l9-11h-7z',
+            name: 'Journal',
+            icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
             children: [
-                { name: 'Run Logs', href: '#' },
-                { name: 'Material Issue (Consumption)', href: '#' },
-                { name: 'Output Posting (Finished/WIP)', href: '#' },
+                { name: 'Journal Entries',    href: '#' },
+                { name: 'Create Entry',       href: '#' },
+                { name: 'Recurring Entries',  href: '#' },
             ],
         },
         {
-            name: 'Quality Control',
-            icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+            name: 'Sales (AR)',
+            icon: 'M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z',
             children: [
-                { name: 'Inspections', href: '#' },
-                { name: 'Rejects / Rework', href: '#' },
+                { name: 'Invoices',              href: '#' },
+                { name: 'Customer Payments',     href: '#' },
+                { name: 'Accounts Receivable',   href: '#' },
+            ],
+        },
+        {
+            name: 'Purchasing (AP)',
+            icon: 'M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z',
+            children: [
+                { name: 'Bills',                href: '#' },
+                { name: 'Supplier Payments',    href: '#' },
+                { name: 'Accounts Payable',     href: '#' },
+            ],
+        },
+        {
+            name: 'Inventory Accounting',
+            icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
+            children: [
+                { name: 'Inventory Valuation',       href: '#' },
+                { name: 'COGS Summary',              href: '#' },
+                { name: 'Stock Adjustment Expenses', href: '#' },
+            ],
+        },
+        {
+            name: 'Production Costing',
+            icon: 'M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z',
+            children: [
+                { name: 'WIP Ledger',                    href: '#' },
+                { name: 'Cost per Run/Batch',            href: '#' },
+                { name: 'Cost Variance (Planned vs Actual)', href: '#' },
             ],
         },
         {
             name: 'Reports',
             icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
             children: [
-                { name: 'Production Summary', href: '#' },
-                { name: 'Material Consumption Report', href: '#' },
-                { name: 'Yield & Waste Report', href: '#' },
-                { name: 'Cost per Batch/Run', href: '#' },
+                { name: 'Trial Balance',              href: '#' },
+                { name: 'General Ledger',             href: '#' },
+                { name: 'Profit & Loss',              href: '#' },
+                { name: 'Balance Sheet',              href: '#' },
+                { name: 'Cash Flow',                  href: '#' },
+                { name: 'Tax / Withholding Summary',  href: '#' },
+            ],
+        },
+        { separator: 'Settings' },
+        {
+            name: 'Settings',
+            icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z',
+            children: [
+                { name: 'Fiscal Year & Periods',   href: '#' },
+                { name: 'Payment Methods',         href: '#' },
+                { name: 'Posting Rules (Auto)',    href: '#' },
             ],
         },
         { separator: 'Account' },
         {
             name: 'Profile',
-            href: route().has('staff.productionprofile') ? route('staff.productionprofile') : '#',
+            href: route().has('staff.accountingprofile') ? route('staff.accountingprofile') : '#',
             icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
         },
     ], []);
@@ -346,7 +375,7 @@ export default function ProductionStaffLayout({ header, children }) {
     const dayStr = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
     const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
-    let pageTitle = header || 'Production Panel';
+    let pageTitle = header || 'Accounting Panel';
     const activeItem = navigation.find(n =>
         !n.separator && (n.children
             ? n.children.some(c => isRouteActive(c.href, currentUrl))
@@ -362,7 +391,7 @@ export default function ProductionStaffLayout({ header, children }) {
     }
 
     return (
-        <div className="flex h-screen bg-slate-50 font-sans antialiased overflow-hidden">
+        <div className="flex h-screen bg-slate-50 font-sans antialiased">
 
             {/* Mobile overlay */}
             {sidebarOpen && (
@@ -370,23 +399,23 @@ export default function ProductionStaffLayout({ header, children }) {
             )}
 
             {/* ── SIDEBAR ── */}
-            <aside className={`fixed inset-y-0 left-0 z-50 w-[268px] bg-white border-r border-slate-100 shadow-xl shadow-slate-200/60 flex flex-col transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
+            <aside className={`fixed inset-y-0 left-0 z-50 w-[268px] bg-white border-r border-slate-100 shadow-xl shadow-slate-200/60 flex flex-col transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 lg:shrink-0`}>
 
                 {/* Logo */}
-                <div className="px-5 pt-6 pb-5">
+                <div className="px-5 pt-6 pb-5 flex-shrink-0">
                     <Link href="/" className="flex items-center gap-2.5">
                         <div className="w-8 h-8 flex-shrink-0">
                             <ApplicationLogo size="xs" className="!w-8 !h-8" />
                         </div>
                         <div>
                             <p className="text-base font-black text-slate-800 leading-none tracking-tight">D'SERICORE</p>
-                            <p className="text-[9px] font-bold text-violet-400 uppercase tracking-widest mt-0.5">Production</p>
+                            <p className="text-[9px] font-bold text-amber-500 uppercase tracking-widest mt-0.5">Accounting</p>
                         </div>
                     </Link>
                 </div>
 
                 {/* Nav links */}
-                <nav className="flex-1 px-4 space-y-0.5 overflow-y-auto pb-4 pt-1">
+                <nav className="flex-1 px-4 space-y-0.5 overflow-y-auto pb-4 pt-1 min-h-0">
                     <div className="px-3 mb-2">
                         <span className="text-[9px] font-black text-slate-300 uppercase tracking-[0.25em]">Navigation</span>
                     </div>
@@ -404,8 +433,8 @@ export default function ProductionStaffLayout({ header, children }) {
                 </nav>
 
                 {/* Sidebar Footer – User card */}
-                <div className="px-4 pb-5">
-                    <div className="relative overflow-hidden bg-gradient-to-br from-violet-600 to-purple-800 rounded-2xl p-4 text-white">
+                <div className="px-4 pb-5 flex-shrink-0">
+                    <div className="relative overflow-hidden bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-4 text-white">
                         <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/10" />
                         <div className="absolute -bottom-4 -left-4 w-20 h-20 rounded-full bg-white/5" />
                         <div className="relative flex items-center gap-3">
@@ -415,13 +444,13 @@ export default function ProductionStaffLayout({ header, children }) {
                             <div className="min-w-0">
                                 <p className="text-xs font-black leading-tight truncate">{fullName}</p>
                                 <span className="inline-flex mt-1 items-center gap-1 bg-white/20 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-violet-300" />
+                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-200" />
                                     {roleInfo.label}
                                 </span>
                             </div>
                         </div>
                         <div className="relative mt-3 pt-3 border-t border-white/15 flex items-center justify-between">
-                            <span className="text-[10px] font-bold text-violet-200">System Online</span>
+                            <span className="text-[10px] font-bold text-amber-100">System Online</span>
                         </div>
                     </div>
                 </div>
@@ -476,8 +505,8 @@ export default function ProductionStaffLayout({ header, children }) {
                 </header>
 
                 {/* Page Content */}
-                <main className="flex-1 overflow-x-hidden overflow-y-auto scroll-smooth">
-                    <div className="container mx-auto px-4 lg:px-6 py-8 max-w-full">
+                <main className="flex-1 overflow-y-auto overflow-x-hidden">
+                    <div className="w-full px-4 lg:px-6 py-6">
                         {children}
                     </div>
                 </main>
@@ -489,7 +518,7 @@ export default function ProductionStaffLayout({ header, children }) {
                 ::-webkit-scrollbar { width: 5px; height: 5px; }
                 ::-webkit-scrollbar-track { background: transparent; }
                 ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-                ::-webkit-scrollbar-thumb:hover { background: #c4b5fd; }
+                ::-webkit-scrollbar-thumb:hover { background: #fcd34d; }
             ` }} />
         </div>
     );

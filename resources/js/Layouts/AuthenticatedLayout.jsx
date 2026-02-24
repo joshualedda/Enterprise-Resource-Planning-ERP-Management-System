@@ -282,8 +282,8 @@ function SidebarGroup({ item, currentUrl, isCollapsed }) {
                                         key={child.name}
                                         href={child.href}
                                         className={`block px-3 py-2 rounded-xl text-xs font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${isChildActive
-                                                ? 'bg-emerald-600 text-white shadow-sm font-bold'
-                                                : 'text-slate-500 hover:bg-emerald-50 hover:text-emerald-700'
+                                            ? 'bg-emerald-600 text-white shadow-sm font-bold'
+                                            : 'text-slate-500 hover:bg-emerald-50 hover:text-emerald-700'
                                             }`}
                                     >
                                         {child.name}
@@ -300,7 +300,7 @@ function SidebarGroup({ item, currentUrl, isCollapsed }) {
 
 function SidebarItem({ item, currentUrl, isCollapsed }) {
     const isActive = isRouteActive(item.href, currentUrl);
-    
+
     if (isCollapsed) {
         return (
             <Link
@@ -322,8 +322,8 @@ function SidebarItem({ item, currentUrl, isCollapsed }) {
         <Link
             href={item.href}
             className={`flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 group mb-1 ${isActive
-                    ? 'bg-emerald-600 text-white shadow-sm font-bold'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
+                ? 'bg-emerald-600 text-white shadow-sm font-bold'
+                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
                 }`}
         >
             <svg className={`w-[18px] h-[18px] flex-shrink-0 transition-colors ${isActive ? 'text-emerald-200' : 'text-slate-400 group-hover:text-emerald-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -369,14 +369,14 @@ export default function AuthenticatedLayout({ header, children }) {
                 { separator: 'Navigation' },
                 { name: 'Dashboard', href: route().has('admin.dashboard') ? route('admin.dashboard') : '#', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
                 { name: 'Products', href: route().has('admin.products.index') ? route('admin.products.index') : '#', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
-                { 
-                    name: 'Orders', 
-                    href: route().has('admin.orders.index') ? route('admin.orders.index') : '#', 
+                {
+                    name: 'Orders',
+                    href: route().has('admin.orders.index') ? route('admin.orders.index') : '#',
                     icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
-                    badge: pendingOrders ? pendingOrders : null 
+                    badge: pendingOrders ? pendingOrders : null
                 },
-                { 
-                    name: 'Reports', 
+                {
+                    name: 'Reports',
                     icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
                     children: [
                         { name: 'All Reports', href: route().has('admin.reports') ? route('admin.reports') : '#' }
@@ -432,6 +432,9 @@ export default function AuthenticatedLayout({ header, children }) {
                         {!sidebarCollapsed && (
                             <div>
                                 <p className="text-base font-black text-slate-800 leading-none tracking-tight">D'SERICORE</p>
+                                <p className="text-[9px] font-bold uppercase tracking-widest mt-0.5" style={{ color: user.role_id === 1 ? '#818cf8' : user.role_id === 3 ? '#2dd4bf' : '#60a5fa' }}>
+                                    {user.role_id === 1 ? 'Administration' : user.role_id === 3 ? 'Customer Portal' : 'Staff Panel'}
+                                </p>
                             </div>
                         )}
                     </Link>
