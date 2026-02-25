@@ -288,59 +288,11 @@ export default function AccountingStaffLayout({ header, children }) {
             href: route().has('staff.accountingdashboard') ? route('staff.accountingdashboard') : '#',
             icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6',
         },
-        { separator: 'Main' },
-        {
-            name: 'Chart of Accounts',
-            icon: 'M4 6h16M4 10h16M4 14h16M4 18h16',
-            children: [
-                { name: 'Accounts List',  href: '#' },
-                { name: 'Account Types',  href: '#' },
-            ],
-        },
-        {
-            name: 'Journal',
-            icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
-            children: [
-                { name: 'Journal Entries',    href: '#' },
-                { name: 'Create Entry',       href: '#' },
-                { name: 'Recurring Entries',  href: '#' },
-            ],
-        },
-        {
-            name: 'Sales (AR)',
-            icon: 'M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z',
-            children: [
-                { name: 'Invoices',              href: '#' },
-                { name: 'Customer Payments',     href: '#' },
-                { name: 'Accounts Receivable',   href: '#' },
-            ],
-        },
-        {
-            name: 'Purchasing (AP)',
-            icon: 'M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z',
-            children: [
-                { name: 'Bills',                href: '#' },
-                { name: 'Supplier Payments',    href: '#' },
-                { name: 'Accounts Payable',     href: '#' },
-            ],
-        },
-        {
-            name: 'Inventory Accounting',
-            icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
-            children: [
-                { name: 'Inventory Valuation',       href: '#' },
-                { name: 'COGS Summary',              href: '#' },
-                { name: 'Stock Adjustment Expenses', href: '#' },
-            ],
-        },
-        {
-            name: 'Production Costing',
-            icon: 'M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z',
-            children: [
-                { name: 'WIP Ledger',                    href: '#' },
-                { name: 'Cost per Run/Batch',            href: '#' },
-                { name: 'Cost Variance (Planned vs Actual)', href: '#' },
-            ],
+        { separator: 'Cashier' },
+            {
+            name: 'Payment',
+            href: route().has('staff.accountingdashboard') ? route('staff.accountingdashboard') : '#',
+            icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6',
         },
         {
             name: 'Reports',
@@ -354,6 +306,20 @@ export default function AccountingStaffLayout({ header, children }) {
                 { name: 'Tax / Withholding Summary',  href: '#' },
             ],
         },
+     { separator: 'Accounting' },
+            {
+            name: 'Payment',
+            href: route().has('staff.accountingdashboard') ? route('staff.accountingdashboard') : '#',
+            icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6',
+        },
+
+   {
+            name: 'Reports',
+            href: route().has('staff.accountingdashboard') ? route('staff.accountingdashboard') : '#',
+            icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6',
+        },
+
+
         { separator: 'Settings' },
         {
             name: 'Settings',

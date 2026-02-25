@@ -133,6 +133,7 @@ Route::middleware(['auth', 'verified'])->prefix('customer')->name('customer.')->
 | Staff — Inventory Department Routes — role_id = 4
 | Prefix: /staff/inventory/...
 |--------------------------------------------------------------------------
+- add payment tab inventory
 */
 Route::middleware(['auth', 'verified'])
     ->prefix('staff')
@@ -210,6 +211,7 @@ Route::middleware(['auth', 'verified'])
 | Staff — Production Department Routes — role_id = 6
 | Prefix: /staff/accouting/...
 |--------------------------------------------------------------------------
+Re: Updated - Finance and Accounting
 */
      Route::middleware(['auth', 'verified'])
     ->prefix('staff')
