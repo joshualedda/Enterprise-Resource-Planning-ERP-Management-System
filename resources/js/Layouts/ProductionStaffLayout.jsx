@@ -14,11 +14,12 @@ function useOutsideClick(ref, handler) {
 }
 
 const roleConfig = {
-    1: { label: 'Administrator', color: 'bg-violet-100 text-violet-700', dot: 'bg-violet-600' },
-    2: { label: 'Staff Member', color: 'bg-blue-100 text-blue-700', dot: 'bg-blue-500' },
-    3: { label: 'Customer', color: 'bg-teal-100 text-teal-700', dot: 'bg-teal-500' },
-    4: { label: 'Inventory Staff', color: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500' },
-    5: { label: 'Production Staff', color: 'bg-violet-100 text-violet-700', dot: 'bg-violet-500' },
+    1: { label: 'Administrator',    color: 'bg-violet-100 text-violet-700', dot: 'bg-violet-600' },
+    2: { label: 'Staff Member',     color: 'bg-blue-100 text-blue-700',     dot: 'bg-blue-500'   },
+    3: { label: 'Customer',         color: 'bg-teal-100 text-teal-700',     dot: 'bg-teal-500'   },
+    4: { label: 'Finance',  color: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500' },
+    5: { label: 'Marketing & Sales', color: 'bg-violet-100 text-violet-700', dot: 'bg-violet-500' },
+    6: { label: 'Production Staff', color: 'bg-amber-100 text-amber-700',   dot: 'bg-amber-500'  },
 };
 
 function getInitials(first, last) {
