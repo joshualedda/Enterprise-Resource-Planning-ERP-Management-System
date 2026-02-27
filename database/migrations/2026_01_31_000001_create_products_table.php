@@ -16,6 +16,7 @@ return new class extends Migration {
             $table->decimal('price', 15, 2);
             $table->string('image_path')->nullable();
             $table->string('status')->default('active'); // active, archived
+            $table->string('receipt')->nullable();
             $table->timestamps();
         });
     }

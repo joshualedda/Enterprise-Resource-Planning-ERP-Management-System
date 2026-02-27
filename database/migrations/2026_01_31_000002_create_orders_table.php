@@ -9,10 +9,11 @@ return new class extends Migration {
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
+            // Nakakabit sa transaction header
             $table->foreignId('transaction_id')->constrained()->cascadeOnDelete();
             $table->foreignId('product_id')->constrained();
             $table->integer('quantity');
-            $table->decimal('price_at_sale', 15, 2); // Presyo nung binili
+            $table->decimal('price_at_sale', 15, 2); 
             $table->string('status', 30)->default('active');
             $table->timestamps();
         });

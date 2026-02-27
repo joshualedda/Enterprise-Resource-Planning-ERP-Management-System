@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('phone_number', 20)->nullable();
 
             // Location Hierarchy (Foreign Keys)
+            $table->foreignId('region_id')->nullable()->constrained()->onDelete('set null');
             $table->foreignId('province_id')->nullable()->constrained()->onDelete('set null');
             $table->foreignId('municipality_id')->nullable()->constrained()->onDelete('set null');
             $table->foreignId('barangay_id')->nullable()->constrained()->onDelete('set null');

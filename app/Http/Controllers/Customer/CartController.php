@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Customer;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Category;
+use App\Models\Region;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -23,10 +24,13 @@ class CartController extends Controller
 
         $categories = Category::orderBy('category')->get();
 
+        $regions = Region::with('provinces.municipalities.barangays')->orderBy('region_name')->get();
+
         return Inertia::render('Customer/Products/Index', [
             'products'   => $products,
             'categories' => $categories,
             'cart'       => session('cart', []),
+            'regions'    => $regions,
         ]);
     }
 

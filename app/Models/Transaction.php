@@ -3,26 +3,45 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Transaction extends Model
 {
-    protected $fillable = ['user_id', 'reference_no', 'total_amount', 'transacted_by', 'status'];
+    protected $fillable = [
+        'user_id', 
+        'reference_no', 
+        'total_amount', 
+        'transacted_by',
+        'status',
+        'order_type', 
+        'payment_method', 
+        'receipt_path'
+    ];
 
-    // Sino ang bumili (optional kung walk-in)
-    public function user() {
+    /**
+     * Relationship sa User (Customer)
+     */
+    public function user(): BelongsTo 
+    {
         return $this->belongsTo(User::class);
     }
 
-public function orders()
-{
-    // Dahil sa orders table ay 'transaction_id' ang foreign key
-    return $this->hasMany(Order::class, 'transaction_id');
-}
-    
-    public function order_items()
+    /**
+     * Main relationship para sa mga items sa loob ng transaction
+     */
+    public function order_items(): HasMany
     {
+        // Mas magandang pangalan ang 'order_items' para hindi malito sa Order model
         return $this->hasMany(Order::class, 'transaction_id');
     }
 
+    /**
+     * Helper logic para malaman kung kailangan ng receipt
+     */
+    public function isOnlinePayment(): bool
+    {
+        return $this->payment_method === 'Bank' || $this->payment_method === 'GCash';
+    }
 
 }

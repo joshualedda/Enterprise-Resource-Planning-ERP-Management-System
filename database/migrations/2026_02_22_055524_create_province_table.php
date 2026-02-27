@@ -8,20 +8,19 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('barangay', function (Blueprint $table) {
+        Schema::create('province', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            // Gagawa ng municipality_id na unsignedBigInteger
-            $table->foreignId('municipality_id')
+            $table->foreignId('region_id')
                   ->constrained()
                   ->onUpdate('cascade')
                   ->onDelete('cascade');
+            $table->string('province_name');
             $table->timestamps();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('barangay');
+        Schema::dropIfExists('province');
     }
 };

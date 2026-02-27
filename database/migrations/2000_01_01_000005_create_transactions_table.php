@@ -14,7 +14,15 @@ return new class extends Migration {
             $table->decimal('total_amount', 15, 2);
             $table->string('receipt_path')->nullable(); // Para sa image ng physical receipt
             $table->string('transacted_by')->nullable(); // Pangalan ng staff
-            $table->enum('status', ['Pending', 'In Process', 'Completed', 'Cancelled'])->default('pending');
+            $table->string('payment_method')->nullable(); // Contact number ng customer
+            $table->string('order_type')->default('walk_in'); // walk_in, delivery
+            $table->enum('status', [
+                        'In Process',      // Parehong meron
+                        'On Delivery',     // Para sa Delivery lang
+                        'Ready for Pickup',// Para sa Walk-in lang
+                        'Completed',       // Parehong meron
+                        'Cancelled'        // Parehong meron
+                    ])->default('In Process');
             $table->timestamps();
         });
     }

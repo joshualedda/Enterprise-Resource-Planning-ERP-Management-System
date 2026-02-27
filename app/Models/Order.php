@@ -4,29 +4,40 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Order extends Model
 {
-    // Note: Sa logic natin, 'Order' ang nagsisilbing OrderItem
-    protected $fillable = ['transaction_id', 'product_id', 'quantity', 'price_at_sale',];
+    // Note: 'Order' acts as an OrderItem/LineItem
+    protected $fillable = [
+        'transaction_id', 
+        'product_id', 
+        'quantity', 
+        'price_at_sale', 
+        'status'
+    ];
 
-public function transaction()
-{
-    // Dahil may transaction_id sa orders table
-    return $this->belongsTo(Transaction::class, 'transaction_id');
-}
-
-    // ITO ANG KAILANGAN PARA SA .product NA NASA CONTROLLER
-    public function product()
+    /**
+     * Balik sa main transaction header
+     */
+    public function transaction(): BelongsTo
     {
-        return $this->belongsTo(Product::class, 'product_id');
+        return $this->belongsTo(Transaction::class);
     }
 
-    public function user(): BelongsTo
+    /**
+     * Relationship para makuha ang detalye ng produkto
+     */
+    public function product(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Product::class);
     }
 
-
+    /**
+     * Shortcut para makuha ang User/Customer. 
+     * Kinukuha ito mula sa Transaction parent.
+     */
+    public function user()
+    {
+        return $this->transaction->user();
+    }
 }

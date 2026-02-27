@@ -8,9 +8,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('municipalities', function (Blueprint $table) {
+        Schema::create('municipality', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('municipality_name');
             // Gagawa ng province_id na unsignedBigInteger
             $table->foreignId('province_id')
                   ->constrained()
@@ -22,6 +22,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('municipalities');
+        Schema::dropIfExists('municipality');
     }
 };
