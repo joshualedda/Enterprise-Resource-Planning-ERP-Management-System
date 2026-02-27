@@ -23,10 +23,22 @@ class OrderController extends Controller
         $transactions = Transaction::with('order_items.product')
             ->where('user_id', Auth::id())
             ->latest()
-            ->get();
+            ->get()
+            ->map(function ($transaction) {
+                // Fix image URLs to include /storage/ prefix
+                $transaction->order_items->each(function ($item) {
+                    if ($item->product && $item->product->image_url) {
+                        $item->product->image_url = '/storage/' . $item->product->image_url;
+                    }
+                });
+                return $transaction;
+            });
 
-        return Inertia::render('Customer/Orders/Index', [
-            'transactions' => $transactions,
+        return Inertia::render('Customer/MyOrders', [
+            // Page expects orders.data
+            'orders' => [
+                'data' => $transactions,
+            ],
         ]);
     }
 
@@ -182,6 +194,27 @@ class OrderController extends Controller
         }
     }
 
+
+    /**
+     * PATCH /customer/orders/{id}/received
+     * Customer marks their own order as received.
+     */
+    public function markReceived(int $id)
+    {
+        $transaction = Transaction::where('user_id', Auth::id())->findOrFail($id);
+
+        if ($transaction->status !== 'Ready to Pickup') {
+            return response()->json(['error' => 'Order is not ready for pickup.'], 422);
+        }
+
+        $transaction->update([
+            'status'         => 'Product Received',
+            'transacted_by'  => Auth::id(),
+        ]);
+
+        return response()->json(['message' => 'Order marked as received.']);
+    }
+
     /**
      * SRDI-2026-XXXXXXXX (7 digits + 1 uppercase letter, shuffled, unique)
      */
@@ -196,4 +229,9 @@ class OrderController extends Controller
 
         return $refNo;
     }
+
+
 }
+
+
+    

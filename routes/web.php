@@ -117,6 +117,7 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
 Route::middleware(['auth', 'verified'])->prefix('customer')->name('customer.')->group(function () {
     Route::get('/dashboard', [UserDashboardController::class, 'index'])->name('dashboard');
 
+    Route::patch('/orders/{transaction}/received', [OrderController::class, 'markReceived'])->name('orders.received');
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('/api/orders/{id}/receipt', [OrderController::class, 'getReceipt'])->name('orders.receipt');
     Route::post('/checkout/place-order', [OrderController::class, 'placeOrder'])->name('checkout.place');

@@ -36,13 +36,13 @@ export default function Edit({ mustVerifyEmail, status }) {
                             />
                         </div>
 
-                        <div>
+                        <div className="space-y-6">
                             <UpdatePasswordForm className="w-full" />
-                        </div>
-                    </div>
 
-                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
-                        <DeleteUserForm className="max-w-xl mx-auto" />
+                            <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
+                                <DeleteUserForm className="max-w-xl mx-auto" />
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
