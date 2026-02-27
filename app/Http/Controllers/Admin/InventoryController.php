@@ -10,7 +10,6 @@ use Inertia\Inertia;
 
 class InventoryController extends Controller
 {
-    
     public function index()
     {
         $products = Product::with(['category', 'inventories' => function ($q) {
@@ -41,16 +40,19 @@ class InventoryController extends Controller
         $stockOut = $product->inventories->where('type', 'out')->sum('quantity');
 
         return Inertia::render('Admin/Inventory/View', [
-            'product'      => $product,
-            'logs'         => $product->inventories,
+            'product'       => $product,
+            'logs'          => $product->inventories,
             'current_stock' => max(0, $stockIn - $stockOut),
-            'total_in'     => $stockIn,
-            'total_out'    => $stockOut,
+            'total_in'      => $stockIn,
+            'total_out'     => $stockOut,
         ]);
     }
 
     /**
-     * Record a new inventory adjustment (stock in or out).
+     * Record an inventory adjustment.
+     * Instead of inserting new rows, this updates the single 'in' row per product.
+     * - type = 'in'  → increments the existing stock row (or creates it)
+     * - type = 'out' → decrements the existing stock row
      */
     public function adjust(Request $request)
     {
@@ -63,24 +65,53 @@ class InventoryController extends Controller
             'remarks'      => 'nullable|string',
         ]);
 
-        // Stock-out guard: cannot remove more than available
+        // Get the single inventory row for this product
+        $inventory = Inventory::where('product_id', $request->product_id)
+            ->where('type', 'in')
+            ->latest()
+            ->first();
+
+        $currentStock = $inventory ? $inventory->quantity : 0;
+
+        // Guard: cannot deduct more than what's available
         if ($request->type === 'out') {
-            $product = Product::findOrFail($request->product_id);
-            if ($request->quantity > $product->stock_count) {
-                return back()->withErrors(['quantity' => "Cannot remove more than current stock ({$product->stock_count})."])->withInput();
+            if ($request->quantity > $currentStock) {
+                return back()->withErrors([
+                    'quantity' => "Cannot remove {$request->quantity}. Current stock is only {$currentStock}."
+                ])->withInput();
             }
         }
 
-        Inventory::create([
-            'product_id'   => $request->product_id,
-            'quantity'     => $request->quantity,
-            'type'         => $request->type,
-            'batch_code'   => $request->batch_code,
-            'restock_date' => $request->restock_date,
-            'remarks'      => $request->remarks,
-        ]);
+        if ($request->type === 'in') {
+            if ($inventory) {
+                // Add to existing row
+                $inventory->increment('quantity', $request->quantity);
+                $inventory->update([
+                    'batch_code'   => $request->batch_code   ?? $inventory->batch_code,
+                    'restock_date' => $request->restock_date ?? $inventory->restock_date,
+                    'remarks'      => $request->remarks      ?? $inventory->remarks,
+                ]);
+            } else {
+                // No row yet — create the first one
+                Inventory::create([
+                    'product_id'   => $request->product_id,
+                    'quantity'     => $request->quantity,
+                    'type'         => 'in',
+                    'batch_code'   => $request->batch_code,
+                    'restock_date' => $request->restock_date,
+                    'remarks'      => $request->remarks,
+                ]);
+            }
+        } else {
+            // type = 'out': deduct directly from the stock row
+            $inventory->decrement('quantity', $request->quantity);
 
-        return back()->with('success', 'Inventory adjustment recorded.');
+            if ($request->remarks) {
+                $inventory->update(['remarks' => $request->remarks]);
+            }
+        }
+
+        return back()->with('success', 'Inventory updated successfully.');
     }
 
     /**

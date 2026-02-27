@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\Region;
+use App\Models\UserInformation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -26,11 +27,22 @@ class CartController extends Controller
 
         $regions = Region::with('provinces.municipalities.barangays')->orderBy('region_name')->get();
 
+        // Fetch saved address for auto-fill on delivery checkout
+        $savedAddress = UserInformation::where('user_id', Auth::id())->first();
+
         return Inertia::render('Customer/Products/Index', [
-            'products'   => $products,
-            'categories' => $categories,
-            'cart'       => session('cart', []),
-            'regions'    => $regions,
+            'products'     => $products,
+            'categories'   => $categories,
+            'cart'         => session('cart', []),
+            'regions'      => $regions,
+            'savedAddress' => $savedAddress ? [
+                'phone_number'    => $savedAddress->phone_number,
+                'region_id'       => (string) ($savedAddress->region_id       ?? ''),
+                'province_id'     => (string) ($savedAddress->province_id     ?? ''),
+                'municipality_id' => (string) ($savedAddress->municipality_id ?? ''),
+                'barangay_id'     => (string) ($savedAddress->barangay_id     ?? ''),
+                'zipcode'         => $savedAddress->zipcode ?? '',
+            ] : null,
         ]);
     }
 
