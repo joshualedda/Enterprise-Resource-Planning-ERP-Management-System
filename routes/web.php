@@ -32,6 +32,7 @@ use App\Http\Controllers\Staff\Cashier\CashierReportsController;
 use App\Http\Controllers\Staff\MarketingSales\MarketingSalesDashboardController;
 use App\Http\Controllers\Staff\MarketingSales\MarketingSalesTasksController;
 use App\Http\Controllers\Staff\MarketingSales\MarketingSalesReportsController;
+use App\Http\Controllers\Customer\StorefrontController;
 use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\Admin\ReportsController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
@@ -123,6 +124,7 @@ Route::middleware(['auth', 'verified'])->prefix('customer')->name('customer.')->
     Route::post('/checkout/place-order', [OrderController::class, 'placeOrder'])->name('checkout.place');
 
     Route::post('/ratings/bulk', [RatingController::class, 'bulkStore'])->name('ratings.bulk');
+    
 
     Route::get('/products', [CartController::class, 'index'])->name('products');
     Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
@@ -133,7 +135,7 @@ Route::middleware(['auth', 'verified'])->prefix('customer')->name('customer.')->
 });
 
 /*
-|--------------------------------------------------------------------------
+|   -----------------------------------------------------------------------
 | Staff — Inventory Department Routes — role_id = 4
 | Prefix: /staff/inventory/...
 |--------------------------------------------------------------------------

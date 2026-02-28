@@ -55,14 +55,24 @@ class Product extends Model
         );
     }
 
-    protected function imageUrl(): Attribute
-    {
-        return Attribute::make(
-            get: fn () => $this->image_path 
-                ? asset($this->image_path) 
-                : asset('images/default-product.png'),
-        );
-    }
+protected function imageUrl(): Attribute
+{
+    return Attribute::make(
+        get: function () {
+            if (!$this->image_path) {
+                return asset('images/default-product.png');
+            }
+
+            if (str_starts_with($this->image_path, 'http')) {
+                return $this->image_path;
+            }
+
+            $fixedPath = str_replace('products/', 'product/', $this->image_path);
+
+            return asset('storage/' . $fixedPath);
+        }
+    );
+}
 
     public function ratings(): HasMany
     {
