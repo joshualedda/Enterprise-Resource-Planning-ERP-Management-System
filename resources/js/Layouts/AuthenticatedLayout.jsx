@@ -487,7 +487,7 @@ export default function AuthenticatedLayout({ header, children }) {
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
 
                 {/* ── TOP NAVBAR ── */}
-                <header className="flex-shrink-0 h-[70px] bg-white border-b border-slate-100 shadow-sm flex items-center gap-4 px-4 md:px-6 z-30">
+                <header className="flex-shrink-0 h-[70px] bg-white border-b border-slate-100 shadow-sm flex items-center gap-4 px-4 md:px-6 z-50">
 
                     {/* Desktop Toggle (hide on mobile) */}
                     <button
