@@ -11,7 +11,7 @@ class OrderController extends Controller
 {
     public function index()
     {
-        $transactions = Transaction::with(['user', 'orders.product'])
+        $transactions = Transaction::with(['user', 'order_items.product'])
             ->latest()
             ->get();
 
@@ -22,7 +22,7 @@ class OrderController extends Controller
 
     public function show($id)
     {
-        $transaction = Transaction::with(['user', 'orders.product'])->findOrFail($id);
+        $transaction = Transaction::with(['user', 'order_items.product'])->findOrFail($id);
 
         return Inertia::render('Admin/Orders/View', [
             'order' => $transaction
