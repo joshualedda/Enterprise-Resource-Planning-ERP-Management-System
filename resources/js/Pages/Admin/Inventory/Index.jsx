@@ -402,7 +402,7 @@ export default function InventoryIndex({ auth, products = [] }) {
 
             {/* Toast */}
             {toast && (
-                <div className={`fixed bottom-6 right-6 z-[100] flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl text-white text-sm font-bold animate-in slide-in-from-right duration-300 ${toast.type === 'error' ? 'bg-rose-600' : 'bg-emerald-600'}`}>
+                <div className={`fixed top-6 right-6 z-[100] flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl text-white text-sm font-bold animate-in slide-in-from-right duration-300 ${toast.type === 'error' ? 'bg-rose-600' : 'bg-emerald-600'}`}>
                     {toast.type === 'error' ? <XCircle size={18} /> : <CheckCircle2 size={18} />}
                     {toast.msg}
                 </div>

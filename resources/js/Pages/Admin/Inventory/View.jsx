@@ -307,7 +307,7 @@ export default function InventoryView({ auth, product, logs = [], current_stock 
 
             {/* Toast */}
             {toastMsg && (
-                <div className="fixed bottom-6 right-6 z-[100] flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl bg-emerald-600 text-white text-sm font-bold animate-in slide-in-from-right duration-300">
+                <div className="fixed top-6 right-6 z-[100] flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl bg-emerald-600 text-white text-sm font-bold animate-in slide-in-from-right duration-300">
                     <CheckCircle2 size={18} />
                     {toastMsg}
                 </div>

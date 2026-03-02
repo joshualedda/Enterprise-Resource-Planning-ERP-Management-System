@@ -7,6 +7,8 @@ use App\Models\Order;
 use App\Models\Transaction;
 use App\Models\UserInformation;
 use App\Models\Inventory;
+use App\Models\Notification;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -25,7 +27,6 @@ class OrderController extends Controller
             ->latest()
             ->get()
             ->map(function ($transaction) {
-                // Fix image URLs to include /storage/ prefix
                 $transaction->order_items->each(function ($item) {
                     if ($item->product && $item->product->image_url) {
                         $item->product->image_url = '/storage/' . $item->product->image_url;
@@ -35,26 +36,9 @@ class OrderController extends Controller
             });
 
         return Inertia::render('Customer/MyOrders', [
-            // Page expects orders.data
             'orders' => [
                 'data' => $transactions,
             ],
-        ]);
-    }
-
-    /**
-     * GET /customer/api/orders/{id}/receipt
-     */
-    public function getReceipt(int $id)
-    {
-        $transaction = Transaction::where('user_id', Auth::id())->findOrFail($id);
-
-        if (!$transaction->receipt_path || !Storage::disk('public')->exists($transaction->receipt_path)) {
-            abort(404, 'Receipt not found.');
-        }
-
-        return response()->json([
-            'url' => Storage::disk('public')->url($transaction->receipt_path),
         ]);
     }
 
@@ -63,90 +47,68 @@ class OrderController extends Controller
      */
     public function placeOrder(Request $request)
     {
-        // ── Parse items ──────────────────────────────────────────────────────
-        // Inertia sends items as JSON string when using forceFormData with a file
-        $items = $request->input('items');
-        if (is_string($items)) {
-            $items = json_decode($items, true);
-        }
-
-        // Parse address the same way
-        $address = $request->input('address', []);
-        if (is_string($address)) {
-            $address = json_decode($address, true) ?? [];
-        }
+        $items = is_string($request->input('items')) ? json_decode($request->input('items'), true) : $request->input('items');
+        $address = is_string($request->input('address')) ? json_decode($request->input('address'), true) : $request->input('address', []);
 
         $method  = $request->input('method');
         $payment = $request->input('payment');
         $user    = Auth::user();
 
-        // ── Basic validation ─────────────────────────────────────────────────
+        // 1. Validation
         if (empty($items) || !is_array($items)) {
-            return back()->with('error', 'Your cart is empty or invalid. Please try again.');
+            return back()->with('error', 'Your cart is empty or invalid.');
         }
 
-        if (!in_array($method, ['walk-in', 'delivery'])) {
-            return back()->with('error', 'Invalid order method.');
-        }
-
-        if (!in_array($payment, ['Cash', 'Bank'])) {
-            return back()->with('error', 'Invalid payment method.');
-        }
-
-        // ── Receipt validation ───────────────────────────────────────────────
         if ($payment === 'Bank' && !$request->hasFile('receipt')) {
             return back()->with('error', 'Please upload your GCash or bank transfer receipt.');
         }
 
-        // ── Stock validation ─────────────────────────────────────────────────
+        // 2. Stock Validation
         foreach ($items as $productId => $item) {
             $availableStock = (int) Inventory::where('product_id', $productId)
                 ->where('type', 'in')
                 ->latest()
                 ->value('quantity') ?? 0;
 
-            $needed = (int) ($item['quantity'] ?? 0);
-
-            if ($availableStock < $needed) {
+            if ($availableStock < (int)$item['quantity']) {
                 $name = $item['product'] ?? "Product #{$productId}";
-                return back()->with('error', "Insufficient stock for \"{$name}\". Only {$availableStock} unit(s) available.");
+                return back()->with('error', "Insufficient stock for \"{$name}\". Only {$availableStock} left.");
             }
         }
 
         DB::beginTransaction();
 
         try {
-            // 1. Upload receipt
+            // 3. Upload receipt
             $receiptPath = null;
             if ($request->hasFile('receipt') && $request->file('receipt')->isValid()) {
                 $receiptPath = $request->file('receipt')->store('receipts', 'public');
             }
 
-            // 2. Total amount
+            // 4. Calculate total
             $totalAmount = collect($items)->sum(fn($item) => ($item['price'] ?? 0) * ($item['quantity'] ?? 0));
 
-            // 3. Create Transaction
+            // 5. Create Transaction
             $transaction = Transaction::create([
                 'user_id'        => $user->id,
                 'reference_no'   => $this->generateReferenceNo(),
                 'total_amount'   => $totalAmount,
-                'status'         => 'In Process',
+                'status'         => 'Pending',
                 'order_type'     => $method,
                 'payment_method' => $payment,
                 'receipt_path'   => $receiptPath,
             ]);
 
-            // 4. Order items + inventory deduction
+            // 6. Order items + inventory deduction
             foreach ($items as $productId => $item) {
                 Order::create([
                     'transaction_id' => $transaction->id,
                     'product_id'     => $productId,
                     'quantity'       => $item['quantity'],
                     'price_at_sale'  => $item['price'],
-                    'status'         => 'In Process',
+                    'status'         => 'Pending',
                 ]);
 
-                // Decrement directly on the existing 'in' row — no new row added
                 $inventoryRow = Inventory::where('product_id', $productId)
                     ->where('type', 'in')
                     ->latest()
@@ -160,64 +122,102 @@ class OrderController extends Controller
                 }
             }
 
-            // 5. Save shipping address (delivery only)
+            // 7. Shipping Info (delivery)
             if ($method === 'delivery' && !empty($address)) {
                 UserInformation::updateOrCreate(
                     ['user_id' => $user->id],
                     [
                         'role_id'         => $user->role_id,
-                        'phone_number'    => $address['phone_number']    ?? null,
-                        'region_id'       => $address['region_id']       ?? null,
-                        'province_id'     => $address['province_id']     ?? null,
+                        'phone_number'    => $address['phone_number'] ?? null,
+                        'region_id'       => $address['region_id'] ?? null,
+                        'province_id'     => $address['province_id'] ?? null,
                         'municipality_id' => $address['municipality_id'] ?? null,
-                        'barangay_id'     => $address['barangay_id']     ?? null,
-                        'zipcode'         => $address['zipcode']         ?? null,
+                        'barangay_id'     => $address['barangay_id'] ?? null,
+                        'zipcode'         => $address['zipcode'] ?? null,
                     ]
                 );
             }
 
-            DB::commit();
+            // 8. Notification para sa ADMIN — may bagong order
+            $admin = User::where('role_id', 1)->first();
+            if ($admin) {
+                Notification::create([
+                    'user_id' => $admin->id,
+                    'icon'    => '🛒',
+                    'title'   => 'New Order Received!',
+                    'body' => "Customer {$user->first_name} {$user->last_name} placed a new order #{$transaction->reference_no}.",
+                    'unread'  => true,
+                    'type'    => 'new_order',
+                    'url'     => route('admin.orders.show', $transaction->id)
+                ]);
+            }
 
-            // Clear the session cart after successful order
+            // 9. Notification para sa CUSTOMER — confirmation ng order
+            Notification::create([
+                'user_id' => $user->id,
+                'icon'    => '🛒',
+                'title'   => 'Order Placed Successfully!',
+                'body'    => "Your order #{$transaction->reference_no} has been placed and is now Pending.",
+                'unread'  => true,
+                'type'    => 'new_order',
+                'url'     => route('customer.orders.index')
+            ]);
+
+            DB::commit();
             session()->forget('cart');
 
-            return back()->with(
-                'success',
-                "Order placed successfully! Reference No: {$transaction->reference_no}. Our staff will contact you shortly."
-            );
+            return back()->with('success', "Order placed! Ref: {$transaction->reference_no}");
 
         } catch (\Throwable $e) {
             DB::rollBack();
-            \Log::error('Order placement failed: ' . $e->getMessage() . ' | Line: ' . $e->getLine() . ' | File: ' . $e->getFile());
-
             return back()->with('error', 'Something went wrong: ' . $e->getMessage());
         }
     }
 
-
     /**
      * PATCH /customer/orders/{id}/received
-     * Customer marks their own order as received.
      */
     public function markReceived(int $id)
     {
         $transaction = Transaction::where('user_id', Auth::id())->findOrFail($id);
 
-        if ($transaction->status !== 'Ready to Pickup') {
-            return response()->json(['error' => 'Order is not ready for pickup.'], 422);
+        if ($transaction->status !== 'Ready to Pickup' && $transaction->status !== 'Delivery in Progress') {
+            return response()->json(['error' => 'Order is not ready for pickup/delivery.'], 422);
         }
 
         $transaction->update([
-            'status'         => 'Product Received',
-            'transacted_by'  => Auth::id(),
+            'status'        => 'Product Received',
+            'transacted_by' => Auth::id(),
+        ]);
+
+        // Notification para sa ADMIN — nareceive na ng customer
+        $admin = User::where('role_id', 1)->first();
+        if ($admin) {
+            Notification::create([
+                'user_id' => $admin->id,
+                'icon'    => '✅',
+                'title'   => 'Order Received by Customer',
+                'body'    => "Order #{$transaction->reference_no} has been marked as received.",
+                'unread'  => true,
+                'type'    => 'order_completed',
+                'url'     => route('admin.orders.show', $transaction->id)
+            ]);
+        }
+
+        // Notification para sa CUSTOMER — confirmation na nareceive
+        Notification::create([
+            'user_id' => Auth::id(),
+            'icon'    => '✅',
+            'title'   => 'Order Completed!',
+            'body'    => "Your order #{$transaction->reference_no} has been marked as received. Thank you!",
+            'unread'  => true,
+            'type'    => 'order_completed',
+            'url'     => route('customer.orders.index')
         ]);
 
         return response()->json(['message' => 'Order marked as received.']);
     }
 
-    /**
-     * SRDI-2026-XXXXXXXX (7 digits + 1 uppercase letter, shuffled, unique)
-     */
     private function generateReferenceNo(): string
     {
         do {
@@ -229,9 +229,4 @@ class OrderController extends Controller
 
         return $refNo;
     }
-
-
 }
-
-
-    

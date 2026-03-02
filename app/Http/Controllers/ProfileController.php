@@ -39,10 +39,7 @@ class ProfileController extends Controller
             ] : null,
         ];
 
-        if ((int) $request->user()->role_id === 1) {
-            return Inertia::render('Admin/Profile/Index', $sharedProps);
-        }
-
+        // Use the same default profile edit page for all roles (including admin)
         return Inertia::render('Profile/Edit', $sharedProps);
     }
 
@@ -71,12 +68,7 @@ class ProfileController extends Controller
         );
 
         return match ((int) $request->user()->role_id) {
-            1       => Redirect::route('admin.profile.index'),
-            4       => Redirect::route('staff.inventory.profile'),
-            5       => Redirect::route('staff.productionprofile'),
-            6       => Redirect::route('staff.accountingprofile'),
-            7       => Redirect::route('staff.cashierprofile'),
-            8       => Redirect::route('staff.marketing-salesprofile'),
+            // Redirect all roles back to the shared profile edit route
             default => Redirect::route('profile.edit'),
         };
     }

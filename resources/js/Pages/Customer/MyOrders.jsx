@@ -379,6 +379,7 @@ export default function MyOrders({ auth, orders }) {
     const [hoveredStars,     setHoveredStars]     = useState({});
     const [receiptUrls,      setReceiptUrls]      = useState({});
     const [loadingReceipt,   setLoadingReceipt]   = useState(null);
+    const [receiptZoom, setReceiptZoom] = useState({ open: false, src: null });
     const [activeTab,        setActiveTab]        = useState('active');
 
     const allOrders     = orders?.data || [];
@@ -573,7 +574,12 @@ export default function MyOrders({ auth, orders }) {
                                     <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-2">Payment Receipt</p>
                                     {loadingReceipt === viewingOrder.id && <p className="text-xs text-slate-400">Loading receipt...</p>}
                                     {receiptUrls[viewingOrder.id] && (
-                                        <img src={receiptUrls[viewingOrder.id]} alt="Receipt" className="w-full rounded-xl border border-blue-100 max-h-48 object-contain bg-white" />
+                                        <img
+                                            src={receiptUrls[viewingOrder.id]}
+                                            alt="Receipt"
+                                            className="w-full rounded-xl border border-blue-100 max-h-48 object-contain bg-white cursor-pointer"
+                                            onClick={() => setReceiptZoom({ open: true, src: receiptUrls[viewingOrder.id] })}
+                                        />
                                     )}
                                     {receiptUrls[viewingOrder.id] === null && <p className="text-xs text-slate-400">No receipt found.</p>}
                                 </div>
@@ -593,6 +599,18 @@ export default function MyOrders({ auth, orders }) {
                                     </button>
                                 )}
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Receipt zoom modal for customer */}
+            {receiptZoom.open && (
+                <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/70">
+                    <div className="max-w-4xl w-full">
+                        <div className="relative bg-transparent">
+                            <button onClick={() => setReceiptZoom({ open: false, src: null })} className="absolute right-2 top-2 z-50 p-2 bg-white rounded-full">×</button>
+                            <img src={receiptZoom.src} alt="Receipt" className="w-full h-auto rounded-lg shadow-2xl object-contain" />
                         </div>
                     </div>
                 </div>

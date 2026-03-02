@@ -1,12 +1,12 @@
 <?php
 
-
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 // Controllers
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProductController;
@@ -43,7 +43,11 @@ use App\Http\Controllers\Admin\InventoryController as AdminInventoryController;
 | Public Routes
 |--------------------------------------------------------------------------
 */
+Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead'])
+    ->name('notifications.markAllRead');
 
+Route::patch('/notifications/{id}/mark-read', [NotificationController::class, 'markAsRead'])
+    ->name('notifications.markRead');
 
 Route::get('/', [LandingPageController::class, 'front'])->name('storefront');
 
@@ -55,7 +59,6 @@ Route::post('/api/check-email', function (Request $request) {
 /*
 |--------------------------------------------------------------------------
 | Auth Guard — Role-Based Dashboard Redirect
-| /dashboard → redirects based on role_id
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'verified'])->get('/dashboard', function () {
@@ -75,7 +78,7 @@ Route::middleware(['auth', 'verified'])->get('/dashboard', function () {
 
 /*
 |--------------------------------------------------------------------------
-| Shared — Profile & Tasks (all authenticated users)
+| Shared — Profile & Tasks
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth'])->group(function () {
@@ -88,7 +91,6 @@ Route::middleware(['auth'])->group(function () {
 /*
 |--------------------------------------------------------------------------
 | Admin Routes — role_id = 1
-| Prefix: /admin/...
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
@@ -103,6 +105,9 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
 
     Route::resource('/orders', AdminOrderController::class)->only(['index', 'show', 'update']);
 
+    // ✅ Reject receipt — inside admin group, using AdminOrderController
+    Route::post('/orders/{id}/reject-receipt', [AdminOrderController::class, 'rejectReceipt'])->name('orders.rejectReceipt');
+
     Route::get('/inventory', [AdminInventoryController::class, 'index'])->name('inventory.index');
     Route::get('/inventory/{product}', [AdminInventoryController::class, 'show'])->name('inventory.show');
     Route::post('/inventory/adjust', [AdminInventoryController::class, 'adjust'])->name('inventory.adjust');
@@ -111,8 +116,7 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
 
 /*
 |--------------------------------------------------------------------------
-| Customer / User Routes — role_id = 3
-| Prefix: /customer/...
+| Customer Routes — role_id = 3
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'verified'])->prefix('customer')->name('customer.')->group(function () {
@@ -124,7 +128,6 @@ Route::middleware(['auth', 'verified'])->prefix('customer')->name('customer.')->
     Route::post('/checkout/place-order', [OrderController::class, 'placeOrder'])->name('checkout.place');
 
     Route::post('/ratings/bulk', [RatingController::class, 'bulkStore'])->name('ratings.bulk');
-    
 
     Route::get('/products', [CartController::class, 'index'])->name('products');
     Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
@@ -135,200 +138,139 @@ Route::middleware(['auth', 'verified'])->prefix('customer')->name('customer.')->
 });
 
 /*
-|   -----------------------------------------------------------------------
-| Staff — Inventory Department Routes — role_id = 4
-| Prefix: /staff/inventory/...
 |--------------------------------------------------------------------------
-- add payment tab inventory
+| Staff — Inventory Department — role_id = 4
+|--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'verified'])
-    ->prefix('staff')
-    ->name('staff.')
-    ->group(function () {
+Route::middleware(['auth', 'verified'])->prefix('staff')->name('staff.')->group(function () {
 
-        Route::prefix('inventory')->name('inventory.')->group(function () {
-
-            Route::controller(InventoryDashboardController::class)->group(function () {
-                Route::get('dashboard', 'index')->name('dashboard');
-            });
-
-            Route::controller(InventoryTasksController::class)->group(function () {
-                Route::get('tasks', 'index')->name('tasks');
-            });
-
-            Route::controller(InventoryReportsController::class)->group(function () {
-                Route::get('reports', 'index')->name('reports');
-                Route::get('reports/pdf', 'pdf')->name('reports.pdf');
-                Route::get('reports/excel', 'excel')->name('reports.excel');
-            });
-
-            Route::controller(ProfileController::class)->group(function () {
-                Route::get('profile', 'edit')->name('profile');
-                Route::patch('profile', 'update')->name('profile.update');
-                Route::delete('profile', 'destroy')->name('profile.destroy');
-            });
+    Route::prefix('inventory')->name('inventory.')->group(function () {
+        Route::controller(InventoryDashboardController::class)->group(function () {
+            Route::get('dashboard', 'index')->name('dashboard');
         });
-
-        Route::controller(OrderManagementController::class)->group(function () {
-            Route::get('orders', 'index')->name('orders.index');
-            Route::patch('orders/{transaction}/update-status', 'updateStatus')->name('orders.update');
+        Route::controller(InventoryTasksController::class)->group(function () {
+            Route::get('tasks', 'index')->name('tasks');
+        });
+        Route::controller(InventoryReportsController::class)->group(function () {
+            Route::get('reports', 'index')->name('reports');
+            Route::get('reports/pdf', 'pdf')->name('reports.pdf');
+            Route::get('reports/excel', 'excel')->name('reports.excel');
+        });
+        Route::controller(ProfileController::class)->group(function () {
+            Route::get('profile', 'edit')->name('profile');
+            Route::patch('profile', 'update')->name('profile.update');
+            Route::delete('profile', 'destroy')->name('profile.destroy');
         });
     });
+
+    Route::controller(OrderManagementController::class)->group(function () {
+        Route::get('orders', 'index')->name('orders.index');
+        Route::patch('orders/{transaction}/update-status', 'updateStatus')->name('orders.update');
+    });
+});
 
 /*
 |--------------------------------------------------------------------------
-| Staff — Production Department Routes — role_id = 5
-| Prefix: /staff/production/...
+| Staff — Production Department — role_id = 5
 |--------------------------------------------------------------------------
 */
-    Route::middleware(['auth', 'verified'])
-    ->prefix('staff')
-    ->name('staff.')
-    ->group(function () {
-
-        Route::prefix('production')->name('production')->group(function () {
-
-            Route::controller(ProductionDashboardController::class)->group(function () {
-                Route::get('dashboard', 'index')->name('dashboard');
-            });
-
-            Route::controller(ProductionTasksController::class)->group(function () {
-                Route::get('tasks', 'index')->name('tasks');
-            });
-
-            Route::controller(ProductionReportsController::class)->group(function () {
-                Route::get('reports', 'index')->name('reports');
-                Route::get('reports/pdf', 'pdf')->name('reports.pdf');
-                Route::get('reports/excel', 'excel')->name('reports.excel');
-            });
-
-            // Reusing the profile
-            Route::controller(ProfileController::class)->group(function () {
-                Route::get('profile', 'edit')->name('profile');
-                Route::patch('profile', 'update')->name('profile.update');
-                Route::delete('profile', 'destroy')->name('profile.destroy');
-            });
+Route::middleware(['auth', 'verified'])->prefix('staff')->name('staff.')->group(function () {
+    Route::prefix('production')->name('production')->group(function () {
+        Route::controller(ProductionDashboardController::class)->group(function () {
+            Route::get('dashboard', 'index')->name('dashboard');
         });
-
+        Route::controller(ProductionTasksController::class)->group(function () {
+            Route::get('tasks', 'index')->name('tasks');
+        });
+        Route::controller(ProductionReportsController::class)->group(function () {
+            Route::get('reports', 'index')->name('reports');
+            Route::get('reports/pdf', 'pdf')->name('reports.pdf');
+            Route::get('reports/excel', 'excel')->name('reports.excel');
+        });
+        Route::controller(ProfileController::class)->group(function () {
+            Route::get('profile', 'edit')->name('profile');
+            Route::patch('profile', 'update')->name('profile.update');
+            Route::delete('profile', 'destroy')->name('profile.destroy');
+        });
     });
+});
 
 /*
 |--------------------------------------------------------------------------
-| Staff — Production Department Routes — role_id = 6
-| Prefix: /staff/accouting/...
+| Staff — Accounting — role_id = 6
 |--------------------------------------------------------------------------
-Re: Updated - Finance and Accounting
 */
-     Route::middleware(['auth', 'verified'])
-    ->prefix('staff')
-    ->name('staff.')
-    ->group(function () {
-
-        Route::prefix('accounting')->name('accounting')->group(function () {
-
-            Route::controller(AccountingDashboardController::class)->group(function () {
-                Route::get('dashboard', 'index')->name('dashboard');
-            });
-
-            Route::controller(AccountingTasksController::class)->group(function () {
-                Route::get('tasks', 'index')->name('tasks');
-            });
-
-            Route::controller(AccountingReportsController::class)->group(function () {
-                Route::get('reports', 'index')->name('reports');
-                Route::get('reports/pdf', 'pdf')->name('reports.pdf');
-                Route::get('reports/excel', 'excel')->name('reports.excel');
-            });
-
-            // Reusing the profile
-            Route::controller(ProfileController::class)->group(function () {
-                Route::get('profile', 'edit')->name('profile');
-                Route::patch('profile', 'update')->name('profile.update');
-                Route::delete('profile', 'destroy')->name('profile.destroy');
-            });
+Route::middleware(['auth', 'verified'])->prefix('staff')->name('staff.')->group(function () {
+    Route::prefix('accounting')->name('accounting')->group(function () {
+        Route::controller(AccountingDashboardController::class)->group(function () {
+            Route::get('dashboard', 'index')->name('dashboard');
         });
-
+        Route::controller(AccountingTasksController::class)->group(function () {
+            Route::get('tasks', 'index')->name('tasks');
+        });
+        Route::controller(AccountingReportsController::class)->group(function () {
+            Route::get('reports', 'index')->name('reports');
+            Route::get('reports/pdf', 'pdf')->name('reports.pdf');
+            Route::get('reports/excel', 'excel')->name('reports.excel');
+        });
+        Route::controller(ProfileController::class)->group(function () {
+            Route::get('profile', 'edit')->name('profile');
+            Route::patch('profile', 'update')->name('profile.update');
+            Route::delete('profile', 'destroy')->name('profile.destroy');
+        });
     });
-
-
+});
 
 /*
 |--------------------------------------------------------------------------
-| Staff — Production Department Routes — role_id = 6
-| Prefix: /staff/cashier/...
+| Staff — Cashier — role_id = 7
 |--------------------------------------------------------------------------
 */
-     Route::middleware(['auth', 'verified'])
-    ->prefix('staff')
-    ->name('staff.')
-    ->group(function () {
-
-        Route::prefix('cashier')->name('cashier')->group(function () {
-
-            Route::controller(CashierDashboardController::class)->group(function () {
-                Route::get('dashboard', 'index')->name('dashboard');
-            });
-
-            Route::controller(CashierTasksController::class)->group(function () {
-                Route::get('tasks', 'index')->name('tasks');
-            });
-
-            Route::controller(CashierReportsController::class)->group(function () {
-                Route::get('reports', 'index')->name('reports');
-                Route::get('reports/pdf', 'pdf')->name('reports.pdf');
-                Route::get('reports/excel', 'excel')->name('reports.excel');
-            });
-
-            // Reusing the profile
-            Route::controller(ProfileController::class)->group(function () {
-                Route::get('profile', 'edit')->name('profile');
-                Route::patch('profile', 'update')->name('profile.update');
-                Route::delete('profile', 'destroy')->name('profile.destroy');
-            });
+Route::middleware(['auth', 'verified'])->prefix('staff')->name('staff.')->group(function () {
+    Route::prefix('cashier')->name('cashier')->group(function () {
+        Route::controller(CashierDashboardController::class)->group(function () {
+            Route::get('dashboard', 'index')->name('dashboard');
         });
-
+        Route::controller(CashierTasksController::class)->group(function () {
+            Route::get('tasks', 'index')->name('tasks');
+        });
+        Route::controller(CashierReportsController::class)->group(function () {
+            Route::get('reports', 'index')->name('reports');
+            Route::get('reports/pdf', 'pdf')->name('reports.pdf');
+            Route::get('reports/excel', 'excel')->name('reports.excel');
+        });
+        Route::controller(ProfileController::class)->group(function () {
+            Route::get('profile', 'edit')->name('profile');
+            Route::patch('profile', 'update')->name('profile.update');
+            Route::delete('profile', 'destroy')->name('profile.destroy');
+        });
     });
+});
 
 /*
 |--------------------------------------------------------------------------
-| Staff — Production Department Routes — role_id = 8
-| Prefix: /staff/marketing-sales/...
+| Staff — Marketing & Sales — role_id = 8
 |--------------------------------------------------------------------------
 */
-
-     Route::middleware(['auth', 'verified'])
-    ->prefix('staff')
-    ->name('staff.')
-    ->group(function () {
-
-        Route::prefix('marketing-sales')->name('marketing-sales')->group(function () {
-
-            Route::controller(MarketingSalesDashboardController::class)->group(function () {
-                Route::get('dashboard', 'index')->name('dashboard');
-            });
-
-            Route::controller(MarketingSalesTasksController::class)->group(function () {
-                Route::get('tasks', 'index')->name('tasks');
-            });
-
-            Route::controller(MarketingSalesReportsController::class)->group(function () {
-                Route::get('reports', 'index')->name('reports');
-                Route::get('reports/pdf', 'pdf')->name('reports.pdf');
-                Route::get('reports/excel', 'excel')->name('reports.excel');
-            });
-
-            // Reusing the profile
-            Route::controller(ProfileController::class)->group(function () {
-                Route::get('profile', 'edit')->name('profile');
-                Route::patch('profile', 'update')->name('profile.update');
-                Route::delete('profile', 'destroy')->name('profile.destroy');
-            });
+Route::middleware(['auth', 'verified'])->prefix('staff')->name('staff.')->group(function () {
+    Route::prefix('marketing-sales')->name('marketing-sales')->group(function () {
+        Route::controller(MarketingSalesDashboardController::class)->group(function () {
+            Route::get('dashboard', 'index')->name('dashboard');
         });
-
+        Route::controller(MarketingSalesTasksController::class)->group(function () {
+            Route::get('tasks', 'index')->name('tasks');
+        });
+        Route::controller(MarketingSalesReportsController::class)->group(function () {
+            Route::get('reports', 'index')->name('reports');
+            Route::get('reports/pdf', 'pdf')->name('reports.pdf');
+            Route::get('reports/excel', 'excel')->name('reports.excel');
+        });
+        Route::controller(ProfileController::class)->group(function () {
+            Route::get('profile', 'edit')->name('profile');
+            Route::patch('profile', 'update')->name('profile.update');
+            Route::delete('profile', 'destroy')->name('profile.destroy');
+        });
     });
-
-
-
-
+});
 
 require __DIR__.'/auth.php';

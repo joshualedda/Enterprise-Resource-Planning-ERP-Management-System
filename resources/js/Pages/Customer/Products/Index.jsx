@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import {
     ShoppingCart, X, Plus, Minus, Package, Tag, Info, ShoppingBag,
     Leaf, MapPin, CreditCard, Truck, Store, Loader2, Upload,
-    CheckCircle2, AlertCircle, CheckCheck
+    CheckCircle2, AlertCircle, CheckCheck, Banknote, Building2
 } from 'lucide-react';
 
 const fmt = (price) => new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(price || 0);
@@ -47,7 +47,6 @@ export default function Index({ products = [], regions: initialRegions = [], sav
     const { flash } = usePage().props;
     const { toasts, toast, removeToast } = useToast();
 
-    // Cart — load from localStorage so it persists across page reloads
     const [cart, setCart] = useState(() => {
         try { return JSON.parse(localStorage.getItem(CART_KEY) || 'null') || {}; }
         catch { return {}; }
@@ -57,10 +56,12 @@ export default function Index({ products = [], regions: initialRegions = [], sav
     const [placing, setPlacing]                 = useState(false);
     const [selectedProduct, setSelectedProduct] = useState(null);
 
-    const [method, setMethod]                   = useState('walk-in');
-    const [payment, setPayment]                 = useState('Cash');
-    const [receipt, setReceipt]                 = useState(null);
-    const [receiptPreview, setReceiptPreview]   = useState(null);
+    // method: 'walk-in' | 'delivery'
+    const [method, setMethod]   = useState('walk-in');
+    // payment: 'Cash' | 'Bank'
+    const [payment, setPayment] = useState('Cash');
+    const [receipt, setReceipt]               = useState(null);
+    const [receiptPreview, setReceiptPreview] = useState(null);
 
     const [address, setAddress] = useState({
         phone_number:    savedAddress?.phone_number    || '',
@@ -71,10 +72,10 @@ export default function Index({ products = [], regions: initialRegions = [], sav
         zipcode:         savedAddress?.zipcode         || '',
     });
 
-    const [provinces, setProvinces]             = useState([]);
-    const [municipalities, setMunicipalities]   = useState([]);
-    const [barangays, setBarangays]             = useState([]);
-    const isMountCascade                        = useRef(true);
+    const [provinces, setProvinces]           = useState([]);
+    const [municipalities, setMunicipalities] = useState([]);
+    const [barangays, setBarangays]           = useState([]);
+    const isMountCascade                      = useRef(true);
 
     // Pre-populate cascading dropdowns from savedAddress on mount
     useEffect(() => {
@@ -101,11 +102,22 @@ export default function Index({ products = [], regions: initialRegions = [], sav
         if (flash?.error)   toast(flash.error,   'error');
     }, [flash]);
 
-    // Auto-switch payment when method changes
+    // Reset payment when method changes
     useEffect(() => {
-        if (method === 'delivery') { setPayment('Bank'); }
-        else { setPayment('Cash'); setReceipt(null); setReceiptPreview(null); }
+        if (method === 'delivery') {
+            setPayment('Bank');
+        } else {
+            setPayment('Cash');
+        }
     }, [method]);
+
+    // Clear receipt when not needed
+    useEffect(() => {
+        if (payment !== 'Bank') {
+            setReceipt(null);
+            setReceiptPreview(null);
+        }
+    }, [payment]);
 
     // Cascading dropdowns
     useEffect(() => {
@@ -131,7 +143,7 @@ export default function Index({ products = [], regions: initialRegions = [], sav
         setAddress(prev => ({ ...prev, barangay_id: '' }));
     }, [address.municipality_id]);
 
-    // Persist cart to localStorage on every change
+    // Persist cart
     useEffect(() => {
         try { localStorage.setItem(CART_KEY, JSON.stringify(cart)); } catch { /* noop */ }
     }, [cart]);
@@ -172,9 +184,11 @@ export default function Index({ products = [], regions: initialRegions = [], sav
         if (file) { setReceipt(file); setReceiptPreview(URL.createObjectURL(file)); }
     };
 
+    const requiresReceipt = payment === 'Bank';
+
     const submitOrder = () => {
         if (cartItems.length === 0) return toast('Your cart is empty.', 'error');
-        if (payment === 'Bank' && !receipt) return toast('Please upload your GCash or bank transfer receipt.', 'error');
+        if (requiresReceipt && !receipt) return toast('Please upload your payment receipt.', 'error');
         if (method === 'delivery') {
             if (!address.phone_number)    return toast('Please enter your phone number.', 'error');
             if (!address.region_id)       return toast('Please select your region.', 'error');
@@ -192,8 +206,13 @@ export default function Index({ products = [], regions: initialRegions = [], sav
         router.post(route('customer.checkout.place'), formData, {
             forceFormData: true,
             onFinish:  () => setPlacing(false),
-            onSuccess: () => { clearCart(); setCartOpen(false); },
-            onError:   (errors) => toast(Object.values(errors)[0] || 'Failed to place order.', 'error'),
+            onSuccess: (page) => {
+                const msg = page?.props?.flash?.success || `Order placed!`;
+                toast(msg, 'success');
+                clearCart();
+                setCartOpen(false);
+            },
+            onError: (errors) => toast(Object.values(errors)[0] || 'Failed to place order.', 'error'),
         });
     };
 
@@ -246,13 +265,9 @@ export default function Index({ products = [], regions: initialRegions = [], sav
 
                                 return (
                                     <div key={p.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 flex flex-col overflow-hidden group">
-
-                                        {/* Image */}
                                         <div className="relative aspect-square bg-slate-50 overflow-hidden">
                                             {p.image_url ? (
-                                                <img
-                                                    src={p.image_url}
-                                                    alt={p.product}
+                                                <img src={p.image_url} alt={p.product}
                                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                                     onError={(e) => { e.target.src = 'https://placehold.co/400x400?text=No+Image'; }}
                                                 />
@@ -262,8 +277,6 @@ export default function Index({ products = [], regions: initialRegions = [], sav
                                                     <span className="text-xs font-bold">No Image</span>
                                                 </div>
                                             )}
-
-                                            {/* Stock badge */}
                                             <div className="absolute top-3 left-3">
                                                 {isOut ? (
                                                     <span className="bg-red-500 text-white text-[10px] font-black px-2.5 py-1 rounded-full uppercase">Out of Stock</span>
@@ -273,19 +286,13 @@ export default function Index({ products = [], regions: initialRegions = [], sav
                                                     <span className="bg-emerald-500 text-white text-[10px] font-black px-2.5 py-1 rounded-full uppercase">{stock} in stock</span>
                                                 )}
                                             </div>
-
-                                            {/* Info button */}
                                             {p.description && (
-                                                <button
-                                                    onClick={() => setSelectedProduct(p)}
-                                                    className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm p-1.5 rounded-full shadow-md hover:bg-white transition-colors"
-                                                >
+                                                <button onClick={() => setSelectedProduct(p)}
+                                                    className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm p-1.5 rounded-full shadow-md hover:bg-white transition-colors">
                                                     <Info size={14} className="text-slate-500" />
                                                 </button>
                                             )}
                                         </div>
-
-                                        {/* Details */}
                                         <div className="p-4 flex flex-col flex-1">
                                             <h3 className="font-black text-slate-800 text-sm leading-tight line-clamp-2 mb-1">{p.product}</h3>
                                             {p.category && (
@@ -300,26 +307,17 @@ export default function Index({ products = [], regions: initialRegions = [], sav
                                             <div className="mt-auto">
                                                 <p className="text-emerald-600 text-lg font-black mb-3">{fmt(p.price)}</p>
                                                 {isOut ? (
-                                                    <button disabled className="w-full bg-slate-100 text-slate-400 py-2.5 rounded-xl font-bold text-sm cursor-not-allowed">
-                                                        Out of Stock
-                                                    </button>
+                                                    <button disabled className="w-full bg-slate-100 text-slate-400 py-2.5 rounded-xl font-bold text-sm cursor-not-allowed">Out of Stock</button>
                                                 ) : inCart ? (
                                                     <div className="flex items-center justify-between bg-slate-50 rounded-xl p-1 border border-slate-100">
-                                                        <button onClick={() => updateQty(p.id, -1)} className="p-2 hover:bg-white rounded-lg transition-colors">
-                                                            <Minus size={14} className="text-slate-600" />
-                                                        </button>
+                                                        <button onClick={() => updateQty(p.id, -1)} className="p-2 hover:bg-white rounded-lg transition-colors"><Minus size={14} className="text-slate-600" /></button>
                                                         <span className="font-black text-sm text-slate-800">{inCart.quantity}</span>
-                                                        <button onClick={() => updateQty(p.id, 1)} className="p-2 hover:bg-white rounded-lg transition-colors">
-                                                            <Plus size={14} className="text-slate-600" />
-                                                        </button>
+                                                        <button onClick={() => updateQty(p.id, 1)} className="p-2 hover:bg-white rounded-lg transition-colors"><Plus size={14} className="text-slate-600" /></button>
                                                     </div>
                                                 ) : (
-                                                    <button
-                                                        onClick={() => addToCart(p)}
-                                                        className="w-full bg-slate-900 hover:bg-emerald-600 text-white py-2.5 rounded-xl font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2"
-                                                    >
-                                                        <ShoppingCart size={14} />
-                                                        Add to Cart
+                                                    <button onClick={() => addToCart(p)}
+                                                        className="w-full bg-slate-900 hover:bg-emerald-600 text-white py-2.5 rounded-xl font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2">
+                                                        <ShoppingCart size={14} /> Add to Cart
                                                     </button>
                                                 )}
                                             </div>
@@ -347,9 +345,7 @@ export default function Index({ products = [], regions: initialRegions = [], sav
                             <div className="flex justify-between items-start mb-3">
                                 <div>
                                     <h2 className="font-black text-xl text-slate-900">{selectedProduct.product}</h2>
-                                    {selectedProduct.category && (
-                                        <span className="text-xs text-slate-400 font-bold uppercase">{selectedProduct.category.category}</span>
-                                    )}
+                                    {selectedProduct.category && <span className="text-xs text-slate-400 font-bold uppercase">{selectedProduct.category.category}</span>}
                                 </div>
                                 <button onClick={() => setSelectedProduct(null)} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
                                     <X size={18} className="text-slate-500" />
@@ -382,9 +378,7 @@ export default function Index({ products = [], regions: initialRegions = [], sav
                             <div className="flex items-center gap-2">
                                 <ShoppingBag size={20} className="text-slate-700" />
                                 <h2 className="font-black text-xl text-slate-800">Your Cart</h2>
-                                {cartCount > 0 && (
-                                    <span className="bg-emerald-500 text-white text-xs font-black px-2 py-0.5 rounded-full">{cartCount}</span>
-                                )}
+                                {cartCount > 0 && <span className="bg-emerald-500 text-white text-xs font-black px-2 py-0.5 rounded-full">{cartCount}</span>}
                             </div>
                             <button onClick={() => !placing && setCartOpen(false)} className="p-2 bg-slate-100 rounded-full hover:rotate-90 transition-transform">
                                 <X size={20} />
@@ -406,8 +400,7 @@ export default function Index({ products = [], regions: initialRegions = [], sav
                                     <div key={item.id} className="flex gap-3 bg-slate-50 rounded-xl p-3 border border-slate-100 items-center">
                                         <div className="w-12 h-12 bg-slate-100 rounded-xl overflow-hidden shrink-0">
                                             {item.image_url
-                                                ? <img src={item.image_url} className="w-full h-full object-cover" alt={item.product}
-                                                    onError={(e) => { e.target.src = 'https://placehold.co/64x64?text=?'; }} />
+                                                ? <img src={item.image_url} className="w-full h-full object-cover" alt={item.product} onError={(e) => { e.target.src = 'https://placehold.co/64x64?text=?'; }} />
                                                 : <div className="w-full h-full flex items-center justify-center text-slate-200"><Package size={20} /></div>
                                             }
                                         </div>
@@ -415,16 +408,10 @@ export default function Index({ products = [], regions: initialRegions = [], sav
                                             <p className="font-bold text-slate-800 text-sm truncate">{item.product}</p>
                                             <p className="text-emerald-600 text-xs font-black">{fmt(item.price)}</p>
                                             <div className="flex items-center gap-2 mt-1">
-                                                <button onClick={() => updateQty(item.id, -1)} className="w-5 h-5 bg-slate-200 rounded-full flex items-center justify-center hover:bg-rose-200 transition-colors">
-                                                    <Minus size={9} />
-                                                </button>
+                                                <button onClick={() => updateQty(item.id, -1)} className="w-5 h-5 bg-slate-200 rounded-full flex items-center justify-center hover:bg-rose-200 transition-colors"><Minus size={9} /></button>
                                                 <span className="text-xs font-black text-slate-700 w-4 text-center">{item.quantity}</span>
-                                                <button onClick={() => updateQty(item.id, 1)} className="w-5 h-5 bg-slate-200 rounded-full flex items-center justify-center hover:bg-emerald-200 transition-colors">
-                                                    <Plus size={9} />
-                                                </button>
-                                                <button onClick={() => removeFromCart(item.id)} className="ml-auto text-slate-300 hover:text-red-400 transition-colors">
-                                                    <X size={13} />
-                                                </button>
+                                                <button onClick={() => updateQty(item.id, 1)} className="w-5 h-5 bg-slate-200 rounded-full flex items-center justify-center hover:bg-emerald-200 transition-colors"><Plus size={9} /></button>
+                                                <button onClick={() => removeFromCart(item.id)} className="ml-auto text-slate-300 hover:text-red-400 transition-colors"><X size={13} /></button>
                                             </div>
                                         </div>
                                         <p className="font-black text-slate-900 text-sm shrink-0">{fmt(item.price * item.quantity)}</p>
@@ -432,17 +419,22 @@ export default function Index({ products = [], regions: initialRegions = [], sav
                                 ))}
                             </div>
 
-                            {/* Method Toggle */}
-                            <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200/50">
-                                <button onClick={() => setMethod('walk-in')} className={`flex-1 py-3 rounded-xl flex items-center justify-center gap-2 text-xs font-black transition-all ${method === 'walk-in' ? 'bg-white shadow-md text-emerald-600' : 'text-slate-500'}`}>
-                                    <Store size={15} /> Walk-in
-                                </button>
-                                <button onClick={() => setMethod('delivery')} className={`flex-1 py-3 rounded-xl flex items-center justify-center gap-2 text-xs font-black transition-all ${method === 'delivery' ? 'bg-white shadow-md text-emerald-600' : 'text-slate-500'}`}>
-                                    <Truck size={15} /> Delivery
-                                </button>
+                            {/* Order Method */}
+                            <div>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Order Method</p>
+                                <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200/50">
+                                    <button onClick={() => setMethod('walk-in')}
+                                        className={`flex-1 py-3 rounded-xl flex items-center justify-center gap-2 text-xs font-black transition-all ${method === 'walk-in' ? 'bg-white shadow-md text-emerald-600' : 'text-slate-500'}`}>
+                                        <Store size={15} /> Walk-in
+                                    </button>
+                                    <button onClick={() => setMethod('delivery')}
+                                        className={`flex-1 py-3 rounded-xl flex items-center justify-center gap-2 text-xs font-black transition-all ${method === 'delivery' ? 'bg-white shadow-md text-emerald-600' : 'text-slate-500'}`}>
+                                        <Truck size={15} /> Delivery
+                                    </button>
+                                </div>
                             </div>
 
-                            {/* Address Form */}
+                            {/* Address Form (delivery only) */}
                             {method === 'delivery' && (
                                 <div className="space-y-3 p-5 bg-slate-50 rounded-2xl border border-slate-100">
                                     <div className="flex items-center justify-between mb-1">
@@ -456,8 +448,7 @@ export default function Index({ products = [], regions: initialRegions = [], sav
                                     </div>
                                     <input type="text" placeholder="Active Phone Number"
                                         className="w-full border-slate-200 rounded-xl text-sm focus:ring-emerald-500 focus:border-emerald-500"
-                                        value={address.phone_number}
-                                        onChange={e => setAddress({ ...address, phone_number: e.target.value })} />
+                                        value={address.phone_number} onChange={e => setAddress({ ...address, phone_number: e.target.value })} />
                                     <select className="w-full border-slate-200 rounded-xl text-sm" value={address.region_id}
                                         onChange={e => setAddress({ ...address, region_id: e.target.value })}>
                                         <option value="">Select Region</option>
@@ -476,8 +467,7 @@ export default function Index({ products = [], regions: initialRegions = [], sav
                                         </select>
                                         <input type="text" placeholder="ZIP Code"
                                             className="w-full border-slate-200 rounded-xl text-sm"
-                                            value={address.zipcode}
-                                            onChange={e => setAddress({ ...address, zipcode: e.target.value })} />
+                                            value={address.zipcode} onChange={e => setAddress({ ...address, zipcode: e.target.value })} />
                                     </div>
                                     <select disabled={!address.municipality_id} className="w-full border-slate-200 rounded-xl text-sm disabled:opacity-50"
                                         value={address.barangay_id} onChange={e => setAddress({ ...address, barangay_id: e.target.value })}>
@@ -487,28 +477,69 @@ export default function Index({ products = [], regions: initialRegions = [], sav
                                 </div>
                             )}
 
-                            {/* Payment */}
+                            {/* ── Payment Method ── */}
                             <div className="space-y-3">
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Payment Method</p>
-                                {method === 'walk-in' ? (
-                                    <div className="p-4 rounded-2xl border-2 border-emerald-500 bg-emerald-50 text-emerald-600 font-black text-xs text-center">
-                                        Cash / Over-the-counter
-                                    </div>
-                                ) : (
-                                    <div className="p-4 rounded-2xl border-2 border-blue-500 bg-blue-50 text-blue-600 font-black text-xs flex items-center justify-center gap-2">
-                                        <CreditCard size={14} /> Bank Transfer / GCash (Required for Delivery)
+
+                                {/* Walk-in: Cash or Bank Transfer */}
+                                {method === 'walk-in' && (
+                                    <div className="flex gap-2">
+                                        {/* Cash */}
+                                        <button type="button" onClick={() => setPayment('Cash')}
+                                            className={`flex-1 flex flex-col items-center gap-2 py-4 px-3 rounded-2xl border-2 font-black text-xs transition-all duration-200
+                                                ${payment === 'Cash'
+                                                    ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-md'
+                                                    : 'border-slate-200 bg-white text-slate-400 hover:border-slate-300 hover:text-slate-600'
+                                                }`}
+                                        >
+                                            <Banknote size={20} className={payment === 'Cash' ? 'text-emerald-500' : 'text-slate-300'} />
+                                            <span className="uppercase tracking-wide">Cash</span>
+                                            <span className={`text-[9px] font-bold normal-case ${payment === 'Cash' ? 'text-emerald-400' : 'text-slate-300'}`}>Pay at counter</span>
+                                        </button>
+
+                                        {/* Bank Transfer */}
+                                        <button type="button" onClick={() => setPayment('Bank')}
+                                            className={`flex-1 flex flex-col items-center gap-2 py-4 px-3 rounded-2xl border-2 font-black text-xs transition-all duration-200
+                                                ${payment === 'Bank'
+                                                    ? 'border-green-600 bg-green-50 text-green-700 shadow-md'
+                                                    : 'border-slate-200 bg-white text-slate-400 hover:border-slate-300 hover:text-slate-600'
+                                                }`}
+                                        >
+                                            <Building2 size={20} className={payment === 'Bank' ? 'text-green-600' : 'text-slate-300'} />
+                                            <span className="uppercase tracking-wide">Bank Transfer</span>
+                                            <span className={`text-[9px] font-bold normal-case ${payment === 'Bank' ? 'text-green-500' : 'text-slate-300'}`}>Scan QR to pay</span>
+                                        </button>
                                     </div>
                                 )}
-                                {payment === 'Bank' && (
-                                    <div className="p-5 bg-blue-50 rounded-2xl border border-blue-100 space-y-4">
-                                        <div className="text-center">
-                                            <div className="bg-white p-3 inline-block rounded-2xl shadow-sm mb-2">
-                                                <img src="/images/gcash-qr.png" className="w-28 h-28 object-contain" alt="GCash QR" />
+
+                                {/* Delivery: Bank Transfer locked */}
+                                {method === 'delivery' && (
+                                    <div className="p-4 rounded-2xl border-2 border-green-600 bg-green-50 text-green-700 font-black text-xs flex items-center justify-center gap-2">
+                                        <Building2 size={14} /> Bank Transfer — Required for Delivery
+                                    </div>
+                                )}
+
+                                {/* QR + Receipt Upload — shown when Bank Transfer selected */}
+                                {requiresReceipt && (
+                                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-4">
+                                        {/* Landbank QR */}
+                                        <div className="bg-white rounded-xl border border-green-100 p-4 space-y-3">
+                                            <div className="flex items-center gap-2">
+                                                <Building2 size={14} className="text-green-600" />
+                                                <span className="text-xs font-black text-slate-700 uppercase tracking-wide">Scan to Pay — Landbank</span>
                                             </div>
-                                            <p className="text-xs font-black text-blue-900">Juan Dela Cruz</p>
-                                            <p className="text-[10px] text-blue-500 font-bold tracking-widest">0912 345 6789</p>
+                                            <div className="flex justify-center">
+                                                <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 inline-block">
+                                                    <img src="/images/landbank-qr.png" className="w-32 h-32 object-contain" alt="Landbank QR" />
+                                                </div>
+                                            </div>
+                                            <p className="text-center text-[10px] text-slate-400 font-bold">
+                                                Scan using your Landbank app or any bank app
+                                            </p>
                                         </div>
-                                        <label className="block border-2 border-dashed border-blue-200 rounded-xl p-5 text-center cursor-pointer hover:bg-blue-100 transition-all relative overflow-hidden" style={{ minHeight: '100px' }}>
+
+                                        {/* Receipt Upload */}
+                                        <label className="block border-2 border-dashed border-slate-300 rounded-xl p-5 text-center cursor-pointer hover:bg-slate-100 transition-all relative overflow-hidden" style={{ minHeight: '100px' }}>
                                             {receiptPreview ? (
                                                 <div className="absolute inset-0 group">
                                                     <img src={receiptPreview} className="w-full h-full object-cover" alt="Receipt" />
@@ -519,9 +550,9 @@ export default function Index({ products = [], regions: initialRegions = [], sav
                                                 </div>
                                             ) : (
                                                 <div className="space-y-1">
-                                                    <Upload className="mx-auto text-blue-400 mb-1" size={22} />
-                                                    <p className="text-[10px] font-black text-blue-600 uppercase">Upload Payment Receipt</p>
-                                                    <p className="text-[10px] text-blue-400">GCash screenshot or bank transfer slip</p>
+                                                    <Upload className="mx-auto text-slate-400 mb-1" size={22} />
+                                                    <p className="text-[10px] font-black text-slate-600 uppercase">Upload Payment Receipt</p>
+                                                    <p className="text-[10px] text-slate-400">Screenshot of your bank transfer</p>
                                                 </div>
                                             )}
                                             <input type="file" className="hidden" onChange={handleReceipt} accept="image/*" />
@@ -537,16 +568,25 @@ export default function Index({ products = [], regions: initialRegions = [], sav
                                 <span className="text-slate-400 text-xs font-black uppercase">Total Amount</span>
                                 <span className="text-2xl font-black text-slate-900">{fmt(cartTotal)}</span>
                             </div>
-                            <button
-                                onClick={submitOrder}
-                                disabled={placing || cartItems.length === 0}
-                                className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-black text-sm shadow-lg shadow-emerald-200 transition-all disabled:opacity-50 disabled:grayscale flex items-center justify-center gap-2"
-                            >
-                                {placing
-                                    ? <><Loader2 size={16} className="animate-spin" /> Placing Order...</>
-                                    : <><ShoppingBag size={16} /> Confirm & Place Order</>
-                                }
-                            </button>
+                            {(() => {
+                                const missingReceipt = requiresReceipt && !receipt;
+                                const disabled = placing || cartItems.length === 0 || missingReceipt;
+                                return (
+                                    <div>
+                                        <button onClick={submitOrder} disabled={disabled}
+                                            className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-black text-sm shadow-lg shadow-emerald-200 transition-all disabled:opacity-50 disabled:grayscale flex items-center justify-center gap-2"
+                                        >
+                                            {placing
+                                                ? <><Loader2 size={16} className="animate-spin" /> Placing Order...</>
+                                                : <><ShoppingBag size={16} /> Confirm & Place Order</>
+                                            }
+                                        </button>
+                                        {missingReceipt && (
+                                            <p className="mt-2 text-xs text-rose-600 font-bold text-center">Please upload your payment receipt to continue.</p>
+                                        )}
+                                    </div>
+                                );
+                            })()}
                         </div>
                     </div>
                 </div>

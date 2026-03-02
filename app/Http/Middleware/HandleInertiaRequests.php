@@ -1,48 +1,55 @@
 <?php
-
 namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Inertia\Middleware;
+use App\Models\Notification;
 
 class HandleInertiaRequests extends Middleware
 {
-    /**
-     * The root template that is loaded on the first page visit.
-     *
-     * @var string
-     */
     protected $rootView = 'app';
 
-    /**
-     * Determine the current asset version.
-     */
     public function version(Request $request): ?string
     {
         return parent::version($request);
     }
 
-    /**
-     * Define the props that are shared by default.
-     *
-     * @return array<string, mixed>
-     */
     public function share(Request $request): array
     {
-        return [
-            ...parent::share($request),
-            
-            // I-share ang Auth user details
-            'auth' => [
-                'user' => $request->user(),
-            ],
+        $user          = $request->user();
+        $notifications = [];
 
-            // ITO ANG PINAKA-IMPORTANTE: 
-            // Dito natin kinukuha ang session messages para mabasa ng React Toast
-            'flash' => [
-                'success' => fn () => $request->session()->get('success'),
-                'error' => fn () => $request->session()->get('error'),
+        if ($user) {
+            $notifications = Notification::where('user_id', $user->id)
+                ->latest()
+                ->take(10)
+                ->get()
+                ->map(function ($n) use ($user) {
+                    return [
+                        'id'         => $n->id,
+                        'icon'       => $n->icon ?? '🔔',
+                        'title'      => $n->title,
+                        'body'       => $n->body,
+                        'type'       => $n->type,       // ✅ needed for receipt_rejected modal
+                        'created_at' => $n->created_at,
+                        'unread'     => (bool) $n->unread,
+                        'url'        => $n->url ?? (($user->role_id === 1)
+                            ? route('admin.orders.index')
+                            : route('customer.orders.index')),
+                    ];
+                });
+        }
+
+        return array_merge(parent::share($request), [
+            'auth' => [
+                'user'          => $user,
+                'notifications' => $notifications,
             ],
-        ];
+            // ✅ flash messages — needed for toast alerts across all pages
+            'flash' => [
+                'success' => session('success'),
+                'error'   => session('error'),
+            ],
+        ]);
     }
 }
