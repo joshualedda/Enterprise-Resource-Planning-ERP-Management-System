@@ -17,12 +17,14 @@ return new class extends Migration {
             $table->string('payment_method')->nullable(); // Contact number ng customer
             $table->string('order_type')->default('walk_in'); // walk_in, delivery
             $table->enum('status', [
+                        'Pending',         // Default status kapag bagong order
                         'In Process',      // Parehong meron
                         'On Delivery',     // Para sa Delivery lang
                         'Ready for Pickup',// Para sa Walk-in lang
                         'Completed',       // Parehong meron
                         'Cancelled'        // Parehong meron
                     ])->default('In Process');
+            $table->boolean('is_rated')->default(false); // Para malaman kung rated na ng customer  
             $table->timestamps();
         });
     }
