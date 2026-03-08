@@ -20,6 +20,9 @@ use App\Http\Controllers\Staff\OrderManagementController;
 use App\Http\Controllers\Staff\InventoryDashboardController;
 use App\Http\Controllers\Staff\InventoryTasksController;
 use App\Http\Controllers\Staff\InventoryReportsController;
+use App\Http\Controllers\Staff\InventoryProductsController;
+use App\Http\Controllers\Staff\InventoryCategoriesController;
+use App\Http\Controllers\Staff\InventoryStockLevelsController;
 use App\Http\Controllers\Staff\Production\ProductionDashboardController;
 use App\Http\Controllers\Staff\Production\ProductionTasksController;
 use App\Http\Controllers\Staff\Production\ProductionReportsController;
@@ -147,6 +150,15 @@ Route::middleware(['auth', 'verified'])->prefix('staff')->name('staff.')->group(
     Route::prefix('inventory')->name('inventory.')->group(function () {
         Route::controller(InventoryDashboardController::class)->group(function () {
             Route::get('dashboard', 'index')->name('dashboard');
+        });
+        Route::controller(InventoryProductsController::class)->group(function () {
+            Route::get('products', 'index')->name('products.index');
+        });
+        Route::controller(InventoryCategoriesController::class)->group(function () {
+            Route::get('categories', 'index')->name('categories.index');
+        });
+        Route::controller(InventoryStockLevelsController::class)->group(function () {
+            Route::get('stock-levels', 'index')->name('stock-levels.index');
         });
         Route::controller(InventoryTasksController::class)->group(function () {
             Route::get('tasks', 'index')->name('tasks');

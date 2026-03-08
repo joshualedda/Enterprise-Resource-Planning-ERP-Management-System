@@ -322,8 +322,8 @@ export default function InventoryStaffLayout({ header, children }) {
             name: 'Products',
             icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
             children: [
-                { name: 'All Products', href: route().has('staff.products.index') ? route('staff.products.index') : '#' },
-                { name: 'Categories', href: '#' },
+                { name: 'All Products', href: route().has('staff.inventory.products.index') ? route('staff.inventory.products.index') : '#' },
+                { name: 'Categories', href: route().has('staff.inventory.categories.index') ? route('staff.inventory.categories.index') : '#' },
                 { name: 'Units', href: '#' },
                 { name: 'Batches', href: '#' },
             ]
@@ -341,7 +341,7 @@ export default function InventoryStaffLayout({ header, children }) {
             name: 'Stock Management',
             icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
             children: [
-                { name: 'Stock Levels', href: '#' },
+                { name: 'Stock Levels', href: route().has('staff.inventory.stock-levels.index') ? route('staff.inventory.stock-levels.index') : '#' },
                 { name: 'Stock Movements', href: '#' },
                 { name: 'Stock Reservations', href: '#' },
                 { name: 'Opening Balances', href: '#' },
