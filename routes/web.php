@@ -22,6 +22,12 @@ use App\Http\Controllers\Staff\InventoryTasksController;
 use App\Http\Controllers\Staff\InventoryReportsController;
 use App\Http\Controllers\Staff\InventoryProductsController;
 use App\Http\Controllers\Staff\InventoryCategoriesController;
+use App\Http\Controllers\Staff\InventoryUnitsController;
+use App\Http\Controllers\Staff\InventoryBatchesController;
+use App\Http\Controllers\Staff\InventoryWarehousesController;
+use App\Http\Controllers\Staff\InventoryWarehouseLocationsController;
+use App\Http\Controllers\Staff\InventoryProductStocksController;
+use App\Http\Controllers\Staff\InventoryStockMovementsController;
 use App\Http\Controllers\Staff\InventoryStockLevelsController;
 use App\Http\Controllers\Staff\Production\ProductionDashboardController;
 use App\Http\Controllers\Staff\Production\ProductionTasksController;
@@ -153,9 +159,53 @@ Route::middleware(['auth', 'verified'])->prefix('staff')->name('staff.')->group(
         });
         Route::controller(InventoryProductsController::class)->group(function () {
             Route::get('products', 'index')->name('products.index');
+            Route::post('products', 'store')->name('products.store');
+            Route::put('products/{product}', 'update')->name('products.update');
+            Route::delete('products/{product}', 'destroy')->name('products.destroy');
         });
         Route::controller(InventoryCategoriesController::class)->group(function () {
             Route::get('categories', 'index')->name('categories.index');
+            Route::post('categories', 'store')->name('categories.store');
+            Route::put('categories/{category}', 'update')->name('categories.update');
+            Route::delete('categories/{category}', 'destroy')->name('categories.destroy');
+        });
+        Route::controller(InventoryUnitsController::class)->group(function () {
+            Route::get('units', 'index')->name('units.index');
+            Route::post('units', 'store')->name('units.store');
+            Route::put('units/{unit}', 'update')->name('units.update');
+            Route::delete('units/{unit}', 'destroy')->name('units.destroy');
+        });
+        Route::controller(InventoryBatchesController::class)->group(function () {
+            Route::get('batches', 'index')->name('batches.index');
+            Route::post('batches', 'store')->name('batches.store');
+            Route::put('batches/{batch}', 'update')->name('batches.update');
+            Route::delete('batches/{batch}', 'destroy')->name('batches.destroy');
+        });
+        Route::controller(InventoryWarehousesController::class)->group(function () {
+            Route::get('warehouses', 'index')->name('warehouses.index');
+            Route::post('warehouses', 'store')->name('warehouses.store');
+            Route::put('warehouses/{warehouse}', 'update')->name('warehouses.update');
+            Route::delete('warehouses/{warehouse}', 'destroy')->name('warehouses.destroy');
+        });
+        Route::controller(InventoryWarehouseLocationsController::class)->group(function () {
+            Route::get('warehouses-location', 'index')->name('warehouses-location.index');
+            Route::post('warehouses-location', 'store')->name('warehouses-location.store');
+            Route::put('warehouses-location/{location}', 'update')->name('warehouses-location.update');
+            Route::delete('warehouses-location/{location}', 'destroy')->name('warehouses-location.destroy');
+        });
+        Route::controller(InventoryProductStocksController::class)->group(function () {
+            Route::get('product-stocks', 'index')->name('product-stocks.index');
+            Route::get('product-stocks/batches/{product}', 'getBatchesByProduct')->name('product-stocks.batches');
+            Route::post('product-stocks', 'store')->name('product-stocks.store');
+            Route::put('product-stocks/{stock}', 'update')->name('product-stocks.update');
+            Route::delete('product-stocks/{stock}', 'destroy')->name('product-stocks.destroy');
+        });
+        Route::controller(InventoryStockMovementsController::class)->group(function () {
+            Route::get('stock-movements', 'index')->name('stock-movements.index');
+            Route::get('stock-movements/batches/{product}', 'getBatchesByProduct')->name('stock-movements.batches');
+            Route::post('stock-movements', 'store')->name('stock-movements.store');
+            Route::put('stock-movements/{movement}', 'update')->name('stock-movements.update');
+            Route::delete('stock-movements/{movement}', 'destroy')->name('stock-movements.destroy');
         });
         Route::controller(InventoryStockLevelsController::class)->group(function () {
             Route::get('stock-levels', 'index')->name('stock-levels.index');

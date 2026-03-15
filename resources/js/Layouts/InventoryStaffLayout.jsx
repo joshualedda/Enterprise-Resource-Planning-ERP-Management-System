@@ -324,16 +324,16 @@ export default function InventoryStaffLayout({ header, children }) {
             children: [
                 { name: 'All Products', href: route().has('staff.inventory.products.index') ? route('staff.inventory.products.index') : '#' },
                 { name: 'Categories', href: route().has('staff.inventory.categories.index') ? route('staff.inventory.categories.index') : '#' },
-                { name: 'Units', href: '#' },
-                { name: 'Batches', href: '#' },
+                { name: 'Units', href: route().has('staff.inventory.units.index') ? route('staff.inventory.units.index') : '#' },
+                { name: 'Batches', href: route().has('staff.inventory.batches.index') ? route('staff.inventory.batches.index') : '#' },
             ]
         },
         {
             name: 'Warehouses',
             icon: 'M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z',
             children: [
-                { name: 'Warehouses', href: '#' },
-                { name: 'Locations', href: '#' },
+                { name: 'Warehouses', href: route().has('staff.inventory.warehouses.index') ? route('staff.inventory.warehouses.index') : '#' },
+                { name: 'Locations', href: route().has('staff.inventory.warehouses-location.index') ? route('staff.inventory.warehouses-location.index') : '#' },
                 { name: 'Warehouse Stock View', href: '#' },
             ]
         },
@@ -341,10 +341,11 @@ export default function InventoryStaffLayout({ header, children }) {
             name: 'Stock Management',
             icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
             children: [
+                { name: 'Product Stock', href: route().has('staff.inventory.product-stocks.index') ? route('staff.inventory.product-stocks.index') : '#' },
                 { name: 'Stock Levels', href: route().has('staff.inventory.stock-levels.index') ? route('staff.inventory.stock-levels.index') : '#' },
-                { name: 'Stock Movements', href: '#' },
-                { name: 'Stock Reservations', href: '#' },
-                { name: 'Opening Balances', href: '#' },
+                { name: 'Stock Movements', href: route().has('staff.inventory.stock-movements.index') ? route('staff.inventory.stock-movements.index') : '#' },
+                // { name: 'Stock Reservations', href: '#' },
+                // { name: 'Opening Balances', href: '#' },
             ]
         },
         {

@@ -1,7 +1,15 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import InventoryStaffLayout from '@/Layouts/InventoryStaffLayout';
-import { Head, router } from '@inertiajs/react';
-
+import { Head, router, useForm } from '@inertiajs/react';
+import Modal from '@/Components/Modal';
+import TextInput from '@/Components/TextInput';
+import InputLabel from '@/Components/InputLabel';
+import InputError from '@/Components/InputError';
+import PrimaryButton from '@/Components/PrimaryButton';
+import SecondaryButton from '@/Components/SecondaryButton';
+import Alert from '@/Components/Alert';
+import Table, { Tr, Td } from '@/Components/Table';
+import Pagination from '@/Components/Pagination';
 // ─────────────────────────────────────────────────────────
 // DUMMY DATA — used when no backend data is passed in
 // ─────────────────────────────────────────────────────────
@@ -116,8 +124,10 @@ function KpiCard({ label, value, sub, iconPath, iconBg, badge, badgeColor }) {
 export default function AllProducts({
     products: serverProducts,
     categories: serverCategories,
+    units: serverUnits,
     stats: serverStats,
     filters: serverFilters = {},
+    flash,
 }) {
     // Use server data if available, else dummy
     const isServer = serverProducts && serverProducts.data !== undefined;
@@ -125,22 +135,130 @@ export default function AllProducts({
     const stats = serverStats ?? DUMMY_STATS;
     const categories = serverCategories?.length ? serverCategories : DUMMY_CATEGORIES;
 
+    // Flash message state
+    const [alertMessage, setAlertMessage] = useState('');
+
+    useEffect(() => {
+        if (flash?.success) {
+            setAlertMessage(flash.success);
+            const timer = setTimeout(() => setAlertMessage(''), 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [flash]);
+
     // Local UI state
     const [search, setSearch]     = useState(serverFilters.search ?? '');
     const [catFilter, setCat]     = useState(serverFilters.category ?? 'All');
-    const [statusFilter, setStatus] = useState(serverFilters.status ?? 'All');
+    const [unitFilter, setUnit]   = useState(serverFilters.unit ?? 'All');
     const [viewMode, setViewMode] = useState('table'); // 'table' | 'grid'
+
+    // Auto-filter
+    const isInitialRender = useRef(true);
+    useEffect(() => {
+        if (isInitialRender.current) {
+            isInitialRender.current = false;
+            return;
+        }
+        if (!isServer) return;
+        const timeoutId = setTimeout(() => {
+            router.get(route('staff.inventory.products.index'), {
+                search: search || undefined,
+                category: catFilter !== 'All' ? catFilter : undefined,
+                unit: unitFilter !== 'All' ? unitFilter : undefined,
+            }, { preserveState: true, replace: true });
+        }, 300);
+        return () => clearTimeout(timeoutId);
+    }, [search, catFilter, unitFilter, isServer]);
+
+    // Modal State
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalMode, setModalMode] = useState('add');
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [itemToDelete, setItemToDelete] = useState(null);
+
+    const { data, setData, post, put, delete: destroy, processing, errors, reset, clearErrors } = useForm({
+        id: '',
+        name: '',
+        sku: '',
+        category_id: '',
+        unit_id: '',
+        product_type: 'raw_material',
+        description: '',
+        cost_price: '',
+        selling_price: '',
+        reorder_level: '',
+        is_active: true,
+    });
+
+    const openModal = (mode, p = null) => {
+        setModalMode(mode);
+        clearErrors();
+        if (mode === 'edit' && p) {
+            setData({
+                id: p.id,
+                name: p.name || '',
+                sku: p.sku || '',
+                category_id: p.category_id || '',
+                unit_id: p.unit_id || '',
+                product_type: p.product_type || 'raw_material',
+                description: p.description || '',
+                cost_price: p.cost_price || '',
+                selling_price: p.selling_price || '',
+                reorder_level: p.reorder_level || '',
+                is_active: p.is_active ?? true,
+            });
+        } else {
+            reset();
+        }
+        setIsModalOpen(true);
+    };
+
+    const closeModal = () => {
+        setIsModalOpen(false);
+        reset();
+        clearErrors();
+    };
+
+    const submitForm = (e) => {
+        e.preventDefault();
+        if (modalMode === 'add') {
+            post(route('staff.inventory.products.store'), {
+                onSuccess: () => closeModal(),
+            });
+        } else {
+            put(route('staff.inventory.products.update', data.id), {
+                onSuccess: () => closeModal(),
+            });
+        }
+    };
+
+    const confirmDelete = (p) => {
+        setItemToDelete(p);
+        setIsDeleteModalOpen(true);
+    };
+
+    const executeDelete = () => {
+        if (itemToDelete) {
+            destroy(route('staff.inventory.products.destroy', itemToDelete.id), {
+                preserveScroll: true,
+                onSuccess: () => setIsDeleteModalOpen(false),
+                onFinish: () => setItemToDelete(null),
+            });
+        }
+    };
 
     // Client-side filter (used for dummy data only)
     const filtered = useMemo(() => {
         if (isServer) return rows;
         return rows.filter(p => {
-            const matchSearch = search === '' || p.product.toLowerCase().includes(search.toLowerCase()) || p.category.name.toLowerCase().includes(search.toLowerCase());
-            const matchCat    = catFilter === 'All' || p.category.name === catFilter;
-            const matchStatus = statusFilter === 'All' || p.status === statusFilter;
-            return matchSearch && matchCat && matchStatus;
+            const productName = p.product || p.name || '';
+            const categoryName = p.category?.name || '';
+            const matchSearch = search === '' || productName.toLowerCase().includes(search.toLowerCase()) || categoryName.toLowerCase().includes(search.toLowerCase());
+            const matchCat    = catFilter === 'All' || categoryName === catFilter;
+            const matchUnit   = unitFilter === 'All' || (p.unit?.name || '') === unitFilter;
+            return matchSearch && matchCat && matchUnit;
         });
-    }, [rows, search, catFilter, statusFilter, isServer]);
+    }, [rows, search, catFilter, unitFilter, isServer]);
 
     // Server-side filter send
     const applyFilters = () => {
@@ -175,12 +293,14 @@ export default function AllProducts({
         },
     ];
 
-    const uniqueCats = ['All', ...categories];
-    const uniqueStatuses = ['All', 'active', 'archived'];
+    const uniqueCats = ['All', ...categories.map(c => typeof c === 'string' ? c : c.name).filter(Boolean)];
+    const uniqueUnits = ['All', ...(isServer && serverUnits ? serverUnits.map(u => u.name) : [])];
 
     return (
         <InventoryStaffLayout>
             <Head title="All Products — Inventory" />
+
+            <Alert message={alertMessage} onClose={() => setAlertMessage('')} />
 
             <div className="space-y-6 animate-in fade-in duration-500">
 
@@ -200,6 +320,10 @@ export default function AllProducts({
                         <button className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 hover:bg-emerald-100 rounded-xl transition">
                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                             Excel
+                        </button>
+                        <button onClick={() => openModal('add')} className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition shadow-sm shadow-emerald-200 ml-2">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                            Add Product
                         </button>
                     </div>
                 </div>
@@ -237,24 +361,16 @@ export default function AllProducts({
                             {uniqueCats.map(c => <option key={c}>{c}</option>)}
                         </select>
 
-                        {/* Status filter */}
+                        {/* Unit filter */}
                         <select
-                            value={statusFilter}
-                            onChange={e => setStatus(e.target.value)}
+                            value={unitFilter}
+                            onChange={e => setUnit(e.target.value)}
                             className="px-3 py-2 text-xs font-bold text-slate-600 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-400 outline-none appearance-none cursor-pointer transition"
                         >
-                            {uniqueStatuses.map(s => <option key={s}>{s}</option>)}
+                            {uniqueUnits.map(u => <option key={u}>{u}</option>)}
                         </select>
 
-                        {/* Apply (server) / Reset */}
-                        {isServer && (
-                            <button
-                                onClick={applyFilters}
-                                className="px-4 py-2 text-xs font-black text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition shadow-sm shadow-emerald-200"
-                            >
-                                Apply
-                            </button>
-                        )}
+                        {/* Apply (server) / Reset - Removed as per request for dynamic update */}
 
                         {/* View Toggle */}
                         <div className="flex items-center bg-slate-100 rounded-xl p-1 gap-1 flex-shrink-0">
@@ -279,199 +395,199 @@ export default function AllProducts({
                     <p className="mt-3 text-[11px] font-bold text-slate-400">
                         Showing <span className="text-slate-700 font-black">{filtered.length}</span> product{filtered.length !== 1 ? 's' : ''}
                         {catFilter !== 'All' && <> in <span className="text-emerald-600">{catFilter}</span></>}
-                        {statusFilter !== 'All' && <> · status: <span className="text-slate-600 capitalize">{statusFilter}</span></>}
+                        {unitFilter !== 'All' && <> · unit: <span className="text-slate-600 capitalize">{unitFilter}</span></>}
                     </p>
                 </div>
 
                 {/* ── TABLE VIEW ── */}
                 {viewMode === 'table' && (
-                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                        <div className="px-6 py-4 border-b border-slate-50 flex items-center justify-between">
-                            <div>
-                                <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">🧵 Product Catalog</h2>
-                                <p className="text-xs text-slate-400 font-medium mt-0.5">All sericulture raw products and silk goods</p>
-                            </div>
-                            <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">
-                                {filtered.length} items
-                            </span>
-                        </div>
-
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left border-collapse">
-                                <thead>
-                                    <tr className="bg-slate-50/60 border-b border-slate-100">
-                                        {['#', 'Product', 'Category', 'Price', 'Stock Level', 'Stock Status', 'Status', 'Actions'].map(h => (
-                                            <th key={h} className="px-5 py-3.5 text-[10px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap">{h}</th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-50">
-                                    {filtered.length > 0 ? filtered.map((p, i) => {
-                                        const stkBadge = stockBadge(p.stock_count ?? 0);
-                                        return (
-                                            <tr key={p.id} className="hover:bg-slate-50/70 transition-colors group">
-                                                {/* # */}
-                                                <td className="px-5 py-3.5 text-xs font-bold text-slate-300">{i + 1}</td>
-
-                                                {/* Product */}
-                                                <td className="px-5 py-3.5">
-                                                    <div className="flex items-center gap-3">
-                                                        <ProductAvatar product={p.product} category={p.category?.name} />
-                                                        <div>
-                                                            <p className="text-sm font-bold text-slate-800 leading-tight">{p.product}</p>
-                                                            <p className="text-[10px] text-slate-400 font-medium mt-0.5">ID #{p.id}</p>
-                                                        </div>
-                                                    </div>
-                                                </td>
-
-                                                {/* Category */}
-                                                <td className="px-5 py-3.5">
-                                                    <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-lg">
-                                                        {p.category?.name ?? '—'}
-                                                    </span>
-                                                </td>
-
-                                                {/* Price */}
-                                                <td className="px-5 py-3.5 text-sm font-black text-slate-700 whitespace-nowrap">
-                                                    {phpFmt(p.price)}
-                                                </td>
-
-                                                {/* Stock bar */}
-                                                <td className="px-5 py-3.5">
-                                                    <StockBar qty={p.stock_count ?? 0} />
-                                                </td>
-
-                                                {/* Stock status badge */}
-                                                <td className="px-5 py-3.5">
-                                                    <span className={`text-[10px] font-black px-2.5 py-1 rounded-full border ${stkBadge.cls}`}>
-                                                        {stkBadge.label}
-                                                    </span>
-                                                </td>
-
-                                                {/* Status */}
-                                                <td className="px-5 py-3.5">
-                                                    <span className={`text-[10px] font-black px-2.5 py-1 rounded-full border capitalize ${statusBadge(p.status)}`}>
-                                                        {p.status}
-                                                    </span>
-                                                </td>
-
-                                                {/* Actions */}
-                                                <td className="px-5 py-3.5">
-                                                    <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <button className="text-[10px] font-black text-slate-600 hover:text-emerald-700 bg-slate-100 hover:bg-emerald-50 px-2.5 py-1 rounded-xl transition">
-                                                            View
-                                                        </button>
-                                                        <button className="text-[10px] font-black text-blue-600 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-xl transition">
-                                                            + Stock
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    }) : (
-                                        <tr>
-                                            <td colSpan={8} className="py-16 text-center">
-                                                <div className="flex flex-col items-center gap-2">
-                                                    <div className="text-4xl">📦</div>
-                                                    <p className="text-sm font-black text-slate-300">No products found</p>
-                                                    <p className="text-xs text-slate-300">Try adjusting your search or filters.</p>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        {/* Pagination (server) */}
-                        {isServer && serverProducts.last_page > 1 && (
-                            <div className="px-6 py-4 border-t border-slate-50 flex items-center justify-between">
-                                <p className="text-xs font-bold text-slate-400">
-                                    Page {serverProducts.current_page} of {serverProducts.last_page}
-                                    &nbsp;·&nbsp; {serverProducts.total} total products
-                                </p>
-                                <div className="flex items-center gap-1.5">
-                                    {serverProducts.links?.filter(l => l.url).map((link, i) => (
-                                        <button
-                                            key={i}
-                                            onClick={() => router.get(link.url, {}, { preserveState: true })}
-                                            disabled={!link.url}
-                                            dangerouslySetInnerHTML={{ __html: link.label }}
-                                            className={`px-3 py-1.5 text-xs font-black rounded-xl transition ${
-                                                link.active
-                                                    ? 'bg-emerald-600 text-white shadow-sm'
-                                                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                                            }`}
-                                        />
-                                    ))}
+                    <>
+                        <Table
+                            title="🧵 Product Catalog"
+                            subtitle="All sericulture raw products and silk goods"
+                            badgeCount={filtered.length}
+                            columns={['#', 'Product', 'Category', 'Price', 'Stock Level', 'Stock Status', 'Status', 'Actions']}
+                            emptyState={
+                                <div className="flex flex-col items-center gap-2">
+                                    <div className="text-4xl">📦</div>
+                                    <p className="text-sm font-black text-slate-300">No products found</p>
+                                    <p className="text-xs text-slate-300">Try adjusting your search or filters.</p>
                                 </div>
-                            </div>
-                        )}
-                    </div>
+                            }
+                            footer={isServer && (
+                                <div className="px-6 py-4 border-t border-slate-50 flex flex-col sm:flex-row items-center justify-between gap-4 rounded-b-2xl">
+                                    <p className="text-xs font-bold text-slate-400 text-center sm:text-left">
+                                        Page {serverProducts.current_page} of {serverProducts.last_page}
+                                        &nbsp;·&nbsp; {serverProducts.total} total products
+                                    </p>
+                                    <Pagination 
+                                        currentPage={serverProducts.current_page} 
+                                        totalPages={serverProducts.last_page} 
+                                        onPageChange={(page) => {
+                                            router.get(route(route().current()), {
+                                                search,
+                                                category: catFilter,
+                                                unit: unitFilter,
+                                                page
+                                            }, { preserveState: true, preserveScroll: true });
+                                        }}
+                                    />
+                                </div>
+                            )}
+                        >
+                            {filtered.map((p, i) => {
+                                const stkBadge = stockBadge(p.stock_count ?? 0);
+                                return (
+                                    <Tr key={p.id}>
+                                        {/* # */}
+                                        <Td className="text-xs font-bold text-slate-300">{i + 1}</Td>
+
+                                        {/* Product */}
+                                        <Td>
+                                            <div className="flex items-center gap-3">
+                                                <ProductAvatar product={p.product || p.name} category={p.category?.name} />
+                                                <div>
+                                                    <p className="text-sm font-bold text-slate-800 leading-tight">{p.product || p.name}</p>
+                                                    <p className="text-[10px] text-slate-400 font-medium mt-0.5">ID #{p.id}</p>
+                                                </div>
+                                            </div>
+                                        </Td>
+
+                                        {/* Category */}
+                                        <Td>
+                                            <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-lg">
+                                                {p.category?.name ?? '—'}
+                                            </span>
+                                        </Td>
+
+                                        {/* Price */}
+                                        <Td className="text-sm font-black text-slate-700 whitespace-nowrap">
+                                            {phpFmt(p.selling_price ?? 0)}
+                                        </Td>
+
+                                        {/* Stock bar */}
+                                        <Td>
+                                            <StockBar qty={p.stock_count ?? 0} />
+                                        </Td>
+
+                                        {/* Stock status badge */}
+                                        <Td>
+                                            <span className={`text-[10px] font-black px-2.5 py-1 rounded-full border ${stkBadge.cls}`}>
+                                                {stkBadge.label}
+                                            </span>
+                                        </Td>
+
+                                        {/* Status */}
+                                        <Td>
+                                            <span className={`text-[10px] font-black px-2.5 py-1 rounded-full border capitalize ${statusBadge(p.status)}`}>
+                                                {p.status}
+                                            </span>
+                                        </Td>
+
+                                        {/* Actions */}
+                                        <Td>
+                                            <div className="flex items-center gap-1.5">
+                                                <button onClick={() => isServer ? openModal('edit', p) : null} className="text-[10px] font-black text-amber-600 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-xl transition">
+                                                    Edit
+                                                </button>
+                                                <button onClick={() => isServer ? confirmDelete(p) : null} className="text-[10px] font-black text-rose-600 bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded-xl transition">
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        </Td>
+                                    </Tr>
+                                );
+                            })}
+                        </Table>
+                    </>
                 )}
 
                 {/* ── GRID / CARD VIEW ── */}
                 {viewMode === 'grid' && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                        {filtered.length > 0 ? filtered.map(p => {
-                            const stkBadge = stockBadge(p.stock_count ?? 0);
-                            return (
-                                <div key={p.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden group">
-                                    {/* Card top color strip by category */}
-                                    <div className={`h-1.5 bg-gradient-to-r ${
-                                        p.category?.name === 'Raw Materials'  ? 'from-lime-400 to-green-500' :
-                                        p.category?.name === 'Cocoons'        ? 'from-amber-300 to-orange-400' :
-                                        p.category?.name === 'Silk Products'  ? 'from-violet-400 to-purple-600' :
-                                        p.category?.name === 'By-Products'    ? 'from-sky-400 to-blue-500' :
-                                        'from-slate-300 to-slate-400'
-                                    }`} />
+                    <div className="flex flex-col gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            {filtered.length > 0 ? filtered.map(p => {
+                                const stkBadge = stockBadge(p.stock_count ?? 0);
+                                return (
+                                    <div key={p.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden group">
+                                        {/* Card top color strip by category */}
+                                        <div className={`h-1.5 bg-gradient-to-r ${
+                                            p.category?.name === 'Raw Materials'  ? 'from-lime-400 to-green-500' :
+                                            p.category?.name === 'Cocoons'        ? 'from-amber-300 to-orange-400' :
+                                            p.category?.name === 'Silk Products'  ? 'from-violet-400 to-purple-600' :
+                                            p.category?.name === 'By-Products'    ? 'from-sky-400 to-blue-500' :
+                                            'from-slate-300 to-slate-400'
+                                        }`} />
 
-                                    <div className="p-4 space-y-3">
-                                        {/* Header */}
-                                        <div className="flex items-start gap-3">
-                                            <ProductAvatar product={p.product} category={p.category?.name} />
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-black text-slate-800 leading-tight truncate">{p.product}</p>
-                                                <p className="text-[10px] text-slate-400 font-medium mt-0.5">{p.category?.name ?? '—'}</p>
+                                        <div className="p-4 space-y-3">
+                                            {/* Header */}
+                                            <div className="flex items-start gap-3">
+                                                <ProductAvatar product={p.product || p.name} category={p.category?.name} />
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-black text-slate-800 leading-tight truncate">{p.product || p.name}</p>
+                                                    <p className="text-[10px] text-slate-400 font-medium mt-0.5">{p.category?.name ?? '—'}</p>
+                                                </div>
                                             </div>
-                                        </div>
 
-                                        {/* Price */}
-                                        <div className="flex items-center justify-between">
-                                            <p className="text-xs font-bold text-slate-400">Price</p>
-                                            <p className="text-sm font-black text-slate-800">{phpFmt(p.price)}</p>
-                                        </div>
-
-                                        {/* Stock */}
-                                        <div>
-                                            <div className="flex items-center justify-between mb-1">
-                                                <p className="text-xs font-bold text-slate-400">Stock</p>
-                                                <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border ${stkBadge.cls}`}>{stkBadge.label}</span>
+                                            {/* Price */}
+                                            <div className="flex items-center justify-between">
+                                                <p className="text-xs font-bold text-slate-400">Price</p>
+                                                <p className="text-sm font-black text-slate-800">{phpFmt(p.selling_price ?? 0)}</p>
                                             </div>
-                                            <StockBar qty={p.stock_count ?? 0} />
-                                        </div>
 
-                                        {/* Footer */}
-                                        <div className="flex items-center justify-between pt-2 border-t border-slate-50">
-                                            <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border capitalize ${statusBadge(p.status)}`}>
-                                                {p.status}
-                                            </span>
-                                            <div className="flex gap-1.5">
-                                                <button className="text-[10px] font-black text-slate-500 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-xl transition">
-                                                    View
-                                                </button>
-                                                <button className="text-[10px] font-black text-blue-600 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-xl transition">
-                                                    + Stock
-                                                </button>
+                                            {/* Stock */}
+                                            <div>
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <p className="text-xs font-bold text-slate-400">Stock</p>
+                                                    <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border ${stkBadge.cls}`}>{stkBadge.label}</span>
+                                                </div>
+                                                <StockBar qty={p.stock_count ?? 0} />
+                                            </div>
+
+                                            {/* Footer */}
+                                            <div className="flex items-center justify-between pt-2 border-t border-slate-50">
+                                                <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border capitalize ${statusBadge(p.status)}`}>
+                                                    {p.status}
+                                                </span>
+                                                <div className="flex gap-1.5">
+                                                    <button onClick={() => isServer ? openModal('edit', p) : null} className="text-[10px] font-black text-amber-600 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-xl transition">
+                                                        Edit
+                                                    </button>
+                                                    <button onClick={() => isServer ? confirmDelete(p) : null} className="text-[10px] font-black text-rose-600 bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded-xl transition">
+                                                        Delete
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
+                                );
+                            }) : (
+                                <div className="col-span-full py-16 text-center">
+                                    <div className="text-4xl mb-2">📦</div>
+                                    <p className="text-sm font-black text-slate-300">No products found</p>
                                 </div>
-                            );
-                        }) : (
-                            <div className="col-span-full py-16 text-center">
-                                <div className="text-4xl mb-2">📦</div>
-                                <p className="text-sm font-black text-slate-300">No products found</p>
+                            )}
+                        </div>
+
+                        {/* Pagination (server) - Grid View */}
+                        {isServer && (
+                            <div className="px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 bg-white rounded-2xl border border-slate-100 shadow-sm mt-2">
+                                <p className="text-xs font-bold text-slate-400 text-center sm:text-left">
+                                    Page {serverProducts.current_page} of {serverProducts.last_page}
+                                    &nbsp;·&nbsp; {serverProducts.total} total products
+                                </p>
+                                <Pagination 
+                                    currentPage={serverProducts.current_page} 
+                                    totalPages={serverProducts.last_page} 
+                                    onPageChange={(page) => {
+                                        router.get(route(route().current()), {
+                                            search,
+                                            category: catFilter,
+                                            unit: unitFilter,
+                                            page
+                                        }, { preserveState: true, preserveScroll: true });
+                                    }}
+                                />
                             </div>
                         )}
                     </div>
@@ -484,8 +600,8 @@ export default function AllProducts({
                         <p className="text-xs text-slate-400 font-medium mt-0.5">Stock distribution across product types</p>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 divide-x divide-slate-50">
-                        {DUMMY_CATEGORIES.map(cat => {
-                            const catRows = (isServer ? rows : DUMMY_PRODUCTS).filter(p => p.category?.name === cat);
+                        {uniqueCats.filter(c => c !== 'All').map(cat => {
+                            const catRows = (isServer ? rows : DUMMY_PRODUCTS).filter(p => (p.category?.name || '') === cat);
                             const totalStock = catRows.reduce((s, p) => s + (p.stock_count ?? 0), 0);
                             const gradient = CATEGORY_COLORS[cat] ?? 'from-slate-300 to-slate-400';
                             return (
@@ -501,6 +617,111 @@ export default function AllProducts({
                         })}
                     </div>
                 </div>
+
+                <Modal show={isModalOpen} onClose={closeModal} maxWidth="2xl">
+                    <form onSubmit={submitForm} className="p-6">
+                        <h2 className="text-lg font-black text-slate-800 mb-4">
+                            {modalMode === 'add' ? 'Add New Product' : 'Edit Product'}
+                        </h2>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="col-span-2 md:col-span-1">
+                                <InputLabel htmlFor="name" value="Product Name *" />
+                                <TextInput id="name" value={data.name} onChange={e => setData('name', e.target.value)} className="mt-1 block w-full" required />
+                                <InputError message={errors.name} className="mt-2" />
+                            </div>
+                            <div className="col-span-2 md:col-span-1">
+                                <InputLabel htmlFor="sku" value="SKU" />
+                                <TextInput id="sku" value={data.sku} onChange={e => setData('sku', e.target.value)} className="mt-1 block w-full" />
+                                <InputError message={errors.sku} className="mt-2" />
+                            </div>
+                            
+                            <div className="col-span-2 md:col-span-1">
+                                <InputLabel htmlFor="category_id" value="Category" />
+                                <select id="category_id" value={data.category_id} onChange={e => setData('category_id', e.target.value)} className="mt-1 block w-full border-slate-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm text-sm">
+                                    <option value="">-- Select Category --</option>
+                                    {isServer && categories.filter(c => c.id).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                </select>
+                                <InputError message={errors.category_id} className="mt-2" />
+                            </div>
+
+                            <div className="col-span-2 md:col-span-1">
+                                <InputLabel htmlFor="unit_id" value="Unit" />
+                                <select id="unit_id" value={data.unit_id} onChange={e => setData('unit_id', e.target.value)} className="mt-1 block w-full border-slate-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm text-sm">
+                                    <option value="">-- Select Unit --</option>
+                                    {isServer && serverUnits && serverUnits.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                                </select>
+                                <InputError message={errors.unit_id} className="mt-2" />
+                            </div>
+                            
+                            <div className="col-span-2 md:col-span-1">
+                                <InputLabel htmlFor="product_type" value="Product Type *" />
+                                <select id="product_type" value={data.product_type} onChange={e => setData('product_type', e.target.value)} className="mt-1 block w-full border-slate-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm text-sm" required>
+                                    <option value="raw_material">Raw Material</option>
+                                    <option value="wip">Work in Progress</option>
+                                    <option value="finished_good">Finished Good</option>
+                                    <option value="supply">Supply</option>
+                                </select>
+                                <InputError message={errors.product_type} className="mt-2" />
+                            </div>
+
+                            <div className="col-span-2 md:col-span-1 flex gap-2">
+                                <div className="flex-1">
+                                    <InputLabel htmlFor="cost_price" value="Cost Price" />
+                                    <TextInput id="cost_price" type="number" step="0.01" value={data.cost_price} onChange={e => setData('cost_price', e.target.value)} className="mt-1 block w-full" />
+                                </div>
+                                <div className="flex-1">
+                                    <InputLabel htmlFor="selling_price" value="Selling Price" />
+                                    <TextInput id="selling_price" type="number" step="0.01" value={data.selling_price} onChange={e => setData('selling_price', e.target.value)} className="mt-1 block w-full" />
+                                </div>
+                            </div>
+
+                            <div className="col-span-2 md:col-span-1">
+                                <InputLabel htmlFor="reorder_level" value="Reorder Level" />
+                                <TextInput id="reorder_level" type="number" value={data.reorder_level} onChange={e => setData('reorder_level', e.target.value)} className="mt-1 block w-full" />
+                                <InputError message={errors.reorder_level} className="mt-2" />
+                            </div>
+
+                            <div className="col-span-2 md:col-span-1 flex items-center mt-6">
+                                <label className="flex items-center">
+                                    <input type="checkbox" checked={data.is_active} onChange={e => setData('is_active', e.target.checked)} className="rounded border-slate-300 text-emerald-600 shadow-sm focus:ring-emerald-500" />
+                                    <span className="ml-2 text-sm text-slate-600">Is Active Product?</span>
+                                </label>
+                            </div>
+
+                            <div className="col-span-2">
+                                <InputLabel htmlFor="description" value="Description" />
+                                <textarea id="description" value={data.description} onChange={e => setData('description', e.target.value)} className="mt-1 block w-full border-slate-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm" rows="3"></textarea>
+                                <InputError message={errors.description} className="mt-2" />
+                            </div>
+                        </div>
+
+                        <div className="mt-6 flex justify-end gap-3">
+                            <SecondaryButton onClick={closeModal}>Cancel</SecondaryButton>
+                            <PrimaryButton disabled={processing}>{modalMode === 'add' ? 'Save Product' : 'Save Changes'}</PrimaryButton>
+                        </div>
+                    </form>
+                </Modal>
+
+                {/* Delete Confirmation Modal */}
+                <Modal show={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} maxWidth="sm">
+                    <div className="p-6">
+                        <h2 className="text-lg font-black text-slate-800 mb-4">Confirm Deletion</h2>
+                        <p className="text-sm text-slate-500 mb-6">
+                            Are you sure you want to delete the product <span className="font-bold text-slate-800">"{itemToDelete?.name}"</span>? This action cannot be undone.
+                        </p>
+                        <div className="flex justify-end gap-3">
+                            <SecondaryButton onClick={() => setIsDeleteModalOpen(false)}>Cancel</SecondaryButton>
+                            <PrimaryButton
+                                onClick={executeDelete}
+                                disabled={processing}
+                                className="!bg-rose-600 hover:!bg-rose-700 focus:!ring-rose-500"
+                            >
+                                {processing ? 'Deleting...' : 'Delete'}
+                            </PrimaryButton>
+                        </div>
+                    </div>
+                </Modal>
 
             </div>
         </InventoryStaffLayout>

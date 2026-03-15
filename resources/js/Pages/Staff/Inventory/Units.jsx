@@ -10,28 +10,22 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import Alert from '@/Components/Alert';
 import Pagination from '@/Components/Pagination';
 
-const CATEGORY_COLORS = [
-    'from-lime-400 to-green-500', 
-    'from-amber-300 to-orange-400',
-    'from-violet-400 to-purple-600',
-    'from-sky-400 to-blue-500',
-    'from-slate-400 to-slate-600',
-    'from-pink-400 to-rose-500',
-    'from-cyan-400 to-teal-600'
+const UNIT_COLORS = [
+    'from-rose-400 to-red-500',
+    'from-fuchsia-400 to-purple-500',
+    'from-indigo-400 to-blue-500',
+    'from-cyan-400 to-teal-500',
+    'from-emerald-400 to-green-500',
+    'from-amber-400 to-orange-500',
+    'from-slate-400 to-slate-600'
 ];
 
-const getCategoryColor = (id) => CATEGORY_COLORS[(id || 0) % CATEGORY_COLORS.length];
-const getCategoryIcon = (name) => name ? name[0].toUpperCase() : '🏷️';
+const getUnitColor = (id) => UNIT_COLORS[(id || 0) % UNIT_COLORS.length];
+const getUnitIcon = (name) => name ? name[0].toUpperCase() : '⚖️';
 
 // ─────────────────────────────────────────────────────────
 // HELPERS
 // ─────────────────────────────────────────────────────────
-function statusBadge(status) {
-    return status === 'active'
-        ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
-        : 'bg-slate-100 text-slate-400 border-slate-200';
-}
-
 function KpiCard({ label, value, badge, badgeColor, iconPath, iconBg }) {
     return (
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 flex flex-col gap-3 hover:shadow-md transition-shadow">
@@ -54,15 +48,15 @@ function KpiCard({ label, value, badge, badgeColor, iconPath, iconBg }) {
 // ─────────────────────────────────────────────────────────
 // MAIN PAGE
 // ─────────────────────────────────────────────────────────
-export default function Categories({
-    categories: serverCategories,
+export default function Units({
+    units: serverUnits,
     stats: serverStats,
     filters: serverFilters = {},
     flash,
 }) {
-    const isServer = serverCategories && serverCategories.data !== undefined;
-    const rows  = isServer ? serverCategories.data : [];
-    const stats = serverStats ?? { total: 0, active: 0, archived: 0, with_products: 0 };
+    const isServer = serverUnits && serverUnits.data !== undefined;
+    const rows  = isServer ? serverUnits.data : [];
+    const stats = serverStats ?? { total: 0, with_products: 0 };
 
     // Flash message state
     const [alertMessage, setAlertMessage] = useState('');
@@ -90,14 +84,14 @@ export default function Categories({
         description: '',
     });
 
-    const openModal = (mode, c = null) => {
+    const openModal = (mode, u = null) => {
         setModalMode(mode);
         clearErrors();
-        if (mode === 'edit' && c) {
+        if (mode === 'edit' && u) {
             setData({
-                id: c.id,
-                name: c.name || '',
-                description: c.description || '',
+                id: u.id,
+                name: u.name || '',
+                description: u.description || '',
             });
         } else {
             reset();
@@ -114,20 +108,20 @@ export default function Categories({
     const submitForm = (e) => {
         e.preventDefault();
         if (modalMode === 'add') {
-            post(route('staff.inventory.categories.store'), { onSuccess: () => closeModal() });
+            post(route('staff.inventory.units.store'), { onSuccess: () => closeModal() });
         } else {
-            put(route('staff.inventory.categories.update', data.id), { onSuccess: () => closeModal() });
+            put(route('staff.inventory.units.update', data.id), { onSuccess: () => closeModal() });
         }
     };
 
-    const confirmDelete = (c) => {
-        setItemToDelete(c);
+    const confirmDelete = (u) => {
+        setItemToDelete(u);
         setIsDeleteModalOpen(true);
     };
 
     const executeDelete = () => {
         if (itemToDelete) {
-            destroy(route('staff.inventory.categories.destroy', itemToDelete.id), {
+            destroy(route('staff.inventory.units.destroy', itemToDelete.id), {
                 preserveScroll: true,
                 onSuccess: () => setIsDeleteModalOpen(false),
                 onFinish: () => setItemToDelete(null),
@@ -143,7 +137,7 @@ export default function Categories({
         }
         if (!isServer) return;
         const timeoutId = setTimeout(() => {
-            router.get(route('staff.inventory.categories.index'), {
+            router.get(route('staff.inventory.units.index'), {
                 search: search || undefined,
             }, { preserveState: true, replace: true });
         }, 300);
@@ -152,22 +146,12 @@ export default function Categories({
 
     const kpis = [
         {
-            label: 'Total Categories', value: stats.total, badge: 'All', badgeColor: 'text-slate-500 bg-slate-50',
-            iconPath: 'M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z',
+            label: 'Total Units', value: stats.total, badge: 'All', badgeColor: 'text-slate-500 bg-slate-50',
+            iconPath: 'M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3',
             iconBg: 'bg-slate-50 text-slate-500',
         },
         {
-            label: 'Active', value: stats.active, badge: 'Published', badgeColor: 'text-emerald-600 bg-emerald-50',
-            iconPath: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
-            iconBg: 'bg-emerald-50 text-emerald-600',
-        },
-        {
-            label: 'Archived', value: stats.archived, badge: 'Hidden', badgeColor: 'text-slate-400 bg-slate-100',
-            iconPath: 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4',
-            iconBg: 'bg-slate-100 text-slate-500',
-        },
-        {
-            label: 'With Products', value: stats.with_products, badge: 'Has items', badgeColor: 'text-violet-600 bg-violet-50',
+            label: 'With Products', value: stats.with_products, badge: 'In Use', badgeColor: 'text-violet-600 bg-violet-50',
             iconPath: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
             iconBg: 'bg-violet-50 text-violet-600',
         },
@@ -175,7 +159,7 @@ export default function Categories({
 
     return (
         <InventoryStaffLayout>
-            <Head title="Categories — Inventory" />
+            <Head title="Units — Inventory" />
 
             <Alert message={alertMessage} onClose={() => setAlertMessage('')} />
 
@@ -184,9 +168,9 @@ export default function Categories({
                 {/* ── PAGE HEADER ── */}
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-3xl font-black text-slate-900 tracking-tight">Categories</h1>
+                        <h1 className="text-3xl font-black text-slate-900 tracking-tight">Units of Measurement</h1>
                         <p className="text-slate-500 font-medium mt-1">
-                            Manage product classifications for the sericulture inventory.
+                            Manage measurements and dimensions for the sericulture inventory.
                         </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
@@ -200,7 +184,7 @@ export default function Categories({
                         </button>
                         <button onClick={() => openModal('add')} className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition shadow-sm shadow-emerald-200 ml-2">
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                            Add Category
+                            Add Unit
                         </button>
                     </div>
                 </div>
@@ -221,14 +205,12 @@ export default function Categories({
                             </svg>
                             <input
                                 type="text"
-                                placeholder="Search by category name or description…"
+                                placeholder="Search by unit name or description…"
                                 value={search}
                                 onChange={e => setSearch(e.target.value)}
                                 className="w-full pl-9 pr-4 py-2 text-sm font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition placeholder-slate-400"
                             />
                         </div>
-
-                        {/* Render filter block intentionally empty for status since categories have no explicit status currently */}
 
                         {/* View toggle */}
                         <div className="flex items-center bg-slate-100 rounded-xl p-1 gap-1 flex-shrink-0">
@@ -250,7 +232,7 @@ export default function Categories({
                     </div>
 
                     <p className="mt-3 text-[11px] font-bold text-slate-400">
-                        Showing <span className="text-slate-700 font-black">{rows.length}</span> categor{rows.length !== 1 ? 'ies' : 'y'}
+                        Showing <span className="text-slate-700 font-black">{rows.length}</span> unit{rows.length !== 1 ? 's' : ''}
                     </p>
                 </div>
 
@@ -259,11 +241,11 @@ export default function Categories({
                     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                         <div className="px-6 py-4 border-b border-slate-50 flex items-center justify-between">
                             <div>
-                                <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">🏷️ Category List</h2>
-                                <p className="text-xs text-slate-400 font-medium mt-0.5">All product classifications in the inventory system</p>
+                                <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">⚖️ Unit List</h2>
+                                <p className="text-xs text-slate-400 font-medium mt-0.5">All product units of measurement in the inventory system</p>
                             </div>
                             <span className="text-[10px] font-black text-violet-600 bg-violet-50 px-2.5 py-1 rounded-full">
-                                {rows.length} categories
+                                {rows.length} units
                             </span>
                         </div>
 
@@ -271,55 +253,55 @@ export default function Categories({
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="bg-slate-50/60 border-b border-slate-100">
-                                        {['#', 'Category', 'Description', 'Products', 'Created', 'Actions'].map(h => (
+                                        {['#', 'Unit', 'Description', 'Products', 'Created', 'Actions'].map(h => (
                                             <th key={h} className="px-5 py-3.5 text-[10px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap">{h}</th>
                                         ))}
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-50">
-                                    {rows.length > 0 ? rows.map((cat, i) => (
-                                        <tr key={cat.id} className="hover:bg-slate-50/70 transition-colors group">
+                                    {rows.length > 0 ? rows.map((u, i) => (
+                                        <tr key={u.id} className="hover:bg-slate-50/70 transition-colors group">
                                             {/* # */}
                                             <td className="px-5 py-3.5 text-xs font-bold text-slate-300">{i + 1}</td>
 
-                                            {/* Category */}
+                                            {/* Unit */}
                                             <td className="px-5 py-3.5">
                                                 <div className="flex items-center gap-3">
-                                                    <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${getCategoryColor(cat.id)} flex items-center justify-center text-white font-black text-sm shadow-sm flex-shrink-0`}>
-                                                        {getCategoryIcon(cat.name)}
+                                                    <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${getUnitColor(u.id)} flex items-center justify-center text-white font-black text-sm shadow-sm flex-shrink-0`}>
+                                                        {getUnitIcon(u.name)}
                                                     </div>
                                                     <div>
-                                                        <p className="text-sm font-bold text-slate-800 leading-tight">{cat.name}</p>
-                                                        <p className="text-[10px] text-slate-400 font-mono mt-0.5">ID #{cat.id}</p>
+                                                        <p className="text-sm font-bold text-slate-800 leading-tight">{u.name}</p>
+                                                        <p className="text-[10px] text-slate-400 font-mono mt-0.5">ID #{u.id}</p>
                                                     </div>
                                                 </div>
                                             </td>
 
                                             {/* Description */}
                                             <td className="px-5 py-3.5 max-w-xs">
-                                                <p className="text-xs text-slate-500 font-medium leading-relaxed line-clamp-2">{cat.description ?? '—'}</p>
+                                                <p className="text-xs text-slate-500 font-medium leading-relaxed line-clamp-2">{u.description ?? '—'}</p>
                                             </td>
 
                                             {/* Products */}
                                             <td className="px-5 py-3.5">
-                                                <span className={`text-sm font-black ${cat.products_count > 0 ? 'text-violet-600' : 'text-slate-300'}`}>
-                                                    {cat.products_count ?? 0}
+                                                <span className={`text-sm font-black ${u.products_count > 0 ? 'text-violet-600' : 'text-slate-300'}`}>
+                                                    {u.products_count ?? 0}
                                                 </span>
                                                 <span className="text-[10px] text-slate-400 font-medium ml-1">items</span>
                                             </td>
 
                                             {/* Created */}
                                             <td className="px-5 py-3.5 text-xs font-bold text-slate-400 whitespace-nowrap">
-                                                {new Date(cat.created_at).toLocaleDateString()}
+                                                {new Date(u.created_at).toLocaleDateString()}
                                             </td>
 
                                             {/* Actions */}
                                             <td className="px-5 py-3.5">
                                                 <div className="flex items-center gap-1.5">
-                                                    <button onClick={() => openModal('edit', cat)} className="text-[10px] font-black text-amber-600 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-xl transition">
+                                                    <button onClick={() => openModal('edit', u)} className="text-[10px] font-black text-amber-600 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-xl transition">
                                                         Edit
                                                     </button>
-                                                    <button onClick={() => confirmDelete(cat)} className="text-[10px] font-black text-rose-600 bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded-xl transition">
+                                                    <button onClick={() => confirmDelete(u)} className="text-[10px] font-black text-rose-600 bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded-xl transition">
                                                         Delete
                                                     </button>
                                                 </div>
@@ -327,10 +309,10 @@ export default function Categories({
                                         </tr>
                                     )) : (
                                         <tr>
-                                            <td colSpan={8} className="py-16 text-center">
+                                            <td colSpan={6} className="py-16 text-center">
                                                 <div className="flex flex-col items-center gap-2">
-                                                    <div className="text-4xl">🏷️</div>
-                                                    <p className="text-sm font-black text-slate-300">No categories found</p>
+                                                    <div className="text-4xl">⚖️</div>
+                                                    <p className="text-sm font-black text-slate-300">No units found</p>
                                                     <p className="text-xs text-slate-300">Try adjusting your search or filters.</p>
                                                 </div>
                                             </td>
@@ -343,12 +325,12 @@ export default function Categories({
                         {isServer && (
                             <div className="px-6 py-4 border-t border-slate-50 flex flex-col sm:flex-row items-center justify-between gap-4 rounded-b-2xl">
                                 <p className="text-xs font-bold text-slate-400 text-center sm:text-left">
-                                    Page {serverCategories.current_page} of {serverCategories.last_page}
-                                    &nbsp;·&nbsp; {serverCategories.total} total categories
+                                    Page {serverUnits.current_page} of {serverUnits.last_page}
+                                    &nbsp;·&nbsp; {serverUnits.total} total units
                                 </p>
                                 <Pagination
-                                    currentPage={serverCategories.current_page}
-                                    totalPages={serverCategories.last_page}
+                                    currentPage={serverUnits.current_page}
+                                    totalPages={serverUnits.last_page}
                                     onPageChange={(page) => {
                                         router.get(route(route().current()), {
                                             search,
@@ -364,43 +346,43 @@ export default function Categories({
                 {/* ── GRID VIEW ── */}
                 {viewMode === 'grid' && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                        {rows.length > 0 ? rows.map(cat => (
-                            <div key={cat.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden group">
+                        {rows.length > 0 ? rows.map(u => (
+                            <div key={u.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden group">
                                 {/* Gradient strip */}
-                                <div className={`h-1.5 bg-gradient-to-r ${getCategoryColor(cat.id)}`} />
+                                <div className={`h-1.5 bg-gradient-to-r ${getUnitColor(u.id)}`} />
 
                                 <div className="p-5 space-y-4">
                                     {/* Header */}
                                     <div className="flex items-start gap-3">
-                                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${getCategoryColor(cat.id)} flex items-center justify-center text-white font-black text-lg shadow-sm flex-shrink-0`}>
-                                            {getCategoryIcon(cat.name)}
+                                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${getUnitColor(u.id)} flex items-center justify-center text-white font-black text-lg shadow-sm flex-shrink-0`}>
+                                            {getUnitIcon(u.name)}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-black text-slate-800 leading-tight">{cat.name}</p>
+                                            <p className="text-sm font-black text-slate-800 leading-tight">{u.name}</p>
                                         </div>
                                     </div>
 
                                     {/* Description */}
                                     <p className="text-xs text-slate-500 font-medium leading-relaxed line-clamp-2">
-                                        {cat.description ?? 'No description added yet.'}
+                                        {u.description ?? 'No description added yet.'}
                                     </p>
 
                                     {/* Stats row */}
                                     <div className="flex items-center gap-4 pt-1">
                                         <div className="text-center">
-                                            <p className="text-base font-black text-violet-600">{cat.products_count ?? 0}</p>
+                                            <p className="text-base font-black text-violet-600">{u.products_count ?? 0}</p>
                                             <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wide">Products</p>
                                         </div>
                                     </div>
 
                                     {/* Footer */}
                                     <div className="flex items-center justify-between pt-1 border-t border-slate-50">
-                                        <span className="text-[10px] text-slate-300 font-bold">{new Date(cat.created_at).toLocaleDateString()}</span>
+                                        <span className="text-[10px] text-slate-300 font-bold">{new Date(u.created_at).toLocaleDateString()}</span>
                                         <div className="flex gap-1.5">
-                                            <button onClick={() => openModal('edit', cat)} className="text-[10px] font-black text-amber-600 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-xl transition">
+                                            <button onClick={() => openModal('edit', u)} className="text-[10px] font-black text-amber-600 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-xl transition">
                                                 Edit
                                             </button>
-                                            <button onClick={() => handleDelete(cat.id)} className="text-[10px] font-black text-rose-600 bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded-xl transition">
+                                            <button onClick={() => confirmDelete(u)} className="text-[10px] font-black text-rose-600 bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded-xl transition">
                                                 Delete
                                             </button>
                                         </div>
@@ -409,7 +391,8 @@ export default function Categories({
                             </div>
                         )) : (
                             <div className="col-span-full py-16 text-center">
-                                <div className="text-4xl mb-2">🏷️</div>
+                                <div className="text-4xl mb-2">⚖️</div>
+                                <p className="text-sm font-black text-slate-300">No units found</p>
                             </div>
                         )}
                     </div>
@@ -420,16 +403,16 @@ export default function Categories({
                 <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                     <div className="px-6 py-4 border-b border-slate-50">
                         <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">📊 Overview</h2>
-                        <p className="text-xs text-slate-400 font-medium mt-0.5">Stock spread across all categories</p>
+                        <p className="text-xs text-slate-400 font-medium mt-0.5">Stock spread across all units</p>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 divide-x divide-slate-50">
-                        {rows.map(cat => (
-                            <div key={cat.id} className="px-5 py-4 text-center hover:bg-slate-50/60 transition-colors">
-                                <div className={`w-8 h-8 rounded-xl bg-gradient-to-br ${getCategoryColor(cat.id)} mx-auto mb-2 flex items-center justify-center text-white font-black text-xs shadow-sm`}>
-                                    {getCategoryIcon(cat.name)}
+                        {rows.map(u => (
+                            <div key={u.id} className="px-5 py-4 text-center hover:bg-slate-50/60 transition-colors">
+                                <div className={`w-8 h-8 rounded-xl bg-gradient-to-br ${getUnitColor(u.id)} mx-auto mb-2 flex items-center justify-center text-white font-black text-xs shadow-sm`}>
+                                    {getUnitIcon(u.name)}
                                 </div>
-                                <p className="text-xs font-black text-slate-700">{cat.products_count ?? 0}</p>
-                                <p className="text-[9px] text-slate-400 font-bold leading-tight mt-0.5 line-clamp-1">{cat.name}</p>
+                                <p className="text-xs font-black text-slate-700">{u.products_count ?? 0}</p>
+                                <p className="text-[9px] text-slate-400 font-bold leading-tight mt-0.5 line-clamp-1">{u.name}</p>
                             </div>
                         ))}
                     </div>
@@ -438,12 +421,12 @@ export default function Categories({
                 <Modal show={isModalOpen} onClose={closeModal} maxWidth="xl">
                     <form onSubmit={submitForm} className="p-6">
                         <h2 className="text-lg font-black text-slate-800 mb-4">
-                            {modalMode === 'add' ? 'Add New Category' : 'Edit Category'}
+                            {modalMode === 'add' ? 'Add New Unit' : 'Edit Unit'}
                         </h2>
                         
                         <div className="grid grid-cols-1 gap-4">
                             <div>
-                                <InputLabel htmlFor="name" value="Category Name *" />
+                                <InputLabel htmlFor="name" value="Unit Name *" />
                                 <TextInput id="name" value={data.name} onChange={e => setData('name', e.target.value)} className="mt-1 block w-full" required />
                                 <InputError message={errors.name} className="mt-2" />
                             </div>
@@ -457,7 +440,7 @@ export default function Categories({
 
                         <div className="mt-6 flex justify-end gap-3">
                             <SecondaryButton onClick={closeModal}>Cancel</SecondaryButton>
-                            <PrimaryButton disabled={processing}>{modalMode === 'add' ? 'Save Category' : 'Save Changes'}</PrimaryButton>
+                            <PrimaryButton disabled={processing}>{modalMode === 'add' ? 'Save Unit' : 'Save Changes'}</PrimaryButton>
                         </div>
                     </form>
                 </Modal>
@@ -466,10 +449,10 @@ export default function Categories({
                 <Modal show={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} maxWidth="sm">
                     <div className="p-6">
                         <h2 className="text-lg font-black text-slate-800 mb-4">Confirm Deletion</h2>
-                        <InputError message={errors.category} className="mb-4" />
+                        <InputError message={errors.unit} className="mb-4" />
                         <p className="text-sm text-slate-500 mb-6">
-                            Are you sure you want to delete the category <span className="font-bold text-slate-800">"{itemToDelete?.name}"</span>? 
-                            <br /><br /><span className="text-rose-600 font-bold">Note: You cannot delete categories that currently have products.</span>
+                            Are you sure you want to delete the unit <span className="font-bold text-slate-800">"{itemToDelete?.name}"</span>? 
+                            <br /><br /><span className="text-rose-600 font-bold">Note: You cannot delete units that currently have products.</span>
                         </p>
                         <div className="flex justify-end gap-3">
                             <SecondaryButton onClick={() => setIsDeleteModalOpen(false)}>Cancel</SecondaryButton>
