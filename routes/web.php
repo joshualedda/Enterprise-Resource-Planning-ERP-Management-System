@@ -24,6 +24,7 @@ use App\Http\Controllers\Staff\InventoryProductsController;
 use App\Http\Controllers\Staff\InventoryCategoriesController;
 use App\Http\Controllers\Staff\InventoryUnitsController;
 use App\Http\Controllers\Staff\InventoryBatchesController;
+use App\Http\Controllers\Staff\Inventory\InventorySuppliersController;
 use App\Http\Controllers\Staff\InventoryWarehousesController;
 use App\Http\Controllers\Staff\InventoryWarehouseLocationsController;
 use App\Http\Controllers\Staff\InventoryProductStocksController;
@@ -209,6 +210,12 @@ Route::middleware(['auth', 'verified'])->prefix('staff')->name('staff.')->group(
         });
         Route::controller(InventoryStockLevelsController::class)->group(function () {
             Route::get('stock-levels', 'index')->name('stock-levels.index');
+        });
+        Route::controller(InventorySuppliersController::class)->group(function () {
+            Route::get('suppliers', 'index')->name('suppliers.index');
+            Route::post('suppliers', 'store')->name('suppliers.store');
+            Route::put('suppliers/{supplier}', 'update')->name('suppliers.update');
+            Route::delete('suppliers/{supplier}', 'destroy')->name('suppliers.destroy');
         });
         Route::controller(InventoryTasksController::class)->group(function () {
             Route::get('tasks', 'index')->name('tasks');
