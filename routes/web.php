@@ -25,6 +25,8 @@ use App\Http\Controllers\Staff\InventoryCategoriesController;
 use App\Http\Controllers\Staff\InventoryUnitsController;
 use App\Http\Controllers\Staff\InventoryBatchesController;
 use App\Http\Controllers\Staff\Inventory\InventorySuppliersController;
+use App\Http\Controllers\Staff\Inventory\InventoryPurchaseOrdersController;
+use App\Http\Controllers\Staff\Inventory\InventoryGoodsReceiptsController;
 use App\Http\Controllers\Staff\InventoryWarehousesController;
 use App\Http\Controllers\Staff\InventoryWarehouseLocationsController;
 use App\Http\Controllers\Staff\InventoryProductStocksController;
@@ -216,6 +218,18 @@ Route::middleware(['auth', 'verified'])->prefix('staff')->name('staff.')->group(
             Route::post('suppliers', 'store')->name('suppliers.store');
             Route::put('suppliers/{supplier}', 'update')->name('suppliers.update');
             Route::delete('suppliers/{supplier}', 'destroy')->name('suppliers.destroy');
+        });
+        Route::controller(InventoryPurchaseOrdersController::class)->group(function () {
+            Route::get('purchase-orders', 'index')->name('purchase-orders.index');
+            Route::post('purchase-orders', 'store')->name('purchase-orders.store');
+            Route::put('purchase-orders/{purchaseOrder}', 'update')->name('purchase-orders.update');
+            Route::delete('purchase-orders/{purchaseOrder}', 'destroy')->name('purchase-orders.destroy');
+        });
+        Route::controller(InventoryGoodsReceiptsController::class)->group(function () {
+            Route::get('goods-receipts', 'index')->name('goods-receipts.index');
+            Route::post('goods-receipts', 'store')->name('goods-receipts.store');
+            Route::put('goods-receipts/{goodsReceipt}', 'update')->name('goods-receipts.update');
+            Route::delete('goods-receipts/{goodsReceipt}', 'destroy')->name('goods-receipts.destroy');
         });
         Route::controller(InventoryTasksController::class)->group(function () {
             Route::get('tasks', 'index')->name('tasks');
