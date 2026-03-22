@@ -2,48 +2,7 @@ import { useState, useMemo } from 'react';
 import ProductionStaffLayout from '@/Layouts/ProductionStaffLayout';
 import { Head } from '@inertiajs/react';
 
-// ─────────────────────────────────────────────
-// SAMPLE DATA  (replace with real props later)
-// ─────────────────────────────────────────────
-const SAMPLE_ORDERS = [
-    { id: 'PO-2026-001', product: 'Silk Yarn A', planned: 500, produced: 340, startDate: '2026-02-20', status: 'In Progress' },
-    { id: 'PO-2026-002', product: 'Cocoon Batch B', planned: 200, produced: 200, startDate: '2026-02-19', status: 'In Progress' },
-    { id: 'PO-2026-003', product: 'Raw Silk Mix', planned: 300, produced: 120, startDate: '2026-02-22', status: 'In Progress' },
-    { id: 'PO-2026-004', product: 'Silk Thread C', planned: 150, produced: 90, startDate: '2026-02-23', status: 'In Progress' },
-];
-
-const SAMPLE_YIELD = [
-    { id: 'PO-2026-001', product: 'Silk Yarn A', planned: 500, actual: 340, waste: 26 },
-    { id: 'PO-2026-002', product: 'Cocoon Batch B', planned: 200, actual: 195, waste: 5 },
-    { id: 'PO-2026-003', product: 'Raw Silk Mix', planned: 300, actual: 120, waste: 18 },
-    { id: 'PO-2026-004', product: 'Silk Thread C', planned: 150, actual: 90, waste: 12 },
-];
-
-const SAMPLE_ACTIVITY = [
-    { id: 'RUN-045', icon: '✅', text: 'Run #RUN-045 completed', detail: '120 kg produced · 5 kg waste · QC Passed', time: '8m ago' },
-    { id: 'RUN-044', icon: '🔍', text: 'QC Inspection started — Batch B', detail: 'Inspector: Maria Santos', time: '32m ago' },
-    { id: 'RUN-043', icon: '⚠️', text: 'Material shortage flagged', detail: 'Raw Silk Thread below threshold', time: '1h ago' },
-    { id: 'RUN-042', icon: '🏭', text: 'Run #RUN-042 started', detail: 'PO-2026-003 · Raw Silk Mix', time: '2h ago' },
-    { id: 'RUN-041', icon: '📦', text: 'Output posted — Silk Yarn A', detail: '200 kg finished goods added to stock', time: '3h ago' },
-];
-
-const STATUS_DATA = [
-    { label: 'Draft', value: 2, color: '#94a3b8' },
-    { label: 'Approved', value: 5, color: '#a78bfa' },
-    { label: 'In Progress', value: 4, color: '#7c3aed' },
-    { label: 'Completed', value: 12, color: '#10b981' },
-    { label: 'Cancelled', value: 1, color: '#f43f5e' },
-];
-
-const WEEKLY_DATA = [
-    { day: 'Mon', issued: 80, output: 70 },
-    { day: 'Tue', issued: 120, output: 110 },
-    { day: 'Wed', issued: 95, output: 88 },
-    { day: 'Thu', issued: 140, output: 130 },
-    { day: 'Fri', issued: 60, output: 55 },
-    { day: 'Sat', issued: 30, output: 28 },
-    { day: 'Sun', issued: 0, output: 0 },
-];
+// No sample data — all data comes from real props passed by the controller.
 
 // ─────────────────────────────────────────────
 // HELPERS
@@ -163,7 +122,14 @@ function LineChart({ data }) {
 // ─────────────────────────────────────────────
 // MAIN DASHBOARD
 // ─────────────────────────────────────────────
-export default function ProductionDashboard({ stats = {}, orders = SAMPLE_ORDERS, yieldData = SAMPLE_YIELD }) {
+export default function ProductionDashboard({
+    stats = {},
+    orders = [],
+    yieldData = [],
+    statusData = [],
+    weeklyData = [],
+    recentRuns = [],
+}) {
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
     const [filterProd, setFilterProd] = useState('All');
@@ -294,7 +260,7 @@ export default function ProductionDashboard({ stats = {}, orders = SAMPLE_ORDERS
                             </div>
                             <span className="text-[10px] font-black text-violet-600 bg-violet-50 px-2.5 py-1 rounded-full uppercase">All Time</span>
                         </div>
-                        <DonutChart data={STATUS_DATA} />
+                        <DonutChart data={statusData} />
                     </div>
 
                     {/* Line — Weekly Activity */}
@@ -309,7 +275,7 @@ export default function ProductionDashboard({ stats = {}, orders = SAMPLE_ORDERS
                                 <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />Output</span>
                             </div>
                         </div>
-                        <LineChart data={WEEKLY_DATA} />
+                        <LineChart data={weeklyData.length > 0 ? weeklyData : []} />
                     </div>
                 </div>
 
@@ -419,7 +385,7 @@ export default function ProductionDashboard({ stats = {}, orders = SAMPLE_ORDERS
                             <p className="text-xs text-slate-400 font-medium mt-0.5">Latest run events</p>
                         </div>
                         <div className="divide-y divide-slate-50">
-                            {SAMPLE_ACTIVITY.map(a => (
+                            {recentRuns.length > 0 ? recentRuns.map(a => (
                                 <div key={a.id} className="flex items-start gap-3 px-6 py-4 hover:bg-slate-50/60 transition-colors">
                                     <div className="text-xl flex-shrink-0 mt-0.5">{a.icon}</div>
                                     <div className="flex-1 min-w-0">
@@ -428,7 +394,9 @@ export default function ProductionDashboard({ stats = {}, orders = SAMPLE_ORDERS
                                     </div>
                                     <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wide flex-shrink-0">{a.time}</span>
                                 </div>
-                            ))}
+                            )) : (
+                                <div className="py-10 text-center text-xs font-bold text-slate-300">No recent run activity yet.</div>
+                            )}
                         </div>
                     </div>
 
