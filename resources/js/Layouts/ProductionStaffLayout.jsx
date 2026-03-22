@@ -178,7 +178,7 @@ function UserMenu({ user, fullName, roleInfo }) {
                     </div>
                     <div className="py-2 px-2">
                         <Link
-                            href={route().has('staff.productionprofile') ? route('staff.productionprofile') : '#'}
+                            href={route().has('staff.production.profile') ? route('staff.production.profile') : '#'}
                             onClick={() => setOpen(false)}
                             className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-violet-600 transition-all text-sm font-bold group"
                         >
@@ -284,48 +284,43 @@ export default function ProductionStaffLayout({ header, children }) {
     const { url: currentUrl } = usePage();
 
     const navigation = useMemo(() => [
-        {
-            name: 'Dashboard',
-            href: route().has('staff.productiondashboard') ? route('staff.productiondashboard') : '#',
-            icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6',
-        },
-        { separator: 'Main' },
-        {
-            name: 'Production Orders',
-            icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2',
-            children: [
-                { name: 'All Orders', href: '#' },
-                { name: 'Create Order', href: '#' },
-                { name: 'Pending Approval', href: '#' },
-                { name: 'In Progress', href: '#' },
-                { name: 'Completed', href: '#' },
-            ],
-        },
-        {
-            name: 'Bill of Materials (BOM)',
-            icon: 'M4 6h16M4 10h16M4 14h16M4 18h16',
-            children: [
-                { name: 'BOM List', href: '#' },
-                { name: 'Create BOM', href: '#' },
-            ],
-        },
-        {
-            name: 'Production Runs',
-            icon: 'M13 10V3L4 14h7v7l9-11h-7z',
-            children: [
-                { name: 'Run Logs', href: '#' },
-                { name: 'Material Issue (Consumption)', href: '#' },
-                { name: 'Output Posting (Finished/WIP)', href: '#' },
-            ],
-        },
-        {
-            name: 'Quality Control',
-            icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
-            children: [
-                { name: 'Inspections', href: '#' },
-                { name: 'Rejects / Rework', href: '#' },
-            ],
-        },
+    {
+        name: 'Dashboard',
+        href: route().has('staff.production.dashboard') ? route('staff.production.dashboard') : '#',
+        icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6',
+    },
+    { separator: 'Main' },
+    {
+        name: 'Production Orders',
+        href: route().has('staff.production.production-orders.index') ? route('staff.production.production-orders.index') : '#',
+        icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2',
+    },
+    {
+        name: 'Production Runs',
+        icon: 'M13 10V3L4 14h7v7l9-11h-7z',
+        children: [
+            { 
+                name: 'Run Logs', 
+                href: route().has('staff.production.runs.index') ? route('staff.production.runs.index') : '#' 
+            },
+            { 
+                name: 'Material Issues', 
+                href: route().has('staff.production.material-issues.index') ? route('staff.production.material-issues.index') : '#' 
+            },
+            { 
+                name: 'Output Posting', 
+                href: route().has('staff.production.output-posting.index') ? route('staff.production.output-posting.index') : '#' 
+            },
+        ],
+    },
+    {
+        name: 'Quality Control',
+        icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+        children: [
+            { name: 'Inspections', href: route().has('staff.production.inspections.index') ? route('staff.production.inspections.index') : '#' },
+            { name: 'Rejects / Rework', href: route().has('staff.production.rejects.index') ? route('staff.production.rejects.index') : '#' },
+        ],
+    },
         {
             name: 'Reports',
             icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
@@ -339,7 +334,7 @@ export default function ProductionStaffLayout({ header, children }) {
         { separator: 'Account' },
         {
             name: 'Profile',
-            href: route().has('staff.productionprofile') ? route('staff.productionprofile') : '#',
+            href: route().has('staff.production.profile') ? route('staff.production.profile') : '#',
             icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
         },
     ], []);

@@ -372,16 +372,16 @@ export default function GoodsReceipt({
 
                 <Modal show={isModalOpen} onClose={closeModal} maxWidth="3xl">
                     <form onSubmit={submitForm} className="p-0 overflow-hidden">
-                        <div className="p-6 bg-slate-50 border-b border-slate-200">
-                            <h2 className="text-xl font-black text-slate-800">{modalMode === 'add' ? 'Receive Goods' : `Edit Receipt: ${data.receipt_number}`}</h2>
-                            <p className="text-sm text-slate-500 mt-1">Record the physical inventory received against a purchase order.</p>
+                        <div className="p-4 bg-slate-50 border-b border-slate-200">
+                            <h2 className="text-lg font-black text-slate-800">{modalMode === 'add' ? 'Receive Goods' : `Edit Receipt: ${data.receipt_number}`}</h2>
+                            <p className="text-[11px] text-slate-500 mt-0.5">Record the physical inventory received against a purchase order.</p>
                         </div>
                         
                         {/* Scrollable Body */}
-                        <div className="p-6 max-h-[70vh] overflow-y-auto scroll-smooth">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="p-5 max-h-[65vh] overflow-y-auto scroll-smooth">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 {/* Left Side - Receipt Details */}
-                                <div className="col-span-1 border-r border-slate-100 pr-0 md:pr-6 space-y-4">
+                                <div className="col-span-1 space-y-4">
                                     <h3 className="text-xs font-black text-indigo-700 uppercase tracking-widest mb-2 border-b border-indigo-100 pb-2">Record Info</h3>
                                     
                                     <div>
@@ -435,7 +435,7 @@ export default function GoodsReceipt({
                                 </div>
 
                                 {/* Right Side - Items Received */}
-                                <div className="col-span-1 md:col-span-2 space-y-4 pt-4 md:pt-0 md:border-l md:border-slate-100 md:pl-6">
+                                <div className="col-span-1 border-l border-slate-100 pl-6 space-y-4">
                                     <div className="flex items-center justify-between border-b border-indigo-100 pb-2 mb-2">
                                         <h3 className="text-xs font-black text-indigo-700 uppercase tracking-widest">Items Received</h3>
                                         <button type="button" onClick={addItemRow} className="text-xs font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-3 py-1.5 rounded-lg transition">

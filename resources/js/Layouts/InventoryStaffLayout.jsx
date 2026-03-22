@@ -334,7 +334,7 @@ export default function InventoryStaffLayout({ header, children }) {
             children: [
                 { name: 'Warehouses', href: route().has('staff.inventory.warehouses.index') ? route('staff.inventory.warehouses.index') : '#' },
                 { name: 'Locations', href: route().has('staff.inventory.warehouses-location.index') ? route('staff.inventory.warehouses-location.index') : '#' },
-                { name: 'Warehouse Stock View', href: '#' },
+                // { name: 'Warehouse Stock View', href: '#' },
             ]
         },
         {
@@ -357,37 +357,37 @@ export default function InventoryStaffLayout({ header, children }) {
                 { name: 'Goods Receipts', href: route().has('staff.inventory.goods-receipts.index') ? route('staff.inventory.goods-receipts.index') : '#' },
             ]
         },
-        {
-            name: 'Transfers',
-            icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4',
-            children: [
-                { name: 'Stock Transfers', href: '#' },
-                { name: 'Transfer History', href: '#' },
-            ]
-        },
+        // {
+        //     name: 'Transfers',
+        //     icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4',
+        //     children: [
+        //         { name: 'Stock Transfers', href: '#' },
+        //         { name: 'Transfer History', href: '#' },
+        //     ]
+        // },
         {
             name: 'Adjustments',
             icon: 'M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4',
             children: [
-                { name: 'Stock Adjustments', href: '#' },
-                { name: 'Adjustment History', href: '#' },
+                { name: 'Stock Adjustments', href: route().has('staff.inventory.stock-adjustments.create') ? route('staff.inventory.stock-adjustments.create') : '#' },
+                { name: 'Adjustment History', href: route().has('staff.inventory.stock-adjustments.index') ? route('staff.inventory.stock-adjustments.index') : '#' },
             ]
         },
         { separator: 'Work' },
-        {
-            name: 'Tasks',
-            href: route().has('staff.inventory.tasks') ? route('staff.inventory.tasks') : '#',
-            icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
-        },
+        // {
+        //     name: 'Tasks',
+        //     href: route().has('staff.inventory.tasks') ? route('staff.inventory.tasks') : '#',
+        //     icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
+        // },
         {
             name: 'Reports',
             icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
             children: [
-                { name: 'Stock Summary Report', href: '#' },
-                { name: 'Movement Report', href: '#' },
-                { name: 'Inventory Valuation Report', href: '#' },
-                { name: 'Low Stock Report', href: '#' },
-                { name: 'Expiry Report', href: '#' },
+                { name: 'Stock Summary Report', href: route().has('staff.inventory.reports.stock-summary') ? route('staff.inventory.reports.stock-summary') : '#' },
+                { name: 'Movement Report', href: route().has('staff.inventory.reports.movement') ? route('staff.inventory.reports.movement') : '#' },
+                // { name: 'Inventory Valuation Report', href: '#' },
+                { name: 'Low Stock Report', href: route().has('staff.inventory.reports.low-stock') ? route('staff.inventory.reports.low-stock') : '#' },
+                { name: 'Expiry Report', href: route().has('staff.inventory.reports.expiry') ? route('staff.inventory.reports.expiry') : '#' },
             ]
         },
         { separator: 'Account' },

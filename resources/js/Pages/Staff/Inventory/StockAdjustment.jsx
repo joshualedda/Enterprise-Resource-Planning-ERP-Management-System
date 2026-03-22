@@ -1,0 +1,271 @@
+import { useState, useEffect } from 'react';
+import InventoryStaffLayout from '@/Layouts/InventoryStaffLayout';
+import { Head, useForm, router, Link } from '@inertiajs/react';
+import TextInput from '@/Components/TextInput';
+import InputLabel from '@/Components/InputLabel';
+import InputError from '@/Components/InputError';
+import PrimaryButton from '@/Components/PrimaryButton';
+import SecondaryButton from '@/Components/SecondaryButton';
+import Alert from '@/Components/Alert';
+
+const phpFmt = (n) =>
+    new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', minimumFractionDigits: 2 }).format(n);
+
+export default function StockAdjustment({ products, warehouses, batches: initialBatches, flash }) {
+    const { data, setData, post, processing, errors, reset } = useForm({
+        warehouse_id: '',
+        reason: '',
+        notes: '',
+        items: [{ product_id: '', batch_id: '', quantity: 1 }],
+    });
+
+    const [availableBatches, setAvailableBatches] = useState({}); // { product_id: [batches] }
+    const [loadingBatches, setLoadingBatches] = useState({});
+
+    const [alertMessage, setAlertMessage] = useState('');
+    useEffect(() => {
+        if (flash?.success) {
+            setAlertMessage(flash.success);
+            const timer = setTimeout(() => setAlertMessage(''), 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [flash]);
+
+    const fetchBatches = async (productId, index) => {
+        if (!productId) return;
+        
+        setLoadingBatches(prev => ({ ...prev, [index]: true }));
+        try {
+            const response = await fetch(route('staff.inventory.stock-adjustments.batches', productId));
+            const data = await response.json();
+            setAvailableBatches(prev => ({ ...prev, [productId]: data }));
+        } catch (error) {
+            console.error('Failed to fetch batches:', error);
+        } finally {
+            setLoadingBatches(prev => ({ ...prev, [index]: false }));
+        }
+    };
+
+    const addItemRow = () => setData('items', [...data.items, { product_id: '', batch_id: '', quantity: 1 }]);
+    const removeItemRow = (index) => {
+        const newItems = [...data.items];
+        newItems.splice(index, 1);
+        setData('items', newItems);
+    };
+
+    const updateItemRow = (index, field, value) => {
+        const newItems = [...data.items];
+        newItems[index][field] = value;
+        
+        if (field === 'product_id') {
+            newItems[index]['batch_id'] = ''; // Reset batch when product changes
+            fetchBatches(value, index);
+        }
+        
+        setData('items', newItems);
+    };
+
+    const submit = (e) => {
+        e.preventDefault();
+        post(route('staff.inventory.stock-adjustments.store'), {
+            onSuccess: () => reset(),
+        });
+    };
+
+    const reasons = [
+        'Damaged Goods',
+        'Inventory Count Correction',
+        'Expired Items',
+        'Theft/Missing',
+        'Internal Use',
+        'Production Waste',
+        'Other'
+    ];
+
+    return (
+        <InventoryStaffLayout>
+            <Head title="Manual Stock Adjustment — Inventory" />
+
+            <Alert message={alertMessage} onClose={() => setAlertMessage('')} />
+
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                    <div>
+                        <h1 className="text-3xl font-black text-slate-900 tracking-tight">Create Adjustment</h1>
+                        <p className="text-slate-500 font-medium mt-1">Record manual changes to stock levels.</p>
+                    </div>
+                    <Link href={route('staff.inventory.stock-adjustments.index')} className="text-sm font-bold text-slate-400 hover:text-indigo-600 transition flex items-center gap-2">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                        Back to History
+                    </Link>
+                </div>
+
+                <form onSubmit={submit} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Left Panel - Header Info */}
+                    <div className="lg:col-span-1 space-y-6">
+                        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-5">
+                            <h3 className="text-xs font-black text-indigo-700 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                <span className="w-6 h-6 rounded-lg bg-indigo-50 flex items-center justify-center text-[10px]">1</span>
+                                Adjustment Details
+                            </h3>
+
+                            <div>
+                                <InputLabel htmlFor="warehouse_id" value="Target Warehouse *" className="text-[10px] font-black uppercase text-slate-400 mb-1.5" />
+                                <select
+                                    id="warehouse_id"
+                                    value={data.warehouse_id}
+                                    onChange={e => setData('warehouse_id', e.target.value)}
+                                    className="w-full bg-slate-50 border-slate-200 rounded-2xl text-sm font-bold text-slate-700 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none"
+                                    required
+                                >
+                                    <option value="">Select Warehouse...</option>
+                                    {warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+                                </select>
+                                <InputError message={errors.warehouse_id} className="mt-1" />
+                            </div>
+
+                            <div>
+                                <InputLabel htmlFor="reason" value="Primary Reason *" className="text-[10px] font-black uppercase text-slate-400 mb-1.5" />
+                                <select
+                                    id="reason"
+                                    value={data.reason}
+                                    onChange={e => setData('reason', e.target.value)}
+                                    className="w-full bg-slate-50 border-slate-200 rounded-2xl text-sm font-bold text-slate-700 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none"
+                                    required
+                                >
+                                    <option value="">Select Reason...</option>
+                                    {reasons.map(r => <option key={r} value={r}>{r}</option>)}
+                                </select>
+                                <InputError message={errors.reason} className="mt-1" />
+                            </div>
+
+                            <div>
+                                <InputLabel htmlFor="notes" value="Internal Notes" className="text-[10px] font-black uppercase text-slate-400 mb-1.5" />
+                                <textarea
+                                    id="notes"
+                                    value={data.notes}
+                                    onChange={e => setData('notes', e.target.value)}
+                                    rows="4"
+                                    className="w-full bg-slate-50 border-slate-200 rounded-2xl text-sm font-medium text-slate-700 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none"
+                                    placeholder="Provide more context if necessary..."
+                                ></textarea>
+                                <InputError message={errors.notes} className="mt-1" />
+                            </div>
+                        </div>
+                        
+                        <div className="bg-amber-50 rounded-3xl border border-amber-100 p-5 text-amber-700 text-xs">
+                            <div className="flex gap-3">
+                                <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                                <div>
+                                    <p className="font-black uppercase tracking-tight mb-1">Stock Impact Notice</p>
+                                    <p className="font-medium opacity-80 leading-relaxed">
+                                        Positive quantities will <strong>increase</strong> stock levels. Negative quantities will <strong>decrease</strong> stock levels.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Right Panel - Items */}
+                    <div className="lg:col-span-2 space-y-6">
+                        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden h-full flex flex-col">
+                            <div className="p-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/30">
+                                <h3 className="text-xs font-black text-indigo-700 uppercase tracking-widest flex items-center gap-2">
+                                    <span className="w-6 h-6 rounded-lg bg-indigo-50 flex items-center justify-center text-[10px]">2</span>
+                                    Adjusted Items
+                                </h3>
+                                <button
+                                    type="button"
+                                    onClick={addItemRow}
+                                    className="px-3 py-1.5 text-[10px] font-black text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition flex items-center gap-1.5 border border-indigo-100"
+                                >
+                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
+                                    Add Another Item
+                                </button>
+                            </div>
+
+                            <div className="p-6 space-y-4 flex-1">
+                                {data.items.map((item, index) => (
+                                    <div key={index} className="group relative grid grid-cols-1 md:grid-cols-12 gap-3 p-4 bg-slate-50/50 hover:bg-slate-50 rounded-2xl border border-slate-100 transition-all active:scale-[0.99]">
+                                        <div className="md:col-span-5">
+                                            <InputLabel value="Product *" className="text-[9px] font-black uppercase text-slate-400 mb-1" />
+                                            <select
+                                                value={item.product_id}
+                                                onChange={e => updateItemRow(index, 'product_id', e.target.value)}
+                                                className="w-full bg-white border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none py-1.5"
+                                                required
+                                            >
+                                                <option value="">Select Product...</option>
+                                                {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                            </select>
+                                            <InputError message={errors[`items.${index}.product_id`]} className="mt-1" />
+                                        </div>
+
+                                        <div className="md:col-span-4">
+                                            <InputLabel value="Batch (Optional)" className="text-[9px] font-black uppercase text-slate-400 mb-1" />
+                                            <select
+                                                value={item.batch_id}
+                                                onChange={e => updateItemRow(index, 'batch_id', e.target.value)}
+                                                className="w-full bg-white border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none py-1.5 disabled:opacity-50"
+                                                disabled={loadingBatches[index]}
+                                            >
+                                                <option value="">No Batch...</option>
+                                                {(availableBatches[item.product_id] || []).map(b => (
+                                                    <option key={b.id} value={b.id}>{b.batch_code}</option>
+                                                ))}
+                                            </select>
+                                            {loadingBatches[index] && <p className="text-[8px] text-indigo-500 font-bold mt-0.5 animate-pulse">Loading batches...</p>}
+                                            <InputError message={errors[`items.${index}.batch_id`]} className="mt-1" />
+                                        </div>
+
+                                        <div className="md:col-span-2">
+                                            <InputLabel value="Quantity *" className="text-[9px] font-black uppercase text-slate-400 mb-1" />
+                                            <TextInput
+                                                type="number"
+                                                step="0.01"
+                                                value={item.quantity}
+                                                onChange={e => updateItemRow(index, 'quantity', e.target.value)}
+                                                className="w-full h-[34px] !py-0 text-xs font-black text-center"
+                                                required
+                                            />
+                                            <InputError message={errors[`items.${index}.quantity`]} className="mt-1" />
+                                        </div>
+
+                                        <div className="md:col-span-1 flex items-end justify-center pb-1">
+                                            {data.items.length > 1 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeItemRow(index)}
+                                                    className="w-8 h-8 rounded-full bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center opacity-0 group-hover:opacity-100"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+
+                                {data.items.length === 0 && (
+                                    <div className="py-12 text-center bg-slate-50/50 rounded-3xl border-2 border-dashed border-slate-100">
+                                        <p className="text-sm font-bold text-slate-300 italic">No products added for adjustment yet.</p>
+                                        <button type="button" onClick={addItemRow} className="mt-4 text-xs font-black text-indigo-600 hover:underline">Add First Product</button>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="p-6 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+                                <p className="text-[10px] font-bold text-slate-400">Total items to adjust: <span className="text-slate-900 font-black">{data.items.length}</span></p>
+                                <div className="flex gap-2">
+                                    <Link href={route('staff.inventory.stock-adjustments.index')} className="px-6 py-2 text-xs font-bold text-slate-500 hover:text-slate-700 transition">Discard</Link>
+                                    <PrimaryButton disabled={processing} className="!bg-indigo-600 hover:!bg-indigo-700 !px-8 !py-2.5 !rounded-2xl shadow-lg shadow-indigo-200">
+                                        {processing ? 'Saving...' : 'Execute Adjustment'}
+                                    </PrimaryButton>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </InventoryStaffLayout>
+    );
+}

@@ -32,9 +32,12 @@ use App\Http\Controllers\Staff\InventoryWarehouseLocationsController;
 use App\Http\Controllers\Staff\InventoryProductStocksController;
 use App\Http\Controllers\Staff\InventoryStockMovementsController;
 use App\Http\Controllers\Staff\InventoryStockLevelsController;
+use App\Http\Controllers\Staff\InventoryStockAdjustmentsController;
 use App\Http\Controllers\Staff\Production\ProductionDashboardController;
 use App\Http\Controllers\Staff\Production\ProductionTasksController;
 use App\Http\Controllers\Staff\Production\ProductionReportsController;
+use App\Http\Controllers\Staff\Production\ProductionOrdersController;
+use App\Http\Controllers\Staff\Production\ProductionRunsController;
 use App\Http\Controllers\Staff\Accounting\AccountingDashboardController;
 use App\Http\Controllers\Staff\Accounting\AccountingTasksController;
 use App\Http\Controllers\Staff\Accounting\AccountingReportsController;
@@ -80,7 +83,7 @@ Route::middleware(['auth', 'verified'])->get('/dashboard', function () {
         1 => redirect()->route('admin.dashboard'),
         3 => redirect()->route('customer.dashboard'),
         4 => redirect()->route('staff.inventory.dashboard'),
-        5 => redirect()->route('staff.productiondashboard'),
+        5 => redirect()->route('staff.production.dashboard'),
         6 => redirect()->route('staff.accountingdashboard'),
         7 => redirect()->route('staff.cashierdashboard'),
         8 => redirect()->route('staff.marketing-salesdashboard'),
@@ -213,6 +216,13 @@ Route::middleware(['auth', 'verified'])->prefix('staff')->name('staff.')->group(
         Route::controller(InventoryStockLevelsController::class)->group(function () {
             Route::get('stock-levels', 'index')->name('stock-levels.index');
         });
+        Route::controller(InventoryStockAdjustmentsController::class)->group(function () {
+            Route::get('stock-adjustment', 'create')->name('stock-adjustments.create');
+            Route::get('stock-adjustment-history', 'index')->name('stock-adjustments.index');
+            Route::get('stock-adjustment/batches/{product}', 'getBatchesByProduct')->name('stock-adjustments.batches');
+            Route::post('stock-adjustment', 'store')->name('stock-adjustments.store');
+            Route::delete('stock-adjustment/{adjustment}', 'destroy')->name('stock-adjustments.destroy');
+        });
         Route::controller(InventorySuppliersController::class)->group(function () {
             Route::get('suppliers', 'index')->name('suppliers.index');
             Route::post('suppliers', 'store')->name('suppliers.store');
@@ -236,6 +246,10 @@ Route::middleware(['auth', 'verified'])->prefix('staff')->name('staff.')->group(
         });
         Route::controller(InventoryReportsController::class)->group(function () {
             Route::get('reports', 'index')->name('reports');
+            Route::get('stock-summary-report', 'stockSummary')->name('reports.stock-summary');
+            Route::get('movement-report', 'movementReport')->name('reports.movement');
+            Route::get('low-stock-report', 'lowStockReport')->name('reports.low-stock');
+            Route::get('expiry-report', 'expiryReport')->name('reports.expiry');
             Route::get('reports/pdf', 'pdf')->name('reports.pdf');
             Route::get('reports/excel', 'excel')->name('reports.excel');
         });
@@ -258,9 +272,21 @@ Route::middleware(['auth', 'verified'])->prefix('staff')->name('staff.')->group(
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'verified'])->prefix('staff')->name('staff.')->group(function () {
-    Route::prefix('production')->name('production')->group(function () {
+    Route::prefix('production')->name('production.')->group(function () {
         Route::controller(ProductionDashboardController::class)->group(function () {
             Route::get('dashboard', 'index')->name('dashboard');
+        });
+        Route::controller(ProductionOrdersController::class)->group(function () {
+            Route::get('production-orders', 'index')->name('production-orders.index');
+            Route::post('production-orders', 'store')->name('production-orders.store');
+            Route::put('production-orders/{order}', 'update')->name('production-orders.update');
+            Route::delete('production-orders/{order}', 'destroy')->name('production-orders.destroy');
+        });
+        Route::controller(ProductionRunsController::class)->group(function () {
+            Route::get('production-runs', 'index')->name('runs.index');
+            Route::post('production-runs', 'store')->name('runs.store');
+            Route::put('production-runs/{run}', 'update')->name('runs.update');
+            Route::delete('production-runs/{run}', 'destroy')->name('runs.destroy');
         });
         Route::controller(ProductionTasksController::class)->group(function () {
             Route::get('tasks', 'index')->name('tasks');

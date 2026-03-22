@@ -21,4 +21,9 @@ class RawProductBatch extends Model
     {
         return $this->belongsTo(RawProduct::class, 'raw_product_id');
     }
+
+    public function stocks()
+    {
+        return $this->hasMany(RawProductStock::class, 'batch_id', 'id');
+    }
 }
