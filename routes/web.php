@@ -38,6 +38,8 @@ use App\Http\Controllers\Staff\Production\ProductionTasksController;
 use App\Http\Controllers\Staff\Production\ProductionReportsController;
 use App\Http\Controllers\Staff\Production\ProductionOrdersController;
 use App\Http\Controllers\Staff\Production\ProductionRunsController;
+use App\Http\Controllers\Staff\Production\MaterialIssuesController;
+use App\Http\Controllers\Staff\Production\OutputPostingController;
 use App\Http\Controllers\Staff\Accounting\AccountingDashboardController;
 use App\Http\Controllers\Staff\Accounting\AccountingTasksController;
 use App\Http\Controllers\Staff\Accounting\AccountingReportsController;
@@ -287,6 +289,18 @@ Route::middleware(['auth', 'verified'])->prefix('staff')->name('staff.')->group(
             Route::post('production-runs', 'store')->name('runs.store');
             Route::put('production-runs/{run}', 'update')->name('runs.update');
             Route::delete('production-runs/{run}', 'destroy')->name('runs.destroy');
+        });
+        Route::controller(MaterialIssuesController::class)->group(function () {
+            Route::get('materials-issue', 'index')->name('material-issues.index');
+            Route::post('materials-issue', 'store')->name('material-issues.store');
+            Route::put('materials-issue/{materialIssue}', 'update')->name('material-issues.update');
+            Route::delete('materials-issue/{materialIssue}', 'destroy')->name('material-issues.destroy');
+        });
+        Route::controller(OutputPostingController::class)->group(function () {
+            Route::get('output-posting', 'index')->name('output-posting.index');
+            Route::post('output-posting', 'store')->name('output-posting.store');
+            Route::put('output-posting/{outputPosting}', 'update')->name('output-posting.update');
+            Route::delete('output-posting/{outputPosting}', 'destroy')->name('output-posting.destroy');
         });
         Route::controller(ProductionTasksController::class)->group(function () {
             Route::get('tasks', 'index')->name('tasks');
