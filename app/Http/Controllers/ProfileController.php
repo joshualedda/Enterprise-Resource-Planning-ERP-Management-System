@@ -1,9 +1,7 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
-use App\Models\UserInformation;
 use App\Models\Region;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
@@ -17,11 +15,15 @@ class ProfileController extends Controller
 {
     public function edit(Request $request): Response
     {
-        $userInformation = UserInformation::where('user_id', $request->user()->id)->first();
-
         // toArray() ensures plain arrays reach the frontend — no Eloquent model issues
-        $regions = Region::with('provinces.municipalities.barangays')
-            ->orderBy('region_name')
+        $regions = Region::with(['provinces' => function($q) {
+                $q->orderBy('provDesc');
+            }, 'provinces.municipalities' => function($q) {
+                $q->orderBy('citymunDesc');
+            }, 'provinces.municipalities.barangays' => function($q) {
+                $q->orderBy('brgyDesc');
+            }])
+            ->orderBy('regDesc')
             ->get()
             ->toArray();
 
@@ -29,23 +31,33 @@ class ProfileController extends Controller
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status'          => session('status'),
             'regions'         => $regions,
-            'userInformation' => $userInformation ? [
-                'phone_number'    => $userInformation->phone_number    ?? '',
-                'region_id'       => (string) ($userInformation->region_id       ?? ''),
-                'province_id'     => (string) ($userInformation->province_id     ?? ''),
-                'municipality_id' => (string) ($userInformation->municipality_id ?? ''),
-                'barangay_id'     => (string) ($userInformation->barangay_id     ?? ''),
-                'zipcode'         => $userInformation->zipcode ?? '',
-            ] : null,
+            'userInformation' => [
+                'region_id'       => (string) ($request->user()->region_id       ?? ''),
+                'province_id'     => (string) ($request->user()->province_id     ?? ''),
+                'municipality_id' => (string) ($request->user()->municipality_id ?? ''),
+                'barangay_id'     => (string) ($request->user()->barangay_id     ?? ''),
+                'zipcode'         => $request->user()->zip_code ?? '',
+            ],
         ];
 
-        // Use the same default profile edit page for all roles (including admin)
+        if ($request->is('staff/inventory/profile')) {
+            return Inertia::render('Staff/Inventory/Profile', $sharedProps);
+        }
+
+        // Use the same default profile edit page for all other roles
         return Inertia::render('Profile/Edit', $sharedProps);
     }
 
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->only(['first_name', 'middle_name', 'last_name', 'email']));
+        $fillData = $request->only(['first_name', 'middle_name', 'last_name', 'email']);
+        $fillData['region_id'] = $request->input('region_id') ?: null;
+        $fillData['province_id'] = $request->input('province_id') ?: null;
+        $fillData['municipality_id'] = $request->input('municipality_id') ?: null;
+        $fillData['barangay_id'] = $request->input('barangay_id') ?: null;
+        $fillData['zip_code'] = $request->input('zipcode') ?: null;
+
+        $request->user()->fill($fillData);
 
         if ($request->user()->isDirty('email')) {
             $request->user()->email_verified_at = null;
@@ -53,23 +65,11 @@ class ProfileController extends Controller
 
         $request->user()->save();
 
-        UserInformation::updateOrCreate(
-            ['user_id' => $request->user()->id],
-            [
-                'user_id'         => $request->user()->id,
-                'role_id'         => $request->user()->role_id,
-                'phone_number'    => $request->input('phone_number'),
-                'region_id'       => $request->input('region_id')       ?: null,
-                'province_id'     => $request->input('province_id')     ?: null,
-                'municipality_id' => $request->input('municipality_id') ?: null,
-                'barangay_id'     => $request->input('barangay_id')     ?: null,
-                'zipcode'         => $request->input('zipcode'),
-            ]
-        );
-
         return match ((int) $request->user()->role_id) {
-            // Redirect all roles back to the shared profile edit route
-            default => Redirect::route('profile.edit'),
+            // Check if the request came from staff inventory profile
+            default => str_contains(url()->previous(), 'staff/inventory/profile')
+                ? Redirect::route('staff.inventory.profile')
+                : Redirect::route('profile.edit'),
         };
     }
 

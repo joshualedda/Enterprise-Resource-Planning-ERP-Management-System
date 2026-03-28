@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 class Barangay extends Model
 {
     protected $table = 'barangay';
-    protected $fillable = ['municipality_id', 'name'];
+    protected $primaryKey = 'barangay_id';
+    protected $fillable = ['brgyCode', 'brgyDesc', 'regCode', 'provCode', 'citymunCode'];
 
     public function municipalities()
     {
-        return $this->belongsTo(Municipality::class, 'municipality_id');
+        return $this->belongsTo(Municipality::class, 'citymunCode', 'citymunCode');
     }
 }

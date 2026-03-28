@@ -7,15 +7,16 @@ use Illuminate\Database\Eloquent\Model;
 class Municipality extends Model
 {
     protected $table = 'municipality';
-    protected $fillable = ['province_id', 'municipality_name'];
+    protected $primaryKey = 'municipality_id';
+    protected $fillable = ['psgcCode', 'citymunDesc', 'regCode', 'provCode', 'citymunCode'];
 
     public function provinces()
     {
-        return $this->belongsTo(Province::class, 'province_id');
+        return $this->belongsTo(Province::class, 'provCode', 'provCode');
     }
 
     public function barangays()
     {
-        return $this->hasMany(Barangay::class, 'municipality_id');
+        return $this->hasMany(Barangay::class, 'citymunCode', 'citymunCode');
     }
 }
