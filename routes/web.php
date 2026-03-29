@@ -43,6 +43,13 @@ use App\Http\Controllers\Staff\Production\OutputPostingController;
 use App\Http\Controllers\Staff\Accounting\AccountingDashboardController;
 use App\Http\Controllers\Staff\Accounting\AccountingTasksController;
 use App\Http\Controllers\Staff\Accounting\AccountingReportsController;
+use App\Http\Controllers\Staff\Accounting\ChartOfAccountController;
+use App\Http\Controllers\Staff\Accounting\JournalEntryController;
+use App\Http\Controllers\Staff\Accounting\CustomerPaymentController;
+use App\Http\Controllers\Staff\Accounting\SupplierPaymentController;
+use App\Http\Controllers\Staff\Accounting\TrialBalanceController;
+use App\Http\Controllers\Staff\Accounting\ProfitAndLossController;
+use App\Http\Controllers\Staff\Accounting\BalanceSheetController;
 use App\Http\Controllers\Staff\Cashier\CashierDashboardController;
 use App\Http\Controllers\Staff\Cashier\CashierTasksController;
 use App\Http\Controllers\Staff\Cashier\CashierReportsController;
@@ -327,6 +334,39 @@ Route::middleware(['auth', 'verified'])->prefix('staff')->name('staff.')->group(
     Route::prefix('accounting')->name('accounting')->group(function () {
         Route::controller(AccountingDashboardController::class)->group(function () {
             Route::get('dashboard', 'index')->name('dashboard');
+        });
+        Route::controller(ChartOfAccountController::class)->group(function () {
+            Route::get('chart-of-accounts', 'index')->name('.chart-of-accounts.index');
+            Route::post('chart-of-accounts', 'store')->name('.chart-of-accounts.store');
+            Route::put('chart-of-accounts/{id}', 'update')->name('.chart-of-accounts.update');
+            Route::delete('chart-of-accounts/{id}', 'destroy')->name('.chart-of-accounts.destroy');
+        });
+        Route::controller(JournalEntryController::class)->group(function () {
+            Route::get('journal-entries', 'index')->name('.journal-entries.index');
+            Route::post('journal-entries', 'store')->name('.journal-entries.store');
+            Route::put('journal-entries/{id}', 'update')->name('.journal-entries.update');
+            Route::delete('journal-entries/{id}', 'destroy')->name('.journal-entries.destroy');
+        });
+        Route::controller(CustomerPaymentController::class)->group(function () {
+            Route::get('customer-payments', 'index')->name('.customer-payments.index');
+            Route::post('customer-payments', 'store')->name('.customer-payments.store');
+            Route::put('customer-payments/{id}', 'update')->name('.customer-payments.update');
+            Route::delete('customer-payments/{id}', 'destroy')->name('.customer-payments.destroy');
+        });
+        Route::controller(SupplierPaymentController::class)->group(function () {
+            Route::get('supplier-payments', 'index')->name('.supplier-payments.index');
+            Route::post('supplier-payments', 'store')->name('.supplier-payments.store');
+            Route::put('supplier-payments/{id}', 'update')->name('.supplier-payments.update');
+            Route::delete('supplier-payments/{id}', 'destroy')->name('.supplier-payments.destroy');
+        });
+        Route::controller(TrialBalanceController::class)->group(function () {
+            Route::get('trial-balance', 'index')->name('.trial-balance.index');
+        });
+        Route::controller(ProfitAndLossController::class)->group(function () {
+            Route::get('profit-and-loss', 'index')->name('.profit-and-loss.index');
+        });
+        Route::controller(BalanceSheetController::class)->group(function () {
+            Route::get('balance-sheet', 'index')->name('.balance-sheet.index');
         });
         Route::controller(AccountingTasksController::class)->group(function () {
             Route::get('tasks', 'index')->name('tasks');

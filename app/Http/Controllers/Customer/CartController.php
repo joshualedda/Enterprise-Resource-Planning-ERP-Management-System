@@ -25,24 +25,31 @@ class CartController extends Controller
 
         $categories = Category::orderBy('category')->get();
 
-        $regions = Region::with('provinces.municipalities.barangays')->orderBy('region_name')->get();
+        $regions = Region::with(['provinces' => function($q) {
+                $q->orderBy('provDesc');
+            }, 'provinces.municipalities' => function($q) {
+                $q->orderBy('citymunDesc');
+            }, 'provinces.municipalities.barangays' => function($q) {
+                $q->orderBy('brgyDesc');
+            }])
+            ->orderBy('regDesc')
+            ->get();
 
-        // Fetch saved address for auto-fill on delivery checkout
-        $savedAddress = UserInformation::where('user_id', Auth::id())->first();
+        // Fetch saved address for auto-fill on delivery checkout from user
+        $user = Auth::user();
 
         return Inertia::render('Customer/Products/Index', [
             'products'     => $products,
             'categories'   => $categories,
             'cart'         => session('cart', []),
             'regions'      => $regions,
-            'savedAddress' => $savedAddress ? [
-                'phone_number'    => $savedAddress->phone_number,
-                'region_id'       => (string) ($savedAddress->region_id       ?? ''),
-                'province_id'     => (string) ($savedAddress->province_id     ?? ''),
-                'municipality_id' => (string) ($savedAddress->municipality_id ?? ''),
-                'barangay_id'     => (string) ($savedAddress->barangay_id     ?? ''),
-                'zipcode'         => $savedAddress->zipcode ?? '',
-            ] : null,
+            'savedAddress' => [
+                'region_id'       => (string) ($user->region_id       ?? ''),
+                'province_id'     => (string) ($user->province_id     ?? ''),
+                'municipality_id' => (string) ($user->municipality_id ?? ''),
+                'barangay_id'     => (string) ($user->barangay_id     ?? ''),
+                'zipcode'         => $user->zip_code ?? '',
+            ],
         ]);
     }
 

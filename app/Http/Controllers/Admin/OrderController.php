@@ -35,22 +35,22 @@ class OrderController extends Controller
             'order_items.product'
         ])->findOrFail($id);
 
-        $info = $transaction->user?->information;
+        $user = $transaction->user;
         $shippingAddress = null;
 
-        if ($info) {
-            $region       = $info->region_id       ? Region::find($info->region_id)             : null;
-            $province     = $info->province_id     ? Province::find($info->province_id)         : null;
-            $municipality = $info->municipality_id ? Municipality::find($info->municipality_id) : null;
-            $barangay     = $info->barangay_id     ? Barangay::find($info->barangay_id)         : null;
+        if ($user && $user->region_id) {
+            $region       = Region::where('regCode', $user->region_id)->first();
+            $province     = Province::where('provCode', $user->province_id)->first();
+            $municipality = Municipality::where('citymunCode', $user->municipality_id)->first();
+            $barangay     = Barangay::where('brgyCode', $user->barangay_id)->first();
 
             $shippingAddress = [
-                'phone_number' => $info->phone_number,
-                'region'       => $region?->region_description ?? $region?->region_name ?? null,
-                'province'     => $province?->province_name    ?? null,
-                'municipality' => $municipality?->municipality_name ?? null,
-                'barangay'     => $barangay?->name              ?? null,
-                'zipcode'      => $info->zipcode,
+                'phone_number' => null, // Assuming no phone_number in users table based on provided schema
+                'region'       => $region?->regDesc ?? null,
+                'province'     => $province?->provDesc    ?? null,
+                'municipality' => $municipality?->citymunDesc ?? null,
+                'barangay'     => $barangay?->brgyDesc            ?? null,
+                'zipcode'      => $user->zip_code ?? null,
             ];
         }
 

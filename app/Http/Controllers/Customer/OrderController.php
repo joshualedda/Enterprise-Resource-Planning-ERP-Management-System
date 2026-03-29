@@ -124,18 +124,13 @@ class OrderController extends Controller
 
             // 7. Shipping Info (delivery)
             if ($method === 'delivery' && !empty($address)) {
-                UserInformation::updateOrCreate(
-                    ['user_id' => $user->id],
-                    [
-                        'role_id'         => $user->role_id,
-                        'phone_number'    => $address['phone_number'] ?? null,
-                        'region_id'       => $address['region_id'] ?? null,
-                        'province_id'     => $address['province_id'] ?? null,
-                        'municipality_id' => $address['municipality_id'] ?? null,
-                        'barangay_id'     => $address['barangay_id'] ?? null,
-                        'zipcode'         => $address['zipcode'] ?? null,
-                    ]
-                );
+                $user->update([
+                    'region_id'       => $address['region_id'] ?? null,
+                    'province_id'     => $address['province_id'] ?? null,
+                    'municipality_id' => $address['municipality_id'] ?? null,
+                    'barangay_id'     => $address['barangay_id'] ?? null,
+                    'zip_code'        => $address['zipcode'] ?? null,
+                ]);
             }
 
             // 8. Notification para sa ADMIN — may bagong order
