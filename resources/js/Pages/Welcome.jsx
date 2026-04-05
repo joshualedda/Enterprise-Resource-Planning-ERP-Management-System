@@ -27,6 +27,28 @@ export default function Storefront({ auth, products }) { // Added products prop
         );
     };
 
+    const getDashboardRoute = () => {
+        if (!auth.user) return route('login');
+        const role_id = auth.user.role_id;
+        const access_id = auth.user.access_id;
+        
+        if (role_id === 1) return route('admin.dashboard');
+        if (role_id === 3) return route('customer.dashboard');
+        
+        // Staff role logic based on department (access_id)
+        if (role_id === 2) {
+            if (access_id === 1) return route('staff.inventory.dashboard');
+            if (access_id === 2) return route('staff.production.dashboard');
+            if (access_id === 3) return route('staff.accounting.dashboard');
+            if (access_id === 4) return route('staff.cashier.dashboard');
+            if (access_id === 5) return route('staff.marketing-sales.dashboard');
+            return route('staff.production.dashboard'); // Standard Staff Fallback
+        }
+        
+        return route('login');
+    };
+
+
     return (
         <div className="min-h-screen bg-[#FAFAFA] flex flex-col font-sans text-slate-950 antialiased selection:bg-lime-400 selection:text-slate-900">
             <Head title="D'SERICORE | Philippine Sericulture Hub" />
@@ -213,10 +235,21 @@ export default function Storefront({ auth, products }) { // Added products prop
                     </div>
 
                     <div className="flex items-center gap-6">
-                        <Link href={route('login')} className="text-xs font-bold uppercase tracking-widest hover:text-lime-600 transition">Log In</Link>
-                        <Link href="#" className="bg-slate-950 text-white px-6 py-3 text-[11px] font-black uppercase tracking-[0.15em] hover:bg-lime-500 hover:text-slate-950 transition-all duration-300">
-                            Enterprise Access
-                        </Link>
+                        {auth.user ? (
+                            <Link 
+                                href={getDashboardRoute()} 
+                                className="bg-lime-500 text-slate-950 px-6 py-3 text-[11px] font-black uppercase tracking-[0.15em] hover:bg-slate-950 hover:text-white transition-all duration-300 shadow-lg shadow-lime-500/20"
+                            >
+                                Go to Dashboard
+                            </Link>
+                        ) : (
+                            <>
+                                <Link href={route('login')} className="text-xs font-bold uppercase tracking-widest hover:text-lime-600 transition">Log In</Link>
+                                <Link href="#" className="bg-slate-950 text-white px-6 py-3 text-[11px] font-black uppercase tracking-[0.15em] hover:bg-lime-500 hover:text-slate-950 transition-all duration-300">
+                                    Enterprise Access
+                                </Link>
+                            </>
+                        )}
                     </div>
                 </div>
             </nav>

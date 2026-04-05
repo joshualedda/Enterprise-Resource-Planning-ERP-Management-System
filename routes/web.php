@@ -74,6 +74,7 @@ Route::patch('/notifications/{id}/mark-read', [NotificationController::class, 'm
     ->name('notifications.markRead');
 
 Route::get('/', [LandingPageController::class, 'front'])->name('storefront');
+Route::get('/all-products', [LandingPageController::class, 'allProducts'])->name('products.all');
 
 Route::post('/api/check-email', function (Request $request) {
     $exists = User::where('email', $request->input('email'))->exists();
@@ -150,6 +151,7 @@ Route::middleware(['auth', 'verified'])->prefix('customer')->name('customer.')->
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('/api/orders/{id}/receipt', [OrderController::class, 'getReceipt'])->name('orders.receipt');
     Route::post('/checkout/place-order', [OrderController::class, 'placeOrder'])->name('checkout.place');
+    Route::patch('/orders/{transaction}/cancel', [OrderController::class, 'cancelOrder'])->name('orders.cancel');
 
     Route::post('/ratings/bulk', [RatingController::class, 'bulkStore'])->name('ratings.bulk');
 
