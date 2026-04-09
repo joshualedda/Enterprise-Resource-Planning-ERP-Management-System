@@ -142,4 +142,136 @@ class OrderController extends Controller
             return redirect()->back()->with('error', 'Something went wrong: ' . $e->getMessage());
         }
     }
+
+    /**
+     * POST /admin/orders/{id}/approve-return
+     * Approve a returned order and create a replacement delivery
+     */
+    public function approveReturn(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'action' => 'required|in:approve,reject',
+            'reason' => 'nullable|string|max:500',
+        ]);
+
+        $transaction = Transaction::with('order_items')->findOrFail($id);
+
+        if ($transaction->status !== 'Returned') {
+            return response()->json(['error' => 'Order is not in Returned status.'], 422);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            if ($validated['action'] === 'approve') {
+                // Restore inventory stock
+                foreach ($transaction->order_items as $item) {
+                    $inventoryRow = Inventory::where('product_id', $item->product_id)
+                        ->where('type', 'in')
+                        ->latest()
+                        ->first();
+
+                    if ($inventoryRow) {
+                        $inventoryRow->increment('quantity', $item->quantity);
+                        $inventoryRow->update([
+                            'remarks' => "Stock restored — Return approved for Order #{$transaction->reference_no}",
+                        ]);
+                    }
+                }
+
+                // Create a new replacement transaction
+                $replacementTransaction = Transaction::create([
+                    'user_id'        => $transaction->user_id,
+                    'reference_no'   => $this->generateReferenceNo(),
+                    'total_amount'   => $transaction->total_amount,
+                    'status'         => 'In Process',
+                    'order_type'     => $transaction->order_type,
+                    'payment_method' => $transaction->payment_method,
+                    'receipt_path'   => $transaction->receipt_path,
+                    'transacted_by'  => auth()->id(),
+                ]);
+
+                // Copy order items to replacement transaction
+                foreach ($transaction->order_items as $item) {
+                    Order::create([
+                        'transaction_id' => $replacementTransaction->id,
+                        'product_id'     => $item->product_id,
+                        'quantity'       => $item->quantity,
+                        'price_at_sale'  => $item->price_at_sale,
+                        'status'         => 'In Process',
+                    ]);
+
+                    // Deduct inventory for replacement
+                    $inventoryRow = Inventory::where('product_id', $item->product_id)
+                        ->where('type', 'in')
+                        ->latest()
+                        ->first();
+
+                    if ($inventoryRow) {
+                        $inventoryRow->decrement('quantity', $item->quantity);
+                        $inventoryRow->update([
+                            'remarks' => "Replacement Order #{$replacementTransaction->reference_no} — from Return #{$transaction->reference_no}",
+                        ]);
+                    }
+                }
+
+                // Update original transaction to Completed (return approved)
+                $transaction->update(['status' => 'Completed']);
+
+                // Notify customer about refund/replacement
+                $customer = $transaction->user;
+                Notification::create([
+                    'user_id' => $transaction->user_id,
+                    'icon'    => '✅',
+                    'title'   => 'Return Approved - Replacement Approved!',
+                    'body'    => "Your return for order #{$transaction->reference_no} has been approved! A replacement order #{$replacementTransaction->reference_no} has been created and will be re-delivered to you.",
+                    'unread'  => true,
+                    'type'    => 'return_approved',
+                    'url'     => route('customer.orders.index')
+                ]);
+
+            } else {
+                // Reject return
+                $transaction->update(['status' => 'Completed']);
+
+                Notification::create([
+                    'user_id' => $transaction->user_id,
+                    'icon'    => '❌',
+                    'title'   => 'Return Request Rejected',
+                    'body'    => "Your return request for order #{$transaction->reference_no} has been rejected. Reason: {$validated['reason']}",
+                    'unread'  => true,
+                    'type'    => 'return_rejected',
+                    'url'     => route('customer.orders.index')
+                ]);
+            }
+
+            DB::commit();
+
+            $action = $validated['action'] === 'approve' ? 'approved' : 'rejected';
+            return response()->json([
+                'success' => true,
+                'message' => "Return {$action} successfully.",
+                'replacementRef' => $validated['action'] === 'approve' ? $replacementTransaction->reference_no ?? null : null
+            ]);
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'Something went wrong: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Generate unique reference number
+     */
+    private function generateReferenceNo(): string
+    {
+        do {
+            $digits = str_pad(rand(0, 9999999), 7, '0', STR_PAD_LEFT);
+            $letter = chr(rand(65, 90));
+            $code   = strtoupper(str_shuffle($digits . $letter));
+            $refNo  = 'SRDI-2026-' . $code;
+        } while (Transaction::where('reference_no', $refNo)->exists());
+
+        return $refNo;
+    }
 }
