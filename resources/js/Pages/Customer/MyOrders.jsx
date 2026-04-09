@@ -11,6 +11,7 @@ const formatCurrency = (amount) =>
     new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(amount || 0);
 
 const statusConfig = {
+    'Pending':          { classes: 'bg-amber-50 text-amber-600 border-amber-100',                        dot: 'bg-amber-500' },
     'In Process':       { classes: 'bg-blue-50 text-blue-600 border-blue-100',                        dot: 'bg-blue-500' },
     'Ready to Pickup':  { classes: 'bg-emerald-50 text-emerald-700 border-emerald-200 animate-pulse', dot: 'bg-emerald-500' },
     'Product Received': { classes: 'bg-slate-100 text-slate-600 border-slate-200',                    dot: 'bg-slate-400' },
@@ -128,7 +129,8 @@ function ActiveOrdersTable({ orders, processingId, onViewDetails, onMarkReceived
                         <Filter size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                         <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
                             className="pl-7 pr-6 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 focus:ring-2 focus:ring-indigo-500 appearance-none cursor-pointer">
-                            <option value="All">All</option>
+                            <option value="All">All Statuses</option>
+                            <option value="Pending">Pending</option>
                             <option value="In Process">In Process</option>
                             <option value="Ready to Pickup">Ready to Pickup</option>
                             <option value="Cancelled">Cancelled</option>
@@ -167,7 +169,8 @@ function ActiveOrdersTable({ orders, processingId, onViewDetails, onMarkReceived
                                 <td className="px-5 py-3.5">
                                     <div className="flex -space-x-2">
                                         {order.order_items?.slice(0, 3).map((item, idx) => (
-                                            <img key={idx} src={item.product?.image_url || '/placeholder.png'}
+                                            <img key={idx} src={item.product?.image_url || 'https://placehold.co/100x100?text=No+Image'}
+                                                onError={(e) => { e.target.src = 'https://placehold.co/100x100?text=No+Image'; }}
                                                 className="h-7 w-7 rounded-full border-2 border-white object-cover bg-slate-100 shadow-sm" title={item.product?.product} />
                                         ))}
                                         {(order.order_items?.length || 0) > 3 && (
@@ -309,7 +312,8 @@ function OrderHistoryTable({ orders, onViewDetails }) {
                                 <td className="px-5 py-3.5">
                                     <div className="flex -space-x-2">
                                         {order.order_items?.slice(0, 3).map((item, idx) => (
-                                            <img key={idx} src={item.product?.image_url || '/placeholder.png'}
+                                            <img key={idx} src={item.product?.image_url || 'https://placehold.co/100x100?text=No+Image'}
+                                                onError={(e) => { e.target.src = 'https://placehold.co/100x100?text=No+Image'; }}
                                                 className="h-7 w-7 rounded-full border-2 border-white object-cover bg-slate-100 shadow-sm grayscale group-hover:grayscale-0 transition-all" />
                                         ))}
                                         {(order.order_items?.length || 0) > 3 && (
@@ -373,6 +377,7 @@ export default function MyOrders({ auth, orders }) {
     const [isDetailsOpen,    setIsDetailsOpen]    = useState(false);
     const [viewingOrder,     setViewingOrder]     = useState(null);
     const [confirmModal,     setConfirmModal]     = useState({ open: false, id: null });
+    const [confirmCancel,    setConfirmCancel]    = useState({ open: false, id: null });
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [showRatingModal,  setShowRatingModal]  = useState(false);
     const [ratingData,       setRatingData]       = useState({ items: [], orderId: null, ratings: {} });
@@ -405,6 +410,21 @@ export default function MyOrders({ auth, orders }) {
             router.reload({ preserveScroll: true });
         } catch {
             alert('Update failed. Please try again.');
+        } finally {
+            setProcessingId(null);
+        }
+    };
+
+    const handleCancelOrder = async () => {
+        const transactionId = confirmCancel.id;
+        setProcessingId(transactionId);
+        setConfirmCancel({ open: false, id: null });
+        try {
+            await axios.patch(route('customer.orders.cancel', transactionId));
+            setIsDetailsOpen(false);
+            router.reload({ preserveScroll: true });
+        } catch (err) {
+            alert(err.response?.data?.error || 'Cancellation failed. Please try again.');
         } finally {
             setProcessingId(null);
         }
@@ -546,6 +566,9 @@ export default function MyOrders({ auth, orders }) {
                                         <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">REF: {viewingOrder.reference_no}</p>
                                         <StatusBadge status={viewingOrder.status} />
                                     </div>
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider mt-1">
+                                        Placed on {new Date(viewingOrder.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                    </p>
                                 </div>
                                 <button onClick={() => setIsDetailsOpen(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
                                     <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -554,47 +577,93 @@ export default function MyOrders({ auth, orders }) {
                                 </button>
                             </div>
 
-                            <div className="space-y-3 max-h-[35vh] overflow-y-auto pr-2">
+                             <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
                                 {viewingOrder.order_items?.map((item, idx) => (
-                                    <div key={idx} className="flex items-center gap-4 p-4 rounded-2xl border border-slate-50 bg-slate-50/50">
-                                        <img src={item.product?.image_url || '/placeholder.png'} className="w-14 h-14 rounded-xl object-cover shadow-sm bg-white" />
-                                        <div className="flex-1">
-                                            <p className="text-sm font-black text-slate-900 uppercase leading-none mb-1">{item.product?.product}</p>
-                                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight">
-                                                Qty: {item.quantity} × {formatCurrency(item.price_at_sale)}
-                                            </p>
+                                    <div key={idx} className="group relative bg-slate-50/50 rounded-3xl p-4 border border-slate-100 hover:bg-white hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300">
+                                        <div className="flex items-center gap-5">
+                                            <div className="relative">
+                                                <img 
+                                                    src={item.product?.image_url || 'https://placehold.co/400x300?text=No+Image'} 
+                                                    onError={(e) => { e.target.src = 'https://placehold.co/400x300?text=No+Image'; }}
+                                                    className="w-16 h-16 rounded-2xl object-cover shadow-sm bg-white border border-slate-100" 
+                                                />
+                                                <div className="absolute -top-2 -right-2 bg-indigo-600 text-white text-[9px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+                                                    {item.quantity}
+                                                </div>
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-[11px] font-black text-indigo-500 uppercase tracking-widest mb-0.5">{item.product?.category?.name || 'Product'}</p>
+                                                <h4 className="text-sm font-black text-slate-800 uppercase truncate mb-1">{item.product?.product}</h4>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-[10px] font-bold text-slate-400 bg-slate-200/50 px-2 py-0.5 rounded-md uppercase tracking-tight">
+                                                        {formatCurrency(item.price_at_sale)} / UNIT
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-sm font-black text-slate-900">{formatCurrency(item.quantity * item.price_at_sale)}</p>
+                                            </div>
                                         </div>
-                                        <p className="text-sm font-black text-slate-900">{formatCurrency(item.quantity * item.price_at_sale)}</p>
                                     </div>
                                 ))}
                             </div>
 
-                            {viewingOrder.payment_method === 'Bank' && (
-                                <div className="mt-4 p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-2">Payment Receipt</p>
-                                    {loadingReceipt === viewingOrder.id && <p className="text-xs text-slate-400">Loading receipt...</p>}
-                                    {receiptUrls[viewingOrder.id] && (
-                                        <img
-                                            src={receiptUrls[viewingOrder.id]}
-                                            alt="Receipt"
-                                            className="w-full rounded-xl border border-blue-100 max-h-48 object-contain bg-white cursor-pointer"
-                                            onClick={() => setReceiptZoom({ open: true, src: receiptUrls[viewingOrder.id] })}
-                                        />
-                                    )}
-                                    {receiptUrls[viewingOrder.id] === null && <p className="text-xs text-slate-400">No receipt found.</p>}
+                            <div className="mt-6 p-6 rounded-[2rem] bg-indigo-50/50 border border-indigo-100/50">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Payment Method</span>
+                                        <span className="text-xs font-black text-slate-800 uppercase">{viewingOrder.payment_method}</span>
+                                    </div>
+                                    <div className="flex flex-col text-right">
+                                        <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Order Type</span>
+                                        <span className="text-xs font-black text-slate-800 uppercase">{viewingOrder.order_type}</span>
+                                    </div>
                                 </div>
-                            )}
+
+                                {viewingOrder.payment_method === 'Bank' && (
+                                    <div className="bg-white rounded-2xl border border-indigo-100 p-4">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest ">Payment Receipt</p>
+                                            <Eye size={12} className="text-slate-300" />
+                                        </div>
+                                        {loadingReceipt === viewingOrder.id && (
+                                            <div className="py-4 flex justify-center"><div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div></div>
+                                        )}
+                                        {receiptUrls[viewingOrder.id] && (
+                                            <img
+                                                src={receiptUrls[viewingOrder.id]}
+                                                alt="Receipt"
+                                                className="w-full rounded-xl max-h-32 object-cover bg-white cursor-pointer hover:opacity-90 transition shadow-sm"
+                                                onClick={() => setReceiptZoom({ open: true, src: receiptUrls[viewingOrder.id] })}
+                                            />
+                                        )}
+                                        {receiptUrls[viewingOrder.id] === null && !loadingReceipt && <p className="text-[9px] text-slate-400 font-bold text-center italic">No receipt found.</p>}
+                                    </div>
+                                )}
+                            </div>
 
                             <div className="mt-6 pt-6 border-t border-slate-100 flex justify-between items-center">
                                 <span className="text-slate-400 font-black uppercase text-[10px] tracking-widest">Grand Total</span>
                                 <span className="text-2xl font-black text-indigo-600">{formatCurrency(viewingOrder.total_amount)}</span>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3 mt-6">
-                                <button onClick={() => setIsDetailsOpen(false)} className="py-4 bg-slate-100 text-slate-600 font-black text-[10px] rounded-2xl uppercase hover:bg-slate-200 transition-all">Close</button>
+                            <div className="grid grid-cols-2 gap-3 mt-8">
+                                <button onClick={() => setIsDetailsOpen(false)} 
+                                    className="py-4 bg-slate-100 text-slate-600 font-black text-[10px] rounded-2xl uppercase hover:bg-slate-200 transition-all tracking-widest">
+                                    Close
+                                </button>
+                                
+                                {viewingOrder.status === 'Pending' && (
+                                    <button onClick={() => setConfirmCancel({ open: true, id: viewingOrder.id })}
+                                        disabled={processingId === viewingOrder.id}
+                                        className="py-4 bg-rose-50 text-rose-600 border border-rose-100 font-black text-[10px] rounded-2xl uppercase hover:bg-rose-600 hover:text-white transition-all tracking-widest shadow-sm">
+                                        Cancel Order
+                                    </button>
+                                )}
+
                                 {viewingOrder.status === 'Product Received' && !viewingOrder.is_rated && (
                                     <button onClick={() => { setRatingData({ items: viewingOrder.order_items, orderId: viewingOrder.id, ratings: {} }); setShowRatingModal(true); setIsDetailsOpen(false); }}
-                                        className="py-4 bg-indigo-600 text-white font-black text-[10px] rounded-2xl uppercase hover:bg-indigo-700 shadow-lg shadow-indigo-100">
+                                        className="py-4 bg-indigo-600 text-white font-black text-[10px] rounded-2xl uppercase hover:bg-indigo-700 shadow-lg shadow-indigo-100 tracking-widest">
                                         Rate Products
                                     </button>
                                 )}
@@ -628,7 +697,9 @@ export default function MyOrders({ auth, orders }) {
                             {ratingData.items.map((item) => (
                                 <div key={item.id} className="p-5 rounded-3xl bg-slate-50 border border-slate-100">
                                     <div className="flex items-center gap-3 mb-4">
-                                        <img src={item.product?.image_url || '/placeholder.png'} className="w-8 h-8 rounded-lg object-cover" />
+                                        <img src={item.product?.image_url || 'https://placehold.co/100x100?text=No+Image'} 
+                                            onError={(e) => { e.target.src = 'https://placehold.co/100x100?text=No+Image'; }}
+                                            className="w-8 h-8 rounded-lg object-cover" />
                                         <p className="text-xs font-black uppercase text-slate-700">{item.product?.product}</p>
                                     </div>
                                     <div className="flex gap-2 mb-4">
@@ -681,6 +752,21 @@ export default function MyOrders({ auth, orders }) {
                         <div className="flex flex-col gap-2">
                             <button onClick={handleProductReceived} className="w-full py-4 bg-emerald-600 text-white text-[10px] font-black rounded-2xl uppercase hover:bg-emerald-700 shadow-lg shadow-emerald-100 transition-all tracking-widest">Yes, Received</button>
                             <button onClick={() => setConfirmModal({ open: false, id: null })} className="w-full py-4 text-[10px] font-black text-slate-400 uppercase hover:text-slate-600 tracking-widest transition-all">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ── Confirm Cancel Modal ───────────────────────────────────────── */}
+            {confirmCancel.open && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+                    <div className="bg-white rounded-[2.5rem] p-10 max-w-sm w-full shadow-2xl text-center animate-in zoom-in duration-200">
+                        <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl transition-transform hover:rotate-12">❌</div>
+                        <h3 className="text-2xl font-black text-slate-900 uppercase">Cancel Order?</h3>
+                        <p className="text-slate-500 text-sm mb-10 font-medium leading-relaxed">Are you sure you want to cancel this order? This action cannot be undone once confirmed.</p>
+                        <div className="flex flex-col gap-2">
+                            <button onClick={handleCancelOrder} className="w-full py-4 bg-rose-600 text-white text-[10px] font-black rounded-2xl uppercase hover:bg-rose-700 shadow-lg shadow-rose-100 transition-all tracking-widest">Confirm Cancel</button>
+                            <button onClick={() => setConfirmCancel({ open: false, id: null })} className="w-full py-4 text-[10px] font-black text-slate-400 uppercase hover:text-slate-600 tracking-widest transition-all">Nevermind</button>
                         </div>
                     </div>
                 </div>

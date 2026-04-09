@@ -9,7 +9,6 @@ import { ChevronDown } from 'lucide-react';
  *   onPageChange {(page: number) => void}
  */
 export default function Pagination({ currentPage, totalPages, onPageChange }) {
-    if (totalPages <= 1) return null;
 
     const getPageNumbers = () => {
         const pages = [];
@@ -26,7 +25,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
     };
 
     return (
-        <div className="flex justify-center items-center gap-2 mt-6">
+        <div className="flex justify-center items-center gap-2">
             <button
                 onClick={() => onPageChange(Math.max(currentPage - 1, 1))}
                 disabled={currentPage === 1}
@@ -43,7 +42,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
                             key={idx}
                             onClick={() => onPageChange(page)}
                             className={`w-10 h-10 rounded-lg text-sm font-bold transition ${currentPage === page
-                                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
+                                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-200'
                                     : 'text-slate-600 hover:bg-slate-50 border border-transparent hover:border-slate-200'
                                 }`}
                         >

@@ -124,18 +124,13 @@ class OrderController extends Controller
 
             // 7. Shipping Info (delivery)
             if ($method === 'delivery' && !empty($address)) {
-                UserInformation::updateOrCreate(
-                    ['user_id' => $user->id],
-                    [
-                        'role_id'         => $user->role_id,
-                        'phone_number'    => $address['phone_number'] ?? null,
-                        'region_id'       => $address['region_id'] ?? null,
-                        'province_id'     => $address['province_id'] ?? null,
-                        'municipality_id' => $address['municipality_id'] ?? null,
-                        'barangay_id'     => $address['barangay_id'] ?? null,
-                        'zipcode'         => $address['zipcode'] ?? null,
-                    ]
-                );
+                $user->update([
+                    'region_id'       => $address['region_id'] ?? null,
+                    'province_id'     => $address['province_id'] ?? null,
+                    'municipality_id' => $address['municipality_id'] ?? null,
+                    'barangay_id'     => $address['barangay_id'] ?? null,
+                    'zip_code'        => $address['zipcode'] ?? null,
+                ]);
             }
 
             // 8. Notification para sa ADMIN — may bagong order
@@ -216,6 +211,62 @@ class OrderController extends Controller
         ]);
 
         return response()->json(['message' => 'Order marked as received.']);
+    }
+
+    /**
+     * PATCH /customer/orders/{transaction}/cancel
+     */
+    public function cancelOrder(int $id)
+    {
+        $transaction = Transaction::with('order_items')->where('user_id', Auth::id())->findOrFail($id);
+
+        if ($transaction->status !== 'Pending') {
+            return response()->json(['error' => 'Only pending orders can be cancelled.'], 422);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            // 1. Update status
+            $transaction->update(['status' => 'Cancelled']);
+
+            // 2. Restore stock
+            foreach ($transaction->order_items as $item) {
+                // Fetch the latest stock log entry for this product (type 'in' is typically used for positive stock)
+                $inventoryRow = Inventory::where('product_id', $item->product_id)
+                    ->where('type', 'in')
+                    ->latest()
+                    ->first();
+
+                if ($inventoryRow) {
+                    $inventoryRow->increment('quantity', $item->quantity);
+                    $inventoryRow->update([
+                        'remarks' => "Stock restored — Order #{$transaction->reference_no} cancelled by customer",
+                    ]);
+                }
+            }
+
+            // 3. Notification for ADMIN
+            $admin = User::where('role_id', 1)->first();
+            if ($admin) {
+                Notification::create([
+                    'user_id' => $admin->id,
+                    'icon'    => '❌',
+                    'title'   => 'Order Cancelled by Customer',
+                    'body'    => "Customer " . Auth::user()->first_name . " cancelled order #{$transaction->reference_no}.",
+                    'unread'  => true,
+                    'type'    => 'order_cancelled',
+                    'url'     => route('admin.orders.show', $transaction->id)
+                ]);
+            }
+
+            DB::commit();
+            return response()->json(['message' => 'Order cancelled successfully.']);
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'Cancellation failed: ' . $e->getMessage()], 500);
+        }
     }
 
     private function generateReferenceNo(): string

@@ -139,59 +139,72 @@ export default function StoreView({ products }) {
                             const restockDate  = getRestockDate(item);
 
                             return (
-                                <div key={item.id} className="group flex flex-col">
-                                    <div className={`relative aspect-[4/5] mb-6 overflow-hidden rounded-[2.5rem] bg-white border border-slate-100 shadow-sm transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 ${isOutOfStock ? 'grayscale' : ''}`}>
-                                        {isOutOfStock && (
-                                            <div className="absolute inset-0 z-10 bg-slate-900/60 backdrop-blur-[2px] flex flex-col items-center justify-center p-6 text-center text-white">
-                                                <span className="bg-white text-slate-900 px-6 py-2 rounded-2xl font-black text-xs uppercase tracking-[0.2em] mb-3">Sold Out</span>
-                                                {restockDate && (
-                                                    <div>
-                                                        <p className="text-[10px] uppercase font-bold tracking-widest opacity-60">Restocking</p>
-                                                        <p className="text-sm font-black italic">
-                                                            {new Date(restockDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
-                                                        </p>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-
+                                <div key={item.id} className="group relative bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-2xl hover:border-indigo-100/50 transition-all duration-500 hover:-translate-y-1 flex flex-col">
+                                    {/* Image Container */}
+                                    <div className={`relative aspect-[4/3] w-full bg-slate-50 overflow-hidden ${isOutOfStock ? 'grayscale' : ''}`}>
                                         <img
-                                            src={item.image_url || 'https://placehold.co/400x500?text=No+Image'}
-                                            className={`w-full h-full object-cover transition-transform duration-700 ${!isOutOfStock && 'group-hover:scale-110'}`}
+                                            src={item.image_url || 'https://placehold.co/400x300?text=No+Image'}
+                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                                             alt={item.product}
-                                            onError={(e) => { e.target.src = 'https://placehold.co/400x500?text=No+Image'; }}
+                                            onError={(e) => { e.target.src = 'https://placehold.co/400x300?text=No+Image'; }}
                                         />
 
-                                        {!isOutOfStock && (
-                                            <button
-                                                onClick={() => addToCart(item)}
-                                                className="absolute bottom-6 right-6 bg-white text-slate-950 p-4 rounded-2xl shadow-xl hover:bg-indigo-600 hover:text-white transition-all duration-300 transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 active:scale-90"
-                                            >
-                                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                                                </svg>
-                                            </button>
+                                        {/* Status Badges Overlay */}
+                                        <div className="absolute top-4 left-4 right-4 flex justify-between items-start pointer-events-none">
+                                            {isOutOfStock ? (
+                                                <span className="bg-red-500/90 backdrop-blur-md text-white px-3 py-1.5 rounded-full font-black text-[10px] uppercase tracking-widest shadow-lg">Sold Out</span>
+                                            ) : currentStock < 5 ? (
+                                                <span className="bg-orange-500/90 backdrop-blur-md text-white px-3 py-1.5 rounded-full font-black text-[10px] uppercase tracking-widest shadow-lg">Only {currentStock} left</span>
+                                            ) : (
+                                                <span className="bg-white/80 backdrop-blur-md text-indigo-700 font-black text-[10px] px-3 py-1.5 rounded-full uppercase tracking-widest shadow-sm">{currentStock} in stock</span>
+                                            )}
+                                        </div>
+
+                                        {/* Sold Out Overlay Text */}
+                                        {isOutOfStock && restockDate && (
+                                            <div className="absolute inset-0 z-10 bg-slate-900/40 backdrop-blur-[2px] flex flex-col items-center justify-center p-4 text-center">
+                                                <p className="text-[10px] text-white/80 uppercase font-black tracking-widest">Restocking On</p>
+                                                <p className="text-sm font-black text-white italic drop-shadow-md">
+                                                    {new Date(restockDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                                </p>
+                                            </div>
                                         )}
                                     </div>
 
-                                    {/* Info */}
-                                    <div className="px-2 space-y-2">
-                                        <div className="flex justify-between items-start gap-4">
-                                            <h3 className={`font-bold text-lg leading-tight flex-grow ${isOutOfStock ? 'text-slate-400' : 'text-slate-900'}`}>{item.product}</h3>
-                                            <p className="text-xl font-black italic tracking-tighter text-slate-950 shrink-0">₱{Number(item.price).toLocaleString()}</p>
-                                        </div>
-
-                                        <p className="text-slate-500 text-sm font-medium line-clamp-2 leading-relaxed">
-                                            {item.description || 'No description available.'}
+                                    {/* Content Info */}
+                                    <div className="p-5 flex flex-col flex-grow">
+                                        <h3 className={`font-black text-lg line-clamp-1 leading-tight mb-1 ${isOutOfStock ? 'text-slate-400' : 'text-slate-800'}`}>
+                                            {item.product}
+                                        </h3>
+                                        
+                                        <p className="text-slate-500 text-xs font-medium line-clamp-2 leading-relaxed mb-4 flex-grow">
+                                            {item.description || 'No description available for this premium product.'}
                                         </p>
 
-                                        <div className="flex items-center gap-3 pt-2">
-                                            <div className="flex-grow h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                                <div className={`h-full transition-all duration-1000 ${isOutOfStock ? 'w-0' : currentStock < 5 ? 'bg-orange-500 w-1/4' : 'bg-indigo-600 w-full'}`} />
+                                        {/* Footer Row */}
+                                        <div className="flex items-center justify-between pt-3 border-t border-slate-50 mt-auto">
+                                            <div className="flex flex-col">
+                                                <span className="text-[9px] uppercase tracking-widest font-bold text-slate-400">Price</span>
+                                                <span className="text-xl font-black text-slate-900 italic tracking-tight leading-none bg-clip-text">
+                                                    ₱{Number(item.price).toLocaleString()}
+                                                </span>
                                             </div>
-                                            <span className={`text-[11px] font-black uppercase tracking-tighter whitespace-nowrap px-3 py-1 rounded-lg ${isOutOfStock ? 'bg-slate-100 text-slate-400' : currentStock < 5 ? 'bg-orange-100 text-orange-600' : 'bg-indigo-50 text-indigo-600'}`}>
-                                                {isOutOfStock ? 'Empty' : `${currentStock} left`}
-                                            </span>
+
+                                            {!isOutOfStock ? (
+                                                <button
+                                                    onClick={() => addToCart(item)}
+                                                    className="w-12 h-12 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-lg hover:bg-indigo-600 hover:scale-105 active:scale-95 transition-all duration-300"
+                                                    title="Add to Cart"
+                                                >
+                                                    <svg className="w-5 h-5 drop-shadow-md" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                    </svg>
+                                                </button>
+                                            ) : (
+                                                <div className="h-12 px-4 rounded-xl bg-slate-100 flex items-center justify-center border border-slate-200 cursor-not-allowed">
+                                                    <span className="text-[10px] uppercase font-black tracking-widest text-slate-400">Unavailable</span>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>

@@ -2,60 +2,6 @@ import { useState, useMemo } from 'react';
 import InventoryStaffLayout from '@/Layouts/InventoryStaffLayout';
 import { Head } from '@inertiajs/react';
 
-// ─────────────────────────────────────────────
-// SAMPLE / FALLBACK DATA
-// ─────────────────────────────────────────────
-const SAMPLE_LOW_STOCK = [
-    { id: 1, product: 'Mulberry Leaves', category: 'Raw Materials', warehouse: 'WH-01 Main', stock: 8, reorder: 50 },
-    { id: 2, product: 'Raw Silk Thread', category: 'Raw Materials', warehouse: 'WH-02 Cold', stock: 4, reorder: 30 },
-    { id: 3, product: 'Cocoon Bags', category: 'Supplies', warehouse: 'WH-01 Main', stock: 12, reorder: 100 },
-    { id: 4, product: 'Silk Yarn Grade A', category: 'Finished Goods', warehouse: 'WH-03 FG', stock: 6, reorder: 40 },
-];
-
-const SAMPLE_EXPIRING = [
-    { id: 1, product: 'Mulberry Leaves', batch: 'BCH-2026-001', warehouse: 'WH-02 Cold', expiry: '2026-03-03', days: 7, qty: 20 },
-    { id: 2, product: 'Cocoon Batch B', batch: 'BCH-2026-002', warehouse: 'WH-01 Main', expiry: '2026-03-10', days: 14, qty: 50 },
-    { id: 3, product: 'Silk Wax', batch: 'BCH-2026-003', warehouse: 'WH-01 Main', expiry: '2026-03-18', days: 22, qty: 8 },
-    { id: 4, product: 'Pupae Feed Mix', batch: 'BCH-2026-004', warehouse: 'WH-02 Cold', expiry: '2026-03-28', days: 32, qty: 100 },
-];
-
-const SAMPLE_WAREHOUSES = [
-    { name: 'WH-01 Main', items: 48, qty: 1240, value: 182400 },
-    { name: 'WH-02 Cold', items: 12, qty: 340, value: 54200 },
-    { name: 'WH-03 Fin. Goods', items: 20, qty: 890, value: 248000 },
-];
-
-const SAMPLE_ACTIVITY = [
-    { icon: '📥', text: 'Purchase Receipt #PR-102 posted', detail: '200 kg Mulberry Leaves received', time: '12m ago' },
-    { icon: '🏭', text: 'Production consumed 120 kg — Mulberry', detail: 'PO-2026-003 · Run #RUN-042', time: '45m ago' },
-    { icon: '📦', text: 'Order #ORD-230 deducted 5 units Silk Yarn', detail: 'Customer: dela Cruz, J.', time: '1h ago' },
-    { icon: '🔧', text: 'Adjustment recorded — Damage', detail: 'BCH-2026-001 · −8 kg Mulberry Leaves', time: '2h ago' },
-    { icon: '📤', text: 'Transfer to WH-03 Fin. Goods completed', detail: '150 units Silk Yarn Grade A moved', time: '3h ago' },
-];
-
-const SAMPLE_RESERVATIONS = [
-    { product: 'Silk Yarn Grade A', reserved: 10, order: 'ORD-228', expiry: '2026-02-25 14:00' },
-    { product: 'Raw Silk Thread', reserved: 5, order: 'ORD-229', expiry: '2026-02-25 16:30' },
-];
-
-const CATEGORY_DATA = [
-    { label: 'Raw Materials', value: 35, color: '#7c3aed' },
-    { label: 'WIP', value: 15, color: '#f59e0b' },
-    { label: 'Finished Goods', value: 30, color: '#10b981' },
-    { label: 'Supplies', value: 12, color: '#3b82f6' },
-    { label: 'Assets', value: 8, color: '#94a3b8' },
-];
-
-const MOVEMENT_DATA = [
-    { day: 'Mon', purchase: 80, prodIn: 40, sales: 60, prodOut: 70, adjust: 5 },
-    { day: 'Tue', purchase: 0, prodIn: 110, sales: 90, prodOut: 95, adjust: 0 },
-    { day: 'Wed', purchase: 120, prodIn: 0, sales: 70, prodOut: 60, adjust: 10 },
-    { day: 'Thu', purchase: 40, prodIn: 90, sales: 110, prodOut: 80, adjust: 5 },
-    { day: 'Fri', purchase: 60, prodIn: 50, sales: 55, prodOut: 45, adjust: 0 },
-    { day: 'Sat', purchase: 20, prodIn: 0, sales: 30, prodOut: 0, adjust: 5 },
-    { day: 'Sun', purchase: 0, prodIn: 0, sales: 0, prodOut: 0, adjust: 0 },
-];
-
 const fmt = (n) => new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', maximumFractionDigits: 0 }).format(n);
 
 // ─────────────────────────────────────────────
@@ -153,11 +99,13 @@ function BarChart({ data }) {
 // ─────────────────────────────────────────────
 export default function InventoryDashboard({
     stats = {},
-    products = [],
-    lowStock = SAMPLE_LOW_STOCK,
-    expiring = SAMPLE_EXPIRING,
-    warehouses = SAMPLE_WAREHOUSES,
-    reservations = SAMPLE_RESERVATIONS,
+    lowStock = [],
+    expiring = [],
+    warehouses = [],
+    reservations = [],
+    categoryData = [],
+    movementData = [],
+    recentActivity = [],
 }) {
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
@@ -178,7 +126,7 @@ export default function InventoryDashboard({
     const kpis = [
         {
             label: 'Active Products',
-            value: stats.total_products ?? (products.length || 72),
+            value: stats.total_products ?? 0,
             sub: 'inventory items',
             icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
             iconBg: 'bg-emerald-50 text-emerald-600',
@@ -186,7 +134,7 @@ export default function InventoryDashboard({
         },
         {
             label: 'Warehouses',
-            value: stats.warehouses ?? warehouses.length,
+            value: stats.warehouses ?? 0,
             sub: 'storage locations',
             icon: 'M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z',
             iconBg: 'bg-blue-50 text-blue-600',
@@ -194,7 +142,7 @@ export default function InventoryDashboard({
         },
         {
             label: 'Low Stock',
-            value: stats.low_stock ?? filteredLow.length,
+            value: stats.low_stock ?? 0,
             sub: 'below reorder level',
             icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z',
             iconBg: 'bg-amber-50 text-amber-600',
@@ -210,7 +158,7 @@ export default function InventoryDashboard({
         },
         {
             label: 'Expiring Soon',
-            value: stats.expiring_soon ?? expiring.filter(e => e.days <= 30).length,
+            value: stats.expiring_soon ?? 0,
             sub: 'within 30 days',
             icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
             iconBg: 'bg-orange-50 text-orange-600',
@@ -218,7 +166,7 @@ export default function InventoryDashboard({
         },
         {
             label: 'Inventory Value',
-            value: fmt(stats.total_value ?? warehouses.reduce((s, w) => s + w.value, 0)),
+            value: fmt(stats.total_value ?? 0),
             sub: 'total stock valuation',
             icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
             iconBg: 'bg-violet-50 text-violet-600',
@@ -307,7 +255,7 @@ export default function InventoryDashboard({
                             </div>
                             <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">by % share</span>
                         </div>
-                        <DonutChart data={CATEGORY_DATA} />
+                        <DonutChart data={categoryData} />
                     </div>
 
                     {/* Bar — IN vs OUT */}
@@ -331,7 +279,7 @@ export default function InventoryDashboard({
                                 </span>
                             ))}
                         </div>
-                        <BarChart data={MOVEMENT_DATA} />
+                        <BarChart data={movementData} />
                     </div>
                 </div>
 
@@ -499,7 +447,7 @@ export default function InventoryDashboard({
                                 <p className="text-xs text-slate-400 font-medium mt-0.5">Latest 5 stock movements</p>
                             </div>
                             <div className="divide-y divide-slate-50">
-                                {SAMPLE_ACTIVITY.map((a, i) => (
+                                {recentActivity.length > 0 ? recentActivity.map((a, i) => (
                                     <div key={i} className="flex items-start gap-3 px-6 py-3.5 hover:bg-slate-50/60 transition-colors">
                                         <div className="text-lg flex-shrink-0 mt-0.5">{a.icon}</div>
                                         <div className="flex-1 min-w-0">
@@ -508,7 +456,11 @@ export default function InventoryDashboard({
                                         </div>
                                         <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wide flex-shrink-0">{a.time}</span>
                                     </div>
-                                ))}
+                                )) : (
+                                    <div className="py-8 text-center text-sm font-bold text-slate-300">
+                                        No recent activity logged.
+                                    </div>
+                                )}
                             </div>
                         </div>
 

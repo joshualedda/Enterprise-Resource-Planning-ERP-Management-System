@@ -452,18 +452,18 @@ export default function Index({ products = [], regions: initialRegions = [], sav
                                     <select className="w-full border-slate-200 rounded-xl text-sm" value={address.region_id}
                                         onChange={e => setAddress({ ...address, region_id: e.target.value })}>
                                         <option value="">Select Region</option>
-                                        {initialRegions.map(r => <option key={r.id} value={String(r.id)}>{r.region_description} ({r.region_name})</option>)}
+                                        {initialRegions.map(r => <option key={r.id} value={String(r.id)}>{r.regDesc}</option>)}
                                     </select>
                                     <select disabled={!address.region_id} className="w-full border-slate-200 rounded-xl text-sm disabled:opacity-50"
                                         value={address.province_id} onChange={e => setAddress({ ...address, province_id: e.target.value })}>
                                         <option value="">Select Province</option>
-                                        {provinces.map(p => <option key={p.id} value={String(p.id)}>{p.province_name}</option>)}
+                                        {provinces.map(p => <option key={p.id} value={String(p.id)}>{p.provDesc}</option>)}
                                     </select>
                                     <div className="grid grid-cols-2 gap-3">
                                         <select disabled={!address.province_id} className="w-full border-slate-200 rounded-xl text-sm disabled:opacity-50"
                                             value={address.municipality_id} onChange={e => setAddress({ ...address, municipality_id: e.target.value })}>
                                             <option value="">City / Town</option>
-                                            {municipalities.map(m => <option key={m.id} value={String(m.id)}>{m.municipality_name}</option>)}
+                                            {municipalities.map(m => <option key={m.id} value={String(m.id)}>{m.citymunDesc}</option>)}
                                         </select>
                                         <input type="text" placeholder="ZIP Code"
                                             className="w-full border-slate-200 rounded-xl text-sm"
@@ -472,7 +472,7 @@ export default function Index({ products = [], regions: initialRegions = [], sav
                                     <select disabled={!address.municipality_id} className="w-full border-slate-200 rounded-xl text-sm disabled:opacity-50"
                                         value={address.barangay_id} onChange={e => setAddress({ ...address, barangay_id: e.target.value })}>
                                         <option value="">Select Barangay</option>
-                                        {barangays.map(b => <option key={b.id} value={String(b.id)}>{b.name || b.barangay_name}</option>)}
+                                        {barangays.map(b => <option key={b.id} value={String(b.id)}>{b.brgyDesc}</option>)}
                                     </select>
                                 </div>
                             )}

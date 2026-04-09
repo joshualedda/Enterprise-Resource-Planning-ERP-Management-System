@@ -22,13 +22,34 @@ use App\Http\Controllers\Staff\InventoryTasksController;
 use App\Http\Controllers\Staff\InventoryReportsController;
 use App\Http\Controllers\Staff\InventoryProductsController;
 use App\Http\Controllers\Staff\InventoryCategoriesController;
+use App\Http\Controllers\Staff\InventoryUnitsController;
+use App\Http\Controllers\Staff\InventoryBatchesController;
+use App\Http\Controllers\Staff\Inventory\InventorySuppliersController;
+use App\Http\Controllers\Staff\Inventory\InventoryPurchaseOrdersController;
+use App\Http\Controllers\Staff\Inventory\InventoryGoodsReceiptsController;
+use App\Http\Controllers\Staff\InventoryWarehousesController;
+use App\Http\Controllers\Staff\InventoryWarehouseLocationsController;
+use App\Http\Controllers\Staff\InventoryProductStocksController;
+use App\Http\Controllers\Staff\InventoryStockMovementsController;
 use App\Http\Controllers\Staff\InventoryStockLevelsController;
+use App\Http\Controllers\Staff\InventoryStockAdjustmentsController;
 use App\Http\Controllers\Staff\Production\ProductionDashboardController;
 use App\Http\Controllers\Staff\Production\ProductionTasksController;
 use App\Http\Controllers\Staff\Production\ProductionReportsController;
+use App\Http\Controllers\Staff\Production\ProductionOrdersController;
+use App\Http\Controllers\Staff\Production\ProductionRunsController;
+use App\Http\Controllers\Staff\Production\MaterialIssuesController;
+use App\Http\Controllers\Staff\Production\OutputPostingController;
 use App\Http\Controllers\Staff\Accounting\AccountingDashboardController;
 use App\Http\Controllers\Staff\Accounting\AccountingTasksController;
 use App\Http\Controllers\Staff\Accounting\AccountingReportsController;
+use App\Http\Controllers\Staff\Accounting\ChartOfAccountController;
+use App\Http\Controllers\Staff\Accounting\JournalEntryController;
+use App\Http\Controllers\Staff\Accounting\CustomerPaymentController;
+use App\Http\Controllers\Staff\Accounting\SupplierPaymentController;
+use App\Http\Controllers\Staff\Accounting\TrialBalanceController;
+use App\Http\Controllers\Staff\Accounting\ProfitAndLossController;
+use App\Http\Controllers\Staff\Accounting\BalanceSheetController;
 use App\Http\Controllers\Staff\Cashier\CashierDashboardController;
 use App\Http\Controllers\Staff\Cashier\CashierTasksController;
 use App\Http\Controllers\Staff\Cashier\CashierReportsController;
@@ -53,6 +74,7 @@ Route::patch('/notifications/{id}/mark-read', [NotificationController::class, 'm
     ->name('notifications.markRead');
 
 Route::get('/', [LandingPageController::class, 'front'])->name('storefront');
+Route::get('/all-products', [LandingPageController::class, 'allProducts'])->name('products.all');
 
 Route::post('/api/check-email', function (Request $request) {
     $exists = User::where('email', $request->input('email'))->exists();
@@ -71,7 +93,7 @@ Route::middleware(['auth', 'verified'])->get('/dashboard', function () {
         1 => redirect()->route('admin.dashboard'),
         3 => redirect()->route('customer.dashboard'),
         4 => redirect()->route('staff.inventory.dashboard'),
-        5 => redirect()->route('staff.productiondashboard'),
+        5 => redirect()->route('staff.production.dashboard'),
         6 => redirect()->route('staff.accountingdashboard'),
         7 => redirect()->route('staff.cashierdashboard'),
         8 => redirect()->route('staff.marketing-salesdashboard'),
@@ -129,6 +151,7 @@ Route::middleware(['auth', 'verified'])->prefix('customer')->name('customer.')->
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('/api/orders/{id}/receipt', [OrderController::class, 'getReceipt'])->name('orders.receipt');
     Route::post('/checkout/place-order', [OrderController::class, 'placeOrder'])->name('checkout.place');
+    Route::patch('/orders/{transaction}/cancel', [OrderController::class, 'cancelOrder'])->name('orders.cancel');
 
     Route::post('/ratings/bulk', [RatingController::class, 'bulkStore'])->name('ratings.bulk');
 
@@ -153,18 +176,91 @@ Route::middleware(['auth', 'verified'])->prefix('staff')->name('staff.')->group(
         });
         Route::controller(InventoryProductsController::class)->group(function () {
             Route::get('products', 'index')->name('products.index');
+            Route::post('products', 'store')->name('products.store');
+            Route::put('products/{product}', 'update')->name('products.update');
+            Route::delete('products/{product}', 'destroy')->name('products.destroy');
         });
         Route::controller(InventoryCategoriesController::class)->group(function () {
             Route::get('categories', 'index')->name('categories.index');
+            Route::post('categories', 'store')->name('categories.store');
+            Route::put('categories/{category}', 'update')->name('categories.update');
+            Route::delete('categories/{category}', 'destroy')->name('categories.destroy');
+        });
+        Route::controller(InventoryUnitsController::class)->group(function () {
+            Route::get('units', 'index')->name('units.index');
+            Route::post('units', 'store')->name('units.store');
+            Route::put('units/{unit}', 'update')->name('units.update');
+            Route::delete('units/{unit}', 'destroy')->name('units.destroy');
+        });
+        Route::controller(InventoryBatchesController::class)->group(function () {
+            Route::get('batches', 'index')->name('batches.index');
+            Route::post('batches', 'store')->name('batches.store');
+            Route::put('batches/{batch}', 'update')->name('batches.update');
+            Route::delete('batches/{batch}', 'destroy')->name('batches.destroy');
+        });
+        Route::controller(InventoryWarehousesController::class)->group(function () {
+            Route::get('warehouses', 'index')->name('warehouses.index');
+            Route::post('warehouses', 'store')->name('warehouses.store');
+            Route::put('warehouses/{warehouse}', 'update')->name('warehouses.update');
+            Route::delete('warehouses/{warehouse}', 'destroy')->name('warehouses.destroy');
+        });
+        Route::controller(InventoryWarehouseLocationsController::class)->group(function () {
+            Route::get('warehouses-location', 'index')->name('warehouses-location.index');
+            Route::post('warehouses-location', 'store')->name('warehouses-location.store');
+            Route::put('warehouses-location/{location}', 'update')->name('warehouses-location.update');
+            Route::delete('warehouses-location/{location}', 'destroy')->name('warehouses-location.destroy');
+        });
+        Route::controller(InventoryProductStocksController::class)->group(function () {
+            Route::get('product-stocks', 'index')->name('product-stocks.index');
+            Route::get('product-stocks/batches/{product}', 'getBatchesByProduct')->name('product-stocks.batches');
+            Route::post('product-stocks', 'store')->name('product-stocks.store');
+            Route::put('product-stocks/{stock}', 'update')->name('product-stocks.update');
+            Route::delete('product-stocks/{stock}', 'destroy')->name('product-stocks.destroy');
+        });
+        Route::controller(InventoryStockMovementsController::class)->group(function () {
+            Route::get('stock-movements', 'index')->name('stock-movements.index');
+            Route::get('stock-movements/batches/{product}', 'getBatchesByProduct')->name('stock-movements.batches');
+            Route::post('stock-movements', 'store')->name('stock-movements.store');
+            Route::put('stock-movements/{movement}', 'update')->name('stock-movements.update');
+            Route::delete('stock-movements/{movement}', 'destroy')->name('stock-movements.destroy');
         });
         Route::controller(InventoryStockLevelsController::class)->group(function () {
             Route::get('stock-levels', 'index')->name('stock-levels.index');
+        });
+        Route::controller(InventoryStockAdjustmentsController::class)->group(function () {
+            Route::get('stock-adjustment', 'create')->name('stock-adjustments.create');
+            Route::get('stock-adjustment-history', 'index')->name('stock-adjustments.index');
+            Route::get('stock-adjustment/batches/{product}', 'getBatchesByProduct')->name('stock-adjustments.batches');
+            Route::post('stock-adjustment', 'store')->name('stock-adjustments.store');
+            Route::delete('stock-adjustment/{adjustment}', 'destroy')->name('stock-adjustments.destroy');
+        });
+        Route::controller(InventorySuppliersController::class)->group(function () {
+            Route::get('suppliers', 'index')->name('suppliers.index');
+            Route::post('suppliers', 'store')->name('suppliers.store');
+            Route::put('suppliers/{supplier}', 'update')->name('suppliers.update');
+            Route::delete('suppliers/{supplier}', 'destroy')->name('suppliers.destroy');
+        });
+        Route::controller(InventoryPurchaseOrdersController::class)->group(function () {
+            Route::get('purchase-orders', 'index')->name('purchase-orders.index');
+            Route::post('purchase-orders', 'store')->name('purchase-orders.store');
+            Route::put('purchase-orders/{purchaseOrder}', 'update')->name('purchase-orders.update');
+            Route::delete('purchase-orders/{purchaseOrder}', 'destroy')->name('purchase-orders.destroy');
+        });
+        Route::controller(InventoryGoodsReceiptsController::class)->group(function () {
+            Route::get('goods-receipts', 'index')->name('goods-receipts.index');
+            Route::post('goods-receipts', 'store')->name('goods-receipts.store');
+            Route::put('goods-receipts/{goodsReceipt}', 'update')->name('goods-receipts.update');
+            Route::delete('goods-receipts/{goodsReceipt}', 'destroy')->name('goods-receipts.destroy');
         });
         Route::controller(InventoryTasksController::class)->group(function () {
             Route::get('tasks', 'index')->name('tasks');
         });
         Route::controller(InventoryReportsController::class)->group(function () {
             Route::get('reports', 'index')->name('reports');
+            Route::get('stock-summary-report', 'stockSummary')->name('reports.stock-summary');
+            Route::get('movement-report', 'movementReport')->name('reports.movement');
+            Route::get('low-stock-report', 'lowStockReport')->name('reports.low-stock');
+            Route::get('expiry-report', 'expiryReport')->name('reports.expiry');
             Route::get('reports/pdf', 'pdf')->name('reports.pdf');
             Route::get('reports/excel', 'excel')->name('reports.excel');
         });
@@ -187,9 +283,33 @@ Route::middleware(['auth', 'verified'])->prefix('staff')->name('staff.')->group(
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'verified'])->prefix('staff')->name('staff.')->group(function () {
-    Route::prefix('production')->name('production')->group(function () {
+    Route::prefix('production')->name('production.')->group(function () {
         Route::controller(ProductionDashboardController::class)->group(function () {
             Route::get('dashboard', 'index')->name('dashboard');
+        });
+        Route::controller(ProductionOrdersController::class)->group(function () {
+            Route::get('production-orders', 'index')->name('production-orders.index');
+            Route::post('production-orders', 'store')->name('production-orders.store');
+            Route::put('production-orders/{order}', 'update')->name('production-orders.update');
+            Route::delete('production-orders/{order}', 'destroy')->name('production-orders.destroy');
+        });
+        Route::controller(ProductionRunsController::class)->group(function () {
+            Route::get('production-runs', 'index')->name('runs.index');
+            Route::post('production-runs', 'store')->name('runs.store');
+            Route::put('production-runs/{run}', 'update')->name('runs.update');
+            Route::delete('production-runs/{run}', 'destroy')->name('runs.destroy');
+        });
+        Route::controller(MaterialIssuesController::class)->group(function () {
+            Route::get('materials-issue', 'index')->name('material-issues.index');
+            Route::post('materials-issue', 'store')->name('material-issues.store');
+            Route::put('materials-issue/{materialIssue}', 'update')->name('material-issues.update');
+            Route::delete('materials-issue/{materialIssue}', 'destroy')->name('material-issues.destroy');
+        });
+        Route::controller(OutputPostingController::class)->group(function () {
+            Route::get('output-posting', 'index')->name('output-posting.index');
+            Route::post('output-posting', 'store')->name('output-posting.store');
+            Route::put('output-posting/{outputPosting}', 'update')->name('output-posting.update');
+            Route::delete('output-posting/{outputPosting}', 'destroy')->name('output-posting.destroy');
         });
         Route::controller(ProductionTasksController::class)->group(function () {
             Route::get('tasks', 'index')->name('tasks');
@@ -216,6 +336,39 @@ Route::middleware(['auth', 'verified'])->prefix('staff')->name('staff.')->group(
     Route::prefix('accounting')->name('accounting')->group(function () {
         Route::controller(AccountingDashboardController::class)->group(function () {
             Route::get('dashboard', 'index')->name('dashboard');
+        });
+        Route::controller(ChartOfAccountController::class)->group(function () {
+            Route::get('chart-of-accounts', 'index')->name('.chart-of-accounts.index');
+            Route::post('chart-of-accounts', 'store')->name('.chart-of-accounts.store');
+            Route::put('chart-of-accounts/{id}', 'update')->name('.chart-of-accounts.update');
+            Route::delete('chart-of-accounts/{id}', 'destroy')->name('.chart-of-accounts.destroy');
+        });
+        Route::controller(JournalEntryController::class)->group(function () {
+            Route::get('journal-entries', 'index')->name('.journal-entries.index');
+            Route::post('journal-entries', 'store')->name('.journal-entries.store');
+            Route::put('journal-entries/{id}', 'update')->name('.journal-entries.update');
+            Route::delete('journal-entries/{id}', 'destroy')->name('.journal-entries.destroy');
+        });
+        Route::controller(CustomerPaymentController::class)->group(function () {
+            Route::get('customer-payments', 'index')->name('.customer-payments.index');
+            Route::post('customer-payments', 'store')->name('.customer-payments.store');
+            Route::put('customer-payments/{id}', 'update')->name('.customer-payments.update');
+            Route::delete('customer-payments/{id}', 'destroy')->name('.customer-payments.destroy');
+        });
+        Route::controller(SupplierPaymentController::class)->group(function () {
+            Route::get('supplier-payments', 'index')->name('.supplier-payments.index');
+            Route::post('supplier-payments', 'store')->name('.supplier-payments.store');
+            Route::put('supplier-payments/{id}', 'update')->name('.supplier-payments.update');
+            Route::delete('supplier-payments/{id}', 'destroy')->name('.supplier-payments.destroy');
+        });
+        Route::controller(TrialBalanceController::class)->group(function () {
+            Route::get('trial-balance', 'index')->name('.trial-balance.index');
+        });
+        Route::controller(ProfitAndLossController::class)->group(function () {
+            Route::get('profit-and-loss', 'index')->name('.profit-and-loss.index');
+        });
+        Route::controller(BalanceSheetController::class)->group(function () {
+            Route::get('balance-sheet', 'index')->name('.balance-sheet.index');
         });
         Route::controller(AccountingTasksController::class)->group(function () {
             Route::get('tasks', 'index')->name('tasks');

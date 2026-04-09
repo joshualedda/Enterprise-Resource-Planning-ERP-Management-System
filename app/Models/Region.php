@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 class Region extends Model
 {
     protected $table = 'region';
-    protected $fillable = ['region_name', 'region_description'];
+    protected $primaryKey = 'region_id';
+    protected $fillable = ['psgcCode', 'regDesc', 'regCode'];
 
     public function provinces()
     {
-        return $this->hasMany(Province::class, 'region_id');
+        return $this->hasMany(Province::class, 'regCode', 'regCode');
     }
 }

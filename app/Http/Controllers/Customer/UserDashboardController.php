@@ -28,6 +28,35 @@ class UserDashboardController extends Controller
                 return $t;
             });
 
+        // ── Chart Data: Last 6 Months ──
+        $chartData = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $date  = now()->subMonths($i);
+            $month = $date->format('M Y');
+            $year  = $date->year;
+            $mNum  = $date->month;
+
+            // Spending (Only Received)
+            $spending = Transaction::where('user_id', $userId)
+                ->where('status', 'Product Received')
+                ->whereYear('created_at', $year)
+                ->whereMonth('created_at', $mNum)
+                ->sum('total_amount');
+
+            // Order Count (All status except Cancelled)
+            $orders = Transaction::where('user_id', $userId)
+                ->where('status', '!=', 'Cancelled')
+                ->whereYear('created_at', $year)
+                ->whereMonth('created_at', $mNum)
+                ->count();
+
+            $chartData[] = [
+                'name'     => $month,
+                'amount'   => (float) $spending,
+                'orders'   => (int) $orders,
+            ];
+        }
+
         // 4 random active products for "For You" section
         $recentProducts = Product::with('category')
             ->where('status', 'active')
@@ -42,6 +71,7 @@ class UserDashboardController extends Controller
         return Inertia::render('Customer/Dashboard', [
             'transactions'   => $transactions,
             'recentProducts' => $recentProducts,
+            'chartData'      => $chartData,
         ]);
     }
 }

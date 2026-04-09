@@ -16,7 +16,6 @@ export default function UpdateProfileInformationForm({ mustVerifyEmail, status, 
         middle_name:     user.middle_name  || '',
         last_name:       user.last_name    || '',
         email:           user.email        || '',
-        phone_number:    savedInfo?.phone_number    || '',
         region_id:       savedInfo?.region_id       || '',
         province_id:     savedInfo?.province_id     || '',
         municipality_id: savedInfo?.municipality_id || '',
@@ -33,7 +32,11 @@ export default function UpdateProfileInformationForm({ mustVerifyEmail, status, 
     const getProvinces     = (region) => region?.provinces     || [];
     const getMunicipalities = (prov)  => prov?.municipalities  || [];
     const getBarangays     = (mun)    => mun?.barangays        || [];
-    const getBarangayName  = (b)      => b?.name || b?.barangay_name || '';
+    const getBarangayName  = (b)      => b?.brgyDesc || b?.name || b?.barangay_name || '';
+    const rId = r => r?.region_id || r?.id;
+    const pId = p => p?.province_id || p?.id;
+    const mId = m => m?.municipality_id || m?.id;
+    const bId = b => b?.barangay_id || b?.id;
 
     // ── On mount: pre-populate all cascading dropdowns from saved data ───────
     useEffect(() => {
@@ -42,20 +45,20 @@ export default function UpdateProfileInformationForm({ mustVerifyEmail, status, 
             return;
         }
 
-        const region = allRegions.find(r => String(r.id) === String(savedInfo.region_id));
+        const region = allRegions.find(r => String(rId(r)) === String(savedInfo.region_id));
         if (!region) { isMountCascade.current = false; return; }
 
         const provList = getProvinces(region);
         setProvinces(provList);
 
         if (savedInfo.province_id) {
-            const prov = provList.find(p => String(p.id) === String(savedInfo.province_id));
+            const prov = provList.find(p => String(pId(p)) === String(savedInfo.province_id));
             if (prov) {
                 const munList = getMunicipalities(prov);
                 setMunicipalities(munList);
 
                 if (savedInfo.municipality_id) {
-                    const mun = munList.find(m => String(m.id) === String(savedInfo.municipality_id));
+                    const mun = munList.find(m => String(mId(m)) === String(savedInfo.municipality_id));
                     if (mun) setBarangays(getBarangays(mun));
                 }
             }
@@ -67,7 +70,7 @@ export default function UpdateProfileInformationForm({ mustVerifyEmail, status, 
     // ── Region → load provinces ──────────────────────────────────────────────
     useEffect(() => {
         if (isMountCascade.current) return;
-        const region = allRegions.find(r => String(r.id) === String(data.region_id));
+        const region = allRegions.find(r => String(rId(r)) === String(data.region_id));
         setProvinces(getProvinces(region));
         setMunicipalities([]);
         setBarangays([]);
@@ -77,7 +80,7 @@ export default function UpdateProfileInformationForm({ mustVerifyEmail, status, 
     // ── Province → load municipalities ──────────────────────────────────────
     useEffect(() => {
         if (isMountCascade.current) return;
-        const prov = provinces.find(p => String(p.id) === String(data.province_id));
+        const prov = provinces.find(p => String(pId(p)) === String(data.province_id));
         setMunicipalities(getMunicipalities(prov));
         setBarangays([]);
         setData(prev => ({ ...prev, municipality_id: '', barangay_id: '' }));
@@ -86,7 +89,7 @@ export default function UpdateProfileInformationForm({ mustVerifyEmail, status, 
     // ── Municipality → load barangays ────────────────────────────────────────
     useEffect(() => {
         if (isMountCascade.current) return;
-        const mun = municipalities.find(m => String(m.id) === String(data.municipality_id));
+        const mun = municipalities.find(m => String(mId(m)) === String(data.municipality_id));
         setBarangays(getBarangays(mun));
         setData(prev => ({ ...prev, barangay_id: '' }));
     }, [data.municipality_id]);
@@ -182,24 +185,14 @@ export default function UpdateProfileInformationForm({ mustVerifyEmail, status, 
 
                     <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100 space-y-4">
 
-                        {/* Phone */}
-                        <div>
-                            <InputLabel htmlFor="phone_number" value="Phone Number" className={labelClass} />
-                            <div className="relative">
-                                <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                                <TextInput id="phone_number" type="text" className={`${inputClass} pl-8`} value={data.phone_number} onChange={e => setData('phone_number', e.target.value)} placeholder="09XX XXX XXXX" />
-                            </div>
-                            <InputError className="mt-1 text-xs" message={errors.phone_number} />
-                        </div>
-
                         {/* Region */}
                         <div>
                             <InputLabel htmlFor="region_id" value="Region" className={labelClass} />
                             <select id="region_id" className={selectClass} value={data.region_id} onChange={e => setData('region_id', e.target.value)}>
                                 <option value="">— Select Region —</option>
                                 {allRegions.map(r => (
-                                    <option key={r.id} value={String(r.id)}>
-                                        {r.region_description} ({r.region_name})
+                                    <option key={rId(r)} value={String(rId(r))}>
+                                        {r.regDesc || r.region_description} ({r.regCode || r.region_name})
                                     </option>
                                 ))}
                             </select>
@@ -212,7 +205,7 @@ export default function UpdateProfileInformationForm({ mustVerifyEmail, status, 
                             <select id="province_id" className={selectClass} disabled={provinces.length === 0} value={data.province_id} onChange={e => setData('province_id', e.target.value)}>
                                 <option value="">— Select Province —</option>
                                 {provinces.map(p => (
-                                    <option key={p.id} value={String(p.id)}>{p.province_name}</option>
+                                    <option key={pId(p)} value={String(pId(p))}>{p.provDesc || p.province_name}</option>
                                 ))}
                             </select>
                             <InputError className="mt-1 text-xs" message={errors.province_id} />
@@ -225,7 +218,7 @@ export default function UpdateProfileInformationForm({ mustVerifyEmail, status, 
                                 <select id="municipality_id" className={selectClass} disabled={municipalities.length === 0} value={data.municipality_id} onChange={e => setData('municipality_id', e.target.value)}>
                                     <option value="">— Select City / Town —</option>
                                     {municipalities.map(m => (
-                                        <option key={m.id} value={String(m.id)}>{m.municipality_name}</option>
+                                        <option key={mId(m)} value={String(mId(m))}>{m.citymunDesc || m.municipality_name}</option>
                                     ))}
                                 </select>
                                 <InputError className="mt-1 text-xs" message={errors.municipality_id} />
@@ -243,7 +236,7 @@ export default function UpdateProfileInformationForm({ mustVerifyEmail, status, 
                             <select id="barangay_id" className={selectClass} disabled={barangays.length === 0} value={data.barangay_id} onChange={e => setData('barangay_id', e.target.value)}>
                                 <option value="">— Select Barangay —</option>
                                 {barangays.map(b => (
-                                    <option key={b.id} value={String(b.id)}>{getBarangayName(b)}</option>
+                                    <option key={bId(b)} value={String(bId(b))}>{getBarangayName(b)}</option>
                                 ))}
                             </select>
                             <InputError className="mt-1 text-xs" message={errors.barangay_id} />

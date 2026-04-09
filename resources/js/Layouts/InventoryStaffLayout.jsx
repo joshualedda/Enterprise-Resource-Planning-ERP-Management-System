@@ -324,69 +324,70 @@ export default function InventoryStaffLayout({ header, children }) {
             children: [
                 { name: 'All Products', href: route().has('staff.inventory.products.index') ? route('staff.inventory.products.index') : '#' },
                 { name: 'Categories', href: route().has('staff.inventory.categories.index') ? route('staff.inventory.categories.index') : '#' },
-                { name: 'Units', href: '#' },
-                { name: 'Batches', href: '#' },
+                { name: 'Units', href: route().has('staff.inventory.units.index') ? route('staff.inventory.units.index') : '#' },
+                { name: 'Batches', href: route().has('staff.inventory.batches.index') ? route('staff.inventory.batches.index') : '#' },
             ]
         },
         {
             name: 'Warehouses',
             icon: 'M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z',
             children: [
-                { name: 'Warehouses', href: '#' },
-                { name: 'Locations', href: '#' },
-                { name: 'Warehouse Stock View', href: '#' },
+                { name: 'Warehouses', href: route().has('staff.inventory.warehouses.index') ? route('staff.inventory.warehouses.index') : '#' },
+                { name: 'Locations', href: route().has('staff.inventory.warehouses-location.index') ? route('staff.inventory.warehouses-location.index') : '#' },
+                // { name: 'Warehouse Stock View', href: '#' },
             ]
         },
         {
             name: 'Stock Management',
             icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
             children: [
+                { name: 'Product Stock', href: route().has('staff.inventory.product-stocks.index') ? route('staff.inventory.product-stocks.index') : '#' },
                 { name: 'Stock Levels', href: route().has('staff.inventory.stock-levels.index') ? route('staff.inventory.stock-levels.index') : '#' },
-                { name: 'Stock Movements', href: '#' },
-                { name: 'Stock Reservations', href: '#' },
-                { name: 'Opening Balances', href: '#' },
+                { name: 'Stock Movements', href: route().has('staff.inventory.stock-movements.index') ? route('staff.inventory.stock-movements.index') : '#' },
+                // { name: 'Stock Reservations', href: '#' },
+                // { name: 'Opening Balances', href: '#' },
             ]
         },
         {
             name: 'Purchasing',
             icon: 'M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z',
             children: [
-                { name: 'Suppliers', href: '#' },
-                { name: 'Purchase Orders', href: '#' },
-                { name: 'Goods Receipts', href: '#' },
+                { name: 'Suppliers', href: route().has('staff.inventory.suppliers.index') ? route('staff.inventory.suppliers.index') : '#' },
+                { name: 'Purchase Orders', href: route().has('staff.inventory.purchase-orders.index') ? route('staff.inventory.purchase-orders.index') : '#' },
+                { name: 'Goods Receipts', href: route().has('staff.inventory.goods-receipts.index') ? route('staff.inventory.goods-receipts.index') : '#' },
             ]
         },
-        {
-            name: 'Transfers',
-            icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4',
-            children: [
-                { name: 'Stock Transfers', href: '#' },
-                { name: 'Transfer History', href: '#' },
-            ]
-        },
+        // {
+        //     name: 'Transfers',
+        //     icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4',
+        //     children: [
+        //         { name: 'Stock Transfers', href: '#' },
+        //         { name: 'Transfer History', href: '#' },
+        //     ]
+        // },
         {
             name: 'Adjustments',
             icon: 'M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4',
             children: [
-                { name: 'Stock Adjustments', href: '#' },
-                { name: 'Adjustment History', href: '#' },
+                { name: 'Stock Adjustments', href: route().has('staff.inventory.stock-adjustments.create') ? route('staff.inventory.stock-adjustments.create') : '#' },
+                { name: 'Adjustment History', href: route().has('staff.inventory.stock-adjustments.index') ? route('staff.inventory.stock-adjustments.index') : '#' },
             ]
         },
         { separator: 'Work' },
-        {
-            name: 'Tasks',
-            href: route().has('staff.inventory.tasks') ? route('staff.inventory.tasks') : '#',
-            icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
-        },
+        // {
+        //     name: 'Tasks',
+        //     href: route().has('staff.inventory.tasks') ? route('staff.inventory.tasks') : '#',
+        //     icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
+        // },
         {
             name: 'Reports',
             icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
             children: [
-                { name: 'Stock Summary Report', href: '#' },
-                { name: 'Movement Report', href: '#' },
-                { name: 'Inventory Valuation Report', href: '#' },
-                { name: 'Low Stock Report', href: '#' },
-                { name: 'Expiry Report', href: '#' },
+                { name: 'Stock Summary Report', href: route().has('staff.inventory.reports.stock-summary') ? route('staff.inventory.reports.stock-summary') : '#' },
+                { name: 'Movement Report', href: route().has('staff.inventory.reports.movement') ? route('staff.inventory.reports.movement') : '#' },
+                // { name: 'Inventory Valuation Report', href: '#' },
+                { name: 'Low Stock Report', href: route().has('staff.inventory.reports.low-stock') ? route('staff.inventory.reports.low-stock') : '#' },
+                { name: 'Expiry Report', href: route().has('staff.inventory.reports.expiry') ? route('staff.inventory.reports.expiry') : '#' },
             ]
         },
         { separator: 'Account' },

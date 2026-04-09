@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination, EffectFade, Navigation } from 'swiper/modules';
@@ -23,9 +23,33 @@ export default function Storefront({ auth, products }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalTab, setModalTab] = useState('description');
 
+    const { post, processing } = useForm({
+        product_id: '',
+        quantity: 1,
+    });
+
     const openModal = (product) => {
         setSelectedProduct(product);
         setIsModalOpen(true);
+        setModalTab('description');
+    };
+
+    const addToCart = (product, qty = 1) => {
+        if (!auth.user) {
+            // Redirect to login if not authenticated
+            window.location.href = route('login') + '?redirect=' + window.location.pathname;
+            return;
+        }
+
+        post(route('customer.cart.add', {
+            product_id: product.id,
+            quantity: qty
+        }), {
+            preserveScroll: true,
+            onSuccess: () => {
+                setIsModalOpen(false);
+            },
+        });
     };
 
     const renderStars = (rating = 0) => {
@@ -42,6 +66,28 @@ export default function Storefront({ auth, products }) {
             </div>
         );
     };
+
+    const getDashboardRoute = () => {
+        if (!auth.user) return route('login');
+        const role_id = auth.user.role_id;
+        const access_id = auth.user.access_id;
+        
+        if (role_id === 1) return route('admin.dashboard');
+        if (role_id === 3) return route('customer.dashboard');
+        
+        // Staff role logic based on department (access_id)
+        if (role_id === 2) {
+            if (access_id === 1) return route('staff.inventory.dashboard');
+            if (access_id === 2) return route('staff.production.dashboard');
+            if (access_id === 3) return route('staff.accounting.dashboard');
+            if (access_id === 4) return route('staff.cashier.dashboard');
+            if (access_id === 5) return route('staff.marketing-sales.dashboard');
+            return route('staff.production.dashboard'); // Standard Staff Fallback
+        }
+        
+        return route('login');
+    };
+
 
     return (
         <div className="min-h-screen bg-[#F7F9FB] flex flex-col font-sans text-[#1F2937] antialiased selection:bg-[#3BAA35]/20 selection:text-[#0B1F3B]">
@@ -78,12 +124,26 @@ export default function Storefront({ auth, products }) {
                         </div>
                     </div>
                     <div className="flex items-center gap-5">
-                        <Link href={route('login')} className="text-sm font-semibold text-slate-600 hover:text-[#0B1F3B] transition-colors">
-                            Log In
-                        </Link>
-                        <Link href={route('login')} className="bg-[#3BAA35] text-white px-5 py-2.5 rounded-lg text-sm font-bold hover:bg-[#329a2d] transition-all shadow-sm shadow-[#3BAA35]/20">
-                            Enterprise Access
-                        </Link>
+                        {auth.user ? (
+                            <Link 
+                                href={getDashboardRoute()} 
+                                className="bg-[#3BAA35] text-white px-6 py-2.5 rounded-lg text-sm font-bold hover:bg-[#329a2d] transition-all shadow-lg shadow-[#3BAA35]/20 flex items-center gap-2"
+                            >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                                </svg>
+                                Go to Dashboard
+                            </Link>
+                        ) : (
+                            <>
+                                <Link href={route('login')} className="text-sm font-semibold text-slate-600 hover:text-[#0B1F3B] transition-colors">
+                                    Log In
+                                </Link>
+                                <Link href={route('login')} className="bg-[#3BAA35] text-white px-5 py-2.5 rounded-lg text-sm font-bold hover:bg-[#329a2d] transition-all shadow-sm shadow-[#3BAA35]/20">
+                                    Enterprise Access
+                                </Link>
+                            </>
+                        )}
                     </div>
                 </div>
             </nav>
@@ -110,9 +170,9 @@ export default function Storefront({ auth, products }) {
                                         From DMMMSU's Sericulture Research and Development Institute — premium silk products backed by decades of Philippine agricultural research.
                                     </p>
                                     <div className="flex flex-wrap items-center gap-4 pt-2">
-                                        <a href="#products" className="bg-[#3BAA35] text-white px-8 py-4 rounded-lg text-sm font-bold hover:bg-[#329a2d] transition-all shadow-lg shadow-[#3BAA35]/25">
+                                        <Link href={route('products.all')} className="bg-[#3BAA35] text-white px-8 py-4 rounded-lg text-sm font-bold hover:bg-[#329a2d] transition-all shadow-lg shadow-[#3BAA35]/25">
                                             Explore Collection
-                                        </a>
+                                        </Link>
                                         <a href="#about" className="border-2 border-white/30 text-white px-8 py-4 rounded-lg text-sm font-bold hover:border-white/60 hover:bg-white/5 transition-all">
                                             Learn More
                                         </a>
@@ -188,7 +248,12 @@ export default function Storefront({ auth, products }) {
                     <div className="mb-12">
                         <span className="text-[11px] font-bold text-[#3BAA35] uppercase tracking-[0.3em]">Official Inventory</span>
                         <h2 className="text-3xl font-extrabold text-[#0B1F3B] mt-2 tracking-tight">The Collection</h2>
-                        <p className="text-sm text-slate-500 mt-2 max-w-lg">Authenticated silk products from SRDI's research facility — quality-tested and market-ready.</p>
+                        <div className="flex justify-between items-end">
+                            <p className="text-sm text-slate-500 mt-2 max-w-lg">Authenticated silk products from SRDI's research facility — quality-tested and market-ready.</p>
+                            <Link href={route('products.all')} className="text-[#3BAA35] text-xs font-bold uppercase tracking-widest hover:underline flex items-center gap-2">
+                                View All Products <span className="text-lg">→</span>
+                            </Link>
+                        </div>
                     </div>
 
                     {products && products.length > 0 ? (
@@ -420,19 +485,24 @@ export default function Storefront({ auth, products }) {
                                     <div className="flex items-center gap-3">
                                         <input
                                             type="number"
+                                            id="qty-input"
                                             min="1"
                                             defaultValue={1}
                                             className="w-20 text-center border border-gray-200 rounded-lg py-2.5 text-sm font-semibold focus:border-[#0B1F3B] focus:ring-1 focus:ring-[#0B1F3B] outline-none"
                                         />
                                         <button
-                                            disabled={selectedProduct.stock_count <= 0}
+                                            disabled={selectedProduct.stock_count <= 0 || processing}
+                                            onClick={() => {
+                                                const val = parseInt(document.getElementById('qty-input')?.value || 1);
+                                                addToCart(selectedProduct, val);
+                                            }}
                                             className={`flex-1 py-3 rounded-lg text-sm font-bold transition-all ${
                                                 selectedProduct.stock_count > 0
-                                                    ? 'bg-[#0B1F3B] text-white hover:bg-[#0f2c54]'
+                                                    ? 'bg-[#0B1F3B] text-white hover:bg-[#0f2c54] active:scale-95'
                                                     : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                                             }`}
                                         >
-                                            {selectedProduct.stock_count > 0 ? 'Add to Cart' : 'Unavailable'}
+                                            {selectedProduct.stock_count > 0 ? (processing ? 'Adding...' : 'Add to Cart') : 'Unavailable'}
                                         </button>
                                     </div>
                                 </div>
