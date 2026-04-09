@@ -193,7 +193,7 @@ export default function CustomerDashboard({ auth, transactions = [], recentProdu
                                     <ShoppingBag size={40} className="text-slate-200 mx-auto mb-3" />
                                     <p className="font-black text-slate-400 text-sm">No orders yet</p>
                                     <p className="text-slate-400 text-xs mt-1 mb-6">Start shopping to see your orders here.</p>
-                                    <Link href={route('customer.products')}
+                                    <Link href={route('products.all')}
                                         className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white text-xs font-black rounded-xl hover:bg-indigo-700 transition-colors">
                                         <ShoppingCart size={14} /> Shop Now
                                     </Link>
@@ -287,7 +287,7 @@ export default function CustomerDashboard({ auth, transactions = [], recentProdu
                         <div className="bg-white p-6 rounded-[1.5rem] border border-slate-100 shadow-sm">
                             <div className="flex justify-between items-center mb-5">
                                 <h3 className="font-black text-sm uppercase tracking-wider text-slate-400">For You</h3>
-                                <Link href={route('customer.products')}
+                                <Link href={route('products.all')}
                                     className="text-xs text-indigo-600 font-bold hover:underline">See All</Link>
                             </div>
                             <div className="space-y-4">
@@ -311,7 +311,7 @@ export default function CustomerDashboard({ auth, transactions = [], recentProdu
                                     <p className="text-xs text-slate-400 text-center py-4">No products available.</p>
                                 )}
                             </div>
-                            <Link href={route('customer.products')}
+                            <Link href={route('products.all')}
                                 className="w-full mt-5 py-3 rounded-xl bg-slate-50 text-slate-500 text-xs font-black uppercase tracking-wider hover:bg-indigo-50 hover:text-indigo-600 transition-colors flex items-center justify-center gap-2">
                                 <ShoppingCart size={14} /> Shop Now
                             </Link>

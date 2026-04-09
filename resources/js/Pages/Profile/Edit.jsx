@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import UserLayout from '@/Layouts/UserLayout';
 import InventoryStaffLayout from '@/Layouts/InventoryStaffLayout';
 import ProductionStaffLayout from '@/Layouts/ProductionStaffLayout';
 import AccountingStaffLayout from '@/Layouts/AccountingStaffLayout';
@@ -19,10 +20,11 @@ export default function Edit({ mustVerifyEmail, status }) {
         roleId === 6 ? AccountingStaffLayout :
         roleId === 7 ? CashierStaffLayout :
         roleId === 8 ? MarketingSalesStaffLayout :
+        roleId === 3 ? UserLayout :
         AuthenticatedLayout;
 
     return (
-        <Layout>
+        <Layout activeTab="profile">
             <Head title="Profile" />
 
             <div className="py-12">

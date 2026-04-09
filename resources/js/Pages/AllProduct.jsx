@@ -1,7 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, router } from '@inertiajs/react';
 import ApplicationLogo from '@/Components/ApplicationLogo';
-import { Search, Filter, ChevronDown, X, ShoppingCart, Eye } from 'lucide-react';
+import UserLayout from '@/Layouts/UserLayout';
+import { Search, Filter, ChevronDown, X } from 'lucide-react';
+import Alert from '@/Components/Alert';
 
 export default function AllProduct({ auth, products = [], categories = [] }) {
     // --- State ---
@@ -15,12 +17,10 @@ export default function AllProduct({ auth, products = [], categories = [] }) {
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalTab, setModalTab] = useState('description');
+    const [alertMessage, setAlertMessage] = useState('');
 
     // --- Cart Logic ---
-    const { post, processing } = useForm({
-        product_id: '',
-        quantity: 1,
-    });
+    const [processing, setProcessing] = useState(false);
 
     const openModal = (product) => {
         setSelectedProduct(product);
@@ -29,19 +29,23 @@ export default function AllProduct({ auth, products = [], categories = [] }) {
     };
 
     const addToCart = (product, qty = 1) => {
-        if (!auth.user) {
+        if (!auth?.user) {
             window.location.href = route('login') + '?redirect=' + window.location.pathname;
             return;
         }
 
-        post(route('customer.cart.add', {
+        setProcessing(true);
+        router.post(route('customer.cart.add'), {
             product_id: product.id,
             quantity: qty
-        }), {
+        }, {
             preserveScroll: true,
-            onSuccess: () => {
+            onSuccess: (page) => {
                 setIsModalOpen(false);
+                setAlertMessage(`Successfully added ${qty}x ${product.product} to your cart.`);
+                setTimeout(() => setAlertMessage(''), 5000);
             },
+            onFinish: () => setProcessing(false)
         });
     };
 
@@ -91,7 +95,7 @@ export default function AllProduct({ auth, products = [], categories = [] }) {
         return result;
     }, [products, searchQuery, selectedCategory, sortBy, minPrice, maxPrice]);
 
-    // --- Helpers ---
+    // --- Helpers (Storefront Stars) ---
     const renderStars = (rating = 0) => {
         const r = Number(rating) || 0;
         return (
@@ -107,175 +111,133 @@ export default function AllProduct({ auth, products = [], categories = [] }) {
         );
     };
 
-    const getDashboardRoute = () => {
-        if (!auth.user) return route('login');
-        const role_id = auth.user.role_id;
-        const access_id = auth.user.access_id;
-        
-        if (role_id === 1) return route('admin.dashboard');
-        if (role_id === 3) return route('customer.dashboard');
-        
-        if (role_id === 2) {
-            if (access_id === 1) return route('staff.inventory.dashboard');
-            if (access_id === 2) return route('staff.production.dashboard');
-            if (access_id === 3) return route('staff.accounting.dashboard');
-            if (access_id === 4) return route('staff.cashier.dashboard');
-            if (access_id === 5) return route('staff.marketing-sales.dashboard');
-            return route('staff.production.dashboard');
-        }
-        
-        return route('login');
-    };
+    const NO_IMAGE = 'https://placehold.co/600x800/f8fafc/0f172a?text=Silk+Asset';
 
     return (
-        <div className="min-h-screen bg-[#F7F9FB] flex flex-col font-sans text-[#1F2937] antialiased">
+        <UserLayout activeTab="marketplace">
             <Head title="Marketplace | D'SERICORE" />
 
-            {/* --- TOP BAR --- */}
-            <div className="bg-[#0B1F3B] py-2.5 text-[10px] font-semibold text-white/60 tracking-[0.15em] uppercase text-center md:text-left">
+            <Alert 
+                message={alertMessage} 
+                onClose={() => setAlertMessage('')} 
+                type="success"
+            />
+
+            {/* --- HERO / HEADER SECTION --- */}
+            <div className="bg-white border-b border-slate-100 py-12 lg:py-16">
                 <div className="max-w-7xl mx-auto px-6">
-                    SRDI — SERICULTURE RESEARCH AND DEVELOPMENT INSTITUTE, DMMMSU
+                    <div className="flex flex-col md:flex-row justify-between items-end gap-6">
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-3">
+                                <span className="w-10 h-px bg-[#C9A227]" />
+                                <span className="text-[#3BAA35] text-[11px] font-bold uppercase tracking-[0.3em]">Full Collection</span>
+                            </div>
+                            <h1 className="text-4xl lg:text-5xl font-extrabold text-[#0B1F3B] tracking-tight uppercase">
+                                Official <span className="text-[#3BAA35]">Inventory</span>
+                            </h1>
+                            <p className="max-w-xl text-slate-500 font-medium text-sm leading-relaxed">
+                                Authenticated silk products from SRDI's research facility — strictly quality-tested and backed by institutional research.
+                            </p>
+                        </div>
+                        
+                        {/* Search Control (Polished Storefront Style) */}
+                        <div className="relative w-full md:max-w-md group">
+                            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#3BAA35] transition-colors" size={20} />
+                            <input 
+                                type="text"
+                                placeholder="Search inventory..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-14 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-xl text-sm font-semibold focus:bg-white focus:border-[#3BAA35] focus:ring-4 focus:ring-[#3BAA35]/5 transition-all outline-none"
+                            />
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            {/* --- NAVBAR --- */}
-            <nav className="bg-white sticky top-0 z-[100] shadow-sm border-b border-slate-100">
-                <div className="max-w-7xl mx-auto px-6 h-[72px] flex items-center justify-between">
-                    <div className="flex items-center gap-10">
-                        <Link href="/" className="flex items-center gap-3">
-                            <ApplicationLogo className="h-9 w-auto" />
-                            <span className="text-xl font-extrabold tracking-tight text-[#0B1F3B]">
-                                D'SERI<span className="text-[#3BAA35]">CORE</span>
-                            </span>
-                        </Link>
+            {/* --- FILTER & SORT BAR --- */}
+            <div className="bg-white border-b border-slate-100 sticky top-[72px] z-[90] shadow-sm">
+                <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-4 w-full md:w-auto overflow-x-auto no-scrollbar">
+                        <button 
+                            onClick={() => setSelectedCategory('all')}
+                            className={`whitespace-nowrap px-6 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${selectedCategory === 'all' ? 'bg-[#0B1F3B] text-white' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'}`}
+                        >
+                            All Assets
+                        </button>
+                        {categories.map(cat => (
+                            <button 
+                                key={cat.id}
+                                onClick={() => setSelectedCategory(cat.id)}
+                                className={`whitespace-nowrap px-6 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${selectedCategory === cat.id ? 'bg-[#0B1F3B] text-white' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'}`}
+                            >
+                                {cat.category}
+                            </button>
+                        ))}
                     </div>
-                    <div className="flex items-center gap-5">
-                        {auth.user ? (
-                            <Link href={getDashboardRoute()} className="bg-[#3BAA35] text-white px-6 py-2.5 rounded-lg text-sm font-bold hover:bg-[#329a2d] transition-all">
-                                Go to Dashboard
-                            </Link>
-                        ) : (
-                            <Link href={route('login')} className="text-sm font-semibold text-slate-600 hover:text-[#0B1F3B] transition-colors">
-                                Log In
-                            </Link>
-                        )}
+
+                    <div className="flex items-center gap-3 w-full md:w-auto">
+                        <div className="relative flex-1 md:flex-none">
+                            <select 
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value)}
+                                className="w-full md:w-48 pl-4 pr-10 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold uppercase tracking-widest appearance-none cursor-pointer focus:ring-2 focus:ring-[#3BAA35]/10 outline-none"
+                            >
+                                <option value="latest">Sort: Latest</option>
+                                <option value="top_sales">Sort: Best Sellers</option>
+                                <option value="price_asc">Price: Low - High</option>
+                                <option value="price_desc">Price: High - Low</option>
+                            </select>
+                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
+                        </div>
+                        <button 
+                            onClick={() => setIsFilterOpen(!isFilterOpen)}
+                            className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all border ${isFilterOpen ? 'bg-[#3BAA35] text-white border-[#3BAA35]' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}
+                        >
+                            <Filter size={14} /> Filters
+                        </button>
                     </div>
                 </div>
-            </nav>
 
-            {/* --- SEARCH & CONTROL BAR --- */}
-            <div className="bg-white border-b border-slate-100 sticky top-[72px] z-[90]">
-                <div className="max-w-7xl mx-auto px-6 py-4">
-                    <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-                        {/* Search */}
-                        <div className="relative w-full md:max-w-md group">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-                            <input 
-                                type="text"
-                                placeholder="Search products..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-12 pr-4 py-3 bg-slate-50 border-transparent rounded-xl text-sm font-medium focus:bg-white focus:border-[#3BAA35] focus:ring-0 transition-all"
-                            />
-                        </div>
-
-                        {/* Controls */}
-                        <div className="flex items-center gap-3 w-full md:w-auto">
-                            <div className="flex-1 md:flex-none relative">
-                                <select 
-                                    value={sortBy}
-                                    onChange={(e) => setSortBy(e.target.value)}
-                                    className="w-full md:w-48 pl-4 pr-10 py-3 bg-slate-50 border-transparent rounded-xl text-sm font-bold appearance-none cursor-pointer focus:ring-0"
-                                >
-                                    <option value="latest">Recently Added</option>
-                                    <option value="top_sales">Best Sellers</option>
-                                    <option value="price_asc">Price: Low to High</option>
-                                    <option value="price_desc">Price: High to Low</option>
-                                </select>
-                                <ChevronDown className="absolute right-4 top-[50%] -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                {/* Filter Panel */}
+                {isFilterOpen && (
+                    <div className="max-w-7xl mx-auto px-6 pb-6 animate-in slide-in-from-top duration-300">
+                        <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col md:flex-row items-end gap-6">
+                            <div className="flex-1 w-full space-y-3">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Price Range (₱)</p>
+                                <div className="flex items-center gap-3">
+                                    <input 
+                                        type="number" 
+                                        placeholder="Min"
+                                        value={minPrice}
+                                        onChange={(e) => setMinPrice(e.target.value)}
+                                        className="w-full px-4 py-2.5 bg-white border border-slate-100 rounded-xl text-sm font-bold focus:ring-2 focus:ring-[#3BAA35]/10 outline-none"
+                                    />
+                                    <span className="text-slate-300">—</span>
+                                    <input 
+                                        type="number" 
+                                        placeholder="Max"
+                                        value={maxPrice}
+                                        onChange={(e) => setMaxPrice(e.target.value)}
+                                        className="w-full px-4 py-2.5 bg-white border border-slate-100 rounded-xl text-sm font-bold focus:ring-2 focus:ring-[#3BAA35]/10 outline-none"
+                                    />
+                                </div>
                             </div>
-
                             <button 
-                                onClick={() => setIsFilterOpen(!isFilterOpen)}
-                                className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all ${isFilterOpen ? 'bg-[#0B1F3B] text-white' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
+                                onClick={() => { setMinPrice(''); setMaxPrice(''); setSelectedCategory('all'); setSearchQuery(''); }}
+                                className="px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-[#3BAA35] hover:bg-white rounded-xl transition-all border border-transparent hover:border-[#3BAA35]/20"
                             >
-                                <Filter size={16} /> Categories
+                                Reset All
                             </button>
                         </div>
                     </div>
-
-                    {/* Filter Panel */}
-                    {isFilterOpen && (
-                        <div className="mt-6 pt-6 border-t border-slate-100 flex flex-col gap-6 animate-in slide-in-from-top duration-300">
-                            {/* Categories */}
-                            <div>
-                                <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">By Category</h4>
-                                <div className="flex flex-wrap gap-2">
-                                    <button 
-                                        onClick={() => setSelectedCategory('all')}
-                                        className={`px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${selectedCategory === 'all' ? 'bg-[#3BAA35] text-white shadow-lg shadow-[#3BAA35]/20' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
-                                    >
-                                        All Products
-                                    </button>
-                                    {categories.map(cat => (
-                                        <button 
-                                            key={cat.id}
-                                            onClick={() => setSelectedCategory(cat.id)}
-                                            className={`px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${selectedCategory === cat.id ? 'bg-[#3BAA35] text-white shadow-lg shadow-[#3BAA35]/20' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
-                                        >
-                                            {cat.category}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Price Range & Reset */}
-                            <div className="flex flex-col md:flex-row items-end gap-6">
-                                <div className="flex-1 w-full">
-                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Price Range (₱)</h4>
-                                    <div className="flex items-center gap-3">
-                                        <div className="relative flex-1">
-                                            <input 
-                                                type="number" 
-                                                placeholder="Min"
-                                                value={minPrice}
-                                                onChange={(e) => setMinPrice(e.target.value)}
-                                                className="w-full pl-4 pr-4 py-2.5 bg-slate-50 border-transparent rounded-xl text-sm font-medium focus:bg-white focus:border-[#3BAA35] focus:ring-0 transition-all shadow-inner"
-                                            />
-                                        </div>
-                                        <span className="text-slate-300 font-bold">—</span>
-                                        <div className="relative flex-1">
-                                            <input 
-                                                type="number" 
-                                                placeholder="Max"
-                                                value={maxPrice}
-                                                onChange={(e) => setMaxPrice(e.target.value)}
-                                                className="w-full pl-4 pr-4 py-2.5 bg-slate-50 border-transparent rounded-xl text-sm font-medium focus:bg-white focus:border-[#3BAA35] focus:ring-0 transition-all shadow-inner"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                                <button 
-                                    onClick={() => {
-                                        setSelectedCategory('all');
-                                        setMinPrice('');
-                                        setMaxPrice('');
-                                        setSearchQuery('');
-                                    }}
-                                    className="px-6 py-2.5 text-xs font-black uppercase tracking-widest text-red-500 hover:bg-red-50 rounded-xl transition-all flex items-center gap-2"
-                                >
-                                    <X size={14} /> Reset Filters
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                </div>
+                )}
             </div>
 
-            {/* --- PRODUCTS GRID --- */}
-            <main className="flex-grow max-w-7xl mx-auto px-6 py-12 w-full">
+            {/* --- PRODUCTS GRID (Matching Storefront Card Design) --- */}
+            <main className="max-w-7xl mx-auto px-6 py-12 w-full">
                 {filteredAndSortedProducts.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8">
                         {filteredAndSortedProducts.map(product => {
                             const isOutOfStock = product.stock_count <= 0;
                             const avgRating = product.ratings_avg_stars ? Number(product.ratings_avg_stars).toFixed(1) : "5.0";
@@ -305,6 +267,7 @@ export default function AllProduct({ auth, products = [], categories = [] }) {
                                                 alt={product.product}
                                             />
                                         ) : null}
+                                        {/* Placeholder — shown when no image or onError */}
                                         <div
                                             className="absolute inset-0 flex-col items-center justify-center gap-1 bg-[#F3F4F6]"
                                             style={{ display: product.image_url ? 'none' : 'flex' }}
@@ -319,20 +282,24 @@ export default function AllProduct({ auth, products = [], categories = [] }) {
 
                                     {/* Product Info */}
                                     <div className="p-4 flex flex-col flex-grow">
+                                        {/* Rating Row */}
                                         <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
                                             {renderStars(avgRating)}
                                             <span className="text-xs font-semibold text-slate-600">{avgRating}</span>
                                             <span className="text-[10px] text-slate-400">({product.ratings_count || 0})</span>
                                         </div>
 
+                                        {/* Product Name */}
                                         <h4 className={`font-semibold text-sm leading-snug mb-1 line-clamp-2 ${isOutOfStock ? 'text-slate-400' : 'text-slate-800'}`}>
                                             {product.product}
                                         </h4>
 
+                                        {/* Price */}
                                         <p className={`text-lg font-bold tracking-tight mt-auto ${isOutOfStock ? 'text-gray-300' : 'text-green-600'}`}>
                                             ₱{Number(product.price).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                         </p>
 
+                                        {/* Action Button */}
                                         <button
                                             disabled={isOutOfStock}
                                             onClick={(e) => { e.stopPropagation(); openModal(product); }}
@@ -350,26 +317,65 @@ export default function AllProduct({ auth, products = [], categories = [] }) {
                         })}
                     </div>
                 ) : (
-                    <div className="text-center py-32 bg-white rounded-2xl border border-dashed border-slate-200">
-                        <div className="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
-                            <Search size={32} />
+                    <div className="py-32 text-center bg-white rounded-[2rem] border-2 border-dashed border-slate-100">
+                        <div className="bg-slate-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-200">
+                            <Search size={40} />
                         </div>
-                        <h3 className="text-lg font-bold text-slate-800">No products found</h3>
-                        <p className="text-slate-400 text-sm mt-1">Try adjusting your filters or search terms.</p>
+                        <h3 className="text-2xl font-bold text-[#0B1F3B] uppercase italic">Inventory Not Found</h3>
+                        <p className="text-slate-400 text-sm mt-2 max-w-sm mx-auto">No products were found matching your current research criteria.</p>
                         <button 
-                            onClick={() => { setSearchQuery(''); setSelectedCategory('all'); }}
-                            className="mt-6 text-[#3BAA35] font-bold text-sm hover:underline"
+                            onClick={() => { setSearchQuery(''); setSelectedCategory('all'); setMinPrice(''); setMaxPrice(''); }}
+                            className="mt-8 px-10 py-3.5 bg-[#0B1F3B] text-white text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-[#3BAA35] transition-all"
                         >
-                            Reset all filters
+                            Reset Inventory View
                         </button>
                     </div>
                 )}
             </main>
 
-            {/* --- QUICK VIEW MODAL --- */}
+            {/* --- FOOTER (Matching Storefront) --- */}
+            <footer className="bg-[#0B1F3B] text-white pt-16 pb-12 mt-auto">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="flex flex-col md:flex-row justify-between items-center gap-8 pb-12 border-b border-white/10">
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-3">
+                                <ApplicationLogo className="h-8 w-auto text-[#3BAA35]" />
+                                <span className="text-xl font-extrabold tracking-tight">D'SERI<span className="text-[#3BAA35]">CORE</span></span>
+                            </div>
+                            <p className="text-sm text-slate-400 max-w-sm leading-relaxed">
+                                Official Sericulture Research and Development Institute portal. Supporting the Philippine silk industry through research and transparency.
+                            </p>
+                        </div>
+                        <div className="flex gap-12">
+                            <div className="space-y-4">
+                                <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#C9A227]">Navigation</h4>
+                                <ul className="space-y-2 text-xs text-slate-400 font-medium">
+                                    <li className="hover:text-white transition cursor-pointer">Marketplace</li>
+                                    <li className="hover:text-white transition cursor-pointer">About SRDI</li>
+                                    <li className="hover:text-white transition cursor-pointer">Research</li>
+                                </ul>
+                            </div>
+                            <div className="space-y-4">
+                                <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#C9A227]">Connect</h4>
+                                <ul className="space-y-2 text-xs text-slate-400 font-medium">
+                                    <li className="hover:text-white transition cursor-pointer">Support Desk</li>
+                                    <li className="hover:text-white transition cursor-pointer">Partnerships</li>
+                                    <li className="hover:text-white transition cursor-pointer">Inquiry</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                        <p className="text-[10px] text-slate-500 font-medium uppercase tracking-widest">© 2026 SRDI — DMMMSU. DON MARIANO MARCOS MEMORIAL STATE UNIVERSITY.</p>
+                        <p className="text-[10px] text-slate-500 font-medium uppercase tracking-widest">Sustainability through scientific excellence.</p>
+                    </div>
+                </div>
+            </footer>
+
+            {/* ═══ QUICK VIEW MODAL (Exact Storefront Implementation) ═══ */}
             {isModalOpen && selectedProduct && (
                 <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setIsModalOpen(false)}>
-                    <div className="bg-white max-w-5xl w-full rounded-2xl relative shadow-2xl overflow-hidden max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                    <div className="bg-white max-w-5xl w-full rounded-2xl relative shadow-2xl overflow-hidden max-h-[90vh] flex flex-col animate-in zoom-in duration-300" onClick={e => e.stopPropagation()}>
 
                         {/* Close Button */}
                         <button onClick={() => setIsModalOpen(false)}
@@ -542,13 +548,6 @@ export default function AllProduct({ auth, products = [], categories = [] }) {
                     </div>
                 </div>
             )}
-
-            {/* --- FOOTER --- */}
-            <footer className="bg-[#0B1F3B] text-white pt-16 pb-8 mt-auto">
-                <div className="max-w-7xl mx-auto px-6 text-center">
-                    <p className="text-sm text-slate-400">© 2026 SRDI — Don Mariano Marcos Memorial State University. All reserved.</p>
-                </div>
-            </footer>
-        </div>
+        </UserLayout>
     );
 }

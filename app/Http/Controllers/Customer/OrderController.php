@@ -35,7 +35,7 @@ class OrderController extends Controller
                 return $transaction;
             });
 
-        return Inertia::render('Customer/MyOrders', [
+        return Inertia::render('Orders', [
             'orders' => [
                 'data' => $transactions,
             ],
@@ -159,7 +159,11 @@ class OrderController extends Controller
             ]);
 
             DB::commit();
-            session()->forget('cart');
+            
+            $cart = \App\Models\Cart::where('user_id', $user->id)->where('status', 'active')->first();
+            if ($cart) {
+                $cart->update(['status' => 'ordered']);
+            }
 
             return back()->with('success', "Order placed! Ref: {$transaction->reference_no}");
 

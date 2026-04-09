@@ -6,7 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\Region;
-use App\Models\UserInformation;
+use App\Models\Cart;
+use App\Models\CartItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -14,7 +15,43 @@ use Inertia\Inertia;
 class CartController extends Controller
 {
     /**
-     * Show customer browse-products page with cart data from session.
+     * Get or create active DB cart for user
+     */
+    private function getActiveCart()
+    {
+        $user = Auth::user();
+        if (!$user) return null;
+
+        return Cart::firstOrCreate(
+            ['user_id' => $user->id, 'status' => 'active']
+        );
+    }
+
+    /**
+     * Format cart to array shape expected by frontend [ 'product_id' => [ item_data ] ]
+     */
+    private function formatCartData($cartRecord)
+    {
+        $cartData = [];
+        if ($cartRecord) {
+            foreach ($cartRecord->items as $item) {
+                if (!$item->product) continue;
+                $product = $item->product;
+                $cartData[(string)$product->id] = [
+                    'id'        => $product->id, 
+                    'product'   => $product->product,
+                    'price'     => (float) $product->price,
+                    'image_url' => $product->image_url,
+                    'quantity'  => (int) $item->quantity,
+                    'category'  => $product->category ? $product->category->toArray() : null,
+                ];
+            }
+        }
+        return $cartData;
+    }
+
+    /**
+     * Show cart page with cart data from DB.
      */
     public function index()
     {
@@ -35,13 +72,14 @@ class CartController extends Controller
             ->orderBy('regDesc')
             ->get();
 
-        // Fetch saved address for auto-fill on delivery checkout from user
         $user = Auth::user();
+        $cartRecord = $this->getActiveCart();
+        $cartRecord?->load(['items.product.category']);
 
-        return Inertia::render('Customer/Products/Index', [
+        return Inertia::render('Cart', [
             'products'     => $products,
             'categories'   => $categories,
-            'cart'         => session('cart', []),
+            'cart'         => $this->formatCartData($cartRecord),
             'regions'      => $regions,
             'savedAddress' => [
                 'region_id'       => (string) ($user->region_id       ?? ''),
@@ -54,7 +92,7 @@ class CartController extends Controller
     }
 
     /**
-     * Add a product to the session cart (or increase qty).
+     * Add a product to the DB cart (or increase qty).
      */
     public function add(Request $request)
     {
@@ -64,62 +102,78 @@ class CartController extends Controller
         ]);
 
         $product = Product::findOrFail($request->product_id);
-        $cart    = session('cart', []);
-        $id      = (string) $product->id;
+        $cart = $this->getActiveCart();
 
-        if (isset($cart[$id])) {
-            $cart[$id]['quantity'] += $request->quantity;
-        } else {
-            $cart[$id] = [
-                'id'        => $product->id,
-                'product'   => $product->product,
-                'price'     => (float) $product->price,
-                'image_url' => $product->image_url,
-                'quantity'  => $request->quantity,
-            ];
+        if ($cart) {
+            $item = CartItem::where('cart_id', $cart->id)
+                            ->where('product_id', $product->id)
+                            ->first();
+            
+            if ($item) {
+                $item->quantity += $request->quantity;
+                $item->save();
+            } else {
+                CartItem::create([
+                    'cart_id' => $cart->id,
+                    'product_id' => $product->id,
+                    'quantity' => $request->quantity,
+                ]);
+            }
         }
-
-        session(['cart' => $cart]);
 
         return back()->with('success', "'{$product->product}' added to cart.");
     }
 
     /**
-     * Update quantity of a cart item.
+     * Update quantity of a cart item in DB.
      */
     public function update(Request $request, $productId)
     {
         $request->validate(['quantity' => 'required|integer|min:1']);
 
-        $cart = session('cart', []);
-        $id   = (string) $productId;
+        $cart = $this->getActiveCart();
 
-        if (isset($cart[$id])) {
-            $cart[$id]['quantity'] = $request->quantity;
-            session(['cart' => $cart]);
+        if ($cart) {
+            $item = CartItem::where('cart_id', $cart->id)
+                            ->where('product_id', $productId)
+                            ->first();
+            
+            if ($item) {
+                $item->quantity = $request->quantity;
+                $item->save();
+            }
         }
 
         return back()->with('success', 'Cart updated.');
     }
 
     /**
-     * Remove a single item from the cart.
+     * Remove a single item from the DB cart.
      */
     public function remove($productId)
     {
-        $cart = session('cart', []);
-        unset($cart[(string) $productId]);
-        session(['cart' => $cart]);
+        $cart = $this->getActiveCart();
+
+        if ($cart) {
+            CartItem::where('cart_id', $cart->id)
+                    ->where('product_id', $productId)
+                    ->delete();
+        }
 
         return back()->with('success', 'Item removed from cart.');
     }
 
     /**
-     * Clear the entire cart.
+     * Clear the entire DB cart.
      */
     public function clear()
     {
-        session()->forget('cart');
+        $cart = $this->getActiveCart();
+
+        if ($cart) {
+            CartItem::where('cart_id', $cart->id)->delete();
+        }
+
         return back()->with('success', 'Cart cleared.');
     }
 
@@ -128,6 +182,8 @@ class CartController extends Controller
      */
     public function get()
     {
-        return response()->json(['cart' => session('cart', [])]);
+        $cartRecord = $this->getActiveCart();
+        $cartRecord?->load(['items.product.category']);
+        return response()->json(['cart' => $this->formatCartData($cartRecord)]);
     }
 }

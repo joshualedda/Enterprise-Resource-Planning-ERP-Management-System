@@ -91,7 +91,7 @@ Route::middleware(['auth', 'verified'])->get('/dashboard', function () {
 
     return match ((int) $user->role_id) {
         1 => redirect()->route('admin.dashboard'),
-        3 => redirect()->route('customer.dashboard'),
+        3 => redirect()->route('products.all'),
         4 => redirect()->route('staff.inventory.dashboard'),
         5 => redirect()->route('staff.production.dashboard'),
         6 => redirect()->route('staff.accountingdashboard'),
@@ -155,12 +155,18 @@ Route::middleware(['auth', 'verified'])->prefix('customer')->name('customer.')->
 
     Route::post('/ratings/bulk', [RatingController::class, 'bulkStore'])->name('ratings.bulk');
 
-    Route::get('/products', [CartController::class, 'index'])->name('products');
+    Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
     Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
     Route::patch('/cart/{productId}', [CartController::class, 'update'])->name('cart.update');
     Route::delete('/cart/{productId}', [CartController::class, 'remove'])->name('cart.remove');
     Route::post('/cart/clear', [CartController::class, 'clear'])->name('cart.clear');
     Route::get('/api/cart', [CartController::class, 'get'])->name('cart.get');
+
+    Route::controller(ProfileController::class)->group(function () {
+        Route::get('/profile', 'edit')->name('profile');
+        Route::patch('/profile', 'update')->name('profile.update');
+        Route::delete('/profile', 'destroy')->name('profile.destroy');
+    });
 });
 
 /*

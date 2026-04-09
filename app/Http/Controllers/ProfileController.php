@@ -44,6 +44,10 @@ class ProfileController extends Controller
             return Inertia::render('Staff/Inventory/Profile', $sharedProps);
         }
 
+        if ((int) $request->user()->role_id === 3) {
+            return Inertia::render('Profile', $sharedProps);
+        }
+
         // Use the same default profile edit page for all other roles
         return Inertia::render('Profile/Edit', $sharedProps);
     }
@@ -66,7 +70,7 @@ class ProfileController extends Controller
         $request->user()->save();
 
         return match ((int) $request->user()->role_id) {
-            // Check if the request came from staff inventory profile
+            3 => Redirect::route('customer.profile'),
             default => str_contains(url()->previous(), 'staff/inventory/profile')
                 ? Redirect::route('staff.inventory.profile')
                 : Redirect::route('profile.edit'),
