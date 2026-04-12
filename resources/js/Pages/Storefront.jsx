@@ -4,6 +4,7 @@ import ApplicationLogo from '@/Components/ApplicationLogo';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination, EffectFade, Navigation } from 'swiper/modules';
 import Chatbot from '@/Components/Chatbot';
+import { LayoutGrid } from 'lucide-react';
 
 import 'swiper/css';
 import 'swiper/css/pagination';
@@ -127,21 +128,19 @@ export default function Storefront({ auth, products }) {
                     <div className="flex items-center gap-5">
                         {auth.user ? (
                             <Link 
-                                href={route('customer.profile')} 
+                                href={route('products.all')} 
                                 className="bg-[#3BAA35] text-white px-6 py-2.5 rounded-lg text-sm font-bold hover:bg-[#329a2d] transition-all shadow-lg shadow-[#3BAA35]/20 flex items-center gap-2"
                             >
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                </svg>
-                                Go to Profile
+                                <LayoutGrid size={18} />
+                                Marketplace
                             </Link>
                         ) : (
                             <>
                                 <Link href={route('login')} className="text-sm font-semibold text-slate-600 hover:text-[#0B1F3B] transition-colors">
                                     Log In
                                 </Link>
-                                <Link href={route('login')} className="bg-[#3BAA35] text-white px-5 py-2.5 rounded-lg text-sm font-bold hover:bg-[#329a2d] transition-all shadow-sm shadow-[#3BAA35]/20">
-                                    Enterprise Access
+                                <Link href={route('products.all')} className="bg-[#3BAA35] text-white px-5 py-2.5 rounded-lg text-sm font-bold hover:bg-[#329a2d] transition-all shadow-sm shadow-[#3BAA35]/20">
+                                    Marketplace
                                 </Link>
                             </>
                         )}

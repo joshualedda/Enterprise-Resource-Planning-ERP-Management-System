@@ -116,8 +116,8 @@ export default function UserLayout({ children, activeTab = 'marketplace' }) {
                                 )}
                             </div>
                         ) : (
-                            <Link href={route('login')} className="bg-[#3BAA35] text-white px-6 py-2.5 rounded-lg text-sm font-bold hover:bg-[#329a2d] transition-all shadow-lg shadow-[#3BAA35]/20">
-                                Enterprise Access
+                            <Link href={route('products.all')} className="bg-[#3BAA35] text-white px-6 py-2.5 rounded-lg text-sm font-bold hover:bg-[#329a2d] transition-all shadow-lg shadow-[#3BAA35]/20">
+                                Marketplace
                             </Link>
                         )}
                     </div>
@@ -173,7 +173,7 @@ export default function UserLayout({ children, activeTab = 'marketplace' }) {
                                 <Link href={route('logout')} method="post" as="button" className="w-full p-5 border border-red-100 text-red-500 bg-red-50 rounded-[2rem] font-bold text-center">SIGN OUT</Link>
                             </div>
                         ) : (
-                            <Link href={route('login')} className="block w-full text-center py-5 bg-[#3BAA35] text-white text-xl font-extrabold rounded-[2rem] shadow-lg shadow-[#3BAA35]/20 tracking-tight">ENTERPRISE ACCESS</Link>
+                            <Link href={route('products.all')} className="block w-full text-center py-5 bg-[#3BAA35] text-white text-xl font-extrabold rounded-[2rem] shadow-lg shadow-[#3BAA35]/20 tracking-tight">MARKETPLACE</Link>
                         )}
                     </div>
                 )}

@@ -88,62 +88,61 @@ class CheckoutController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
+        \Illuminate\Support\Facades\Log::info('Checkout process started', ['request' => $request->except(['receipt'])]);
+
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'items' => 'required|array',
             'customer_name' => 'required|string',
             'contact' => 'required|string',
-            'address' => 'nullable|string',
-            'region_id' => 'required|exists:region,region_id',
-            'province_id' => 'required|exists:province,province_id',
-            'municipality_id' => 'required|exists:municipality,municipality_id',
-            'barangay_id' => 'required|exists:barangay,barangay_id',
+            'address' => 'required|string',
+            'region_id' => 'required',
+            'province_id' => 'required',
+            'municipality_id' => 'required',
+            'barangay_id' => 'required',
             'zip_code' => 'nullable|string',
             'payment_method' => 'required|in:cash,gcash,bank',
             'reference_no' => 'nullable|string',
             'receipt' => 'nullable|image|max:2048'
         ]);
 
+        if ($validator->fails()) {
+            \Illuminate\Support\Facades\Log::warning('Checkout validation failed', ['errors' => $validator->errors()->toArray()]);
+            return back()->withErrors($validator)->withInput();
+        }
+
         $user = Auth::user();
         
         DB::beginTransaction();
         try {
-            // Update User Profile with new address as fallback
-            $user->update([
-                'region_id' => $request->region_id,
-                'province_id' => $request->province_id,
-                'municipality_id' => $request->municipality_id,
-                'barangay_id' => $request->barangay_id,
-                'zip_code' => $request->zip_code,
-            ]);
-
-            // 1. Calculate Total
-            $totalAmount = 0;
-            foreach ($request->items as $item) {
-                $totalAmount += $item['price'] * $item['quantity'];
-            }
-
-            // 2. Receipt Upload
+            // 1. Receipt Upload
             $receiptPath = null;
             if ($request->hasFile('receipt')) {
                 $receiptPath = $request->file('receipt')->store('receipts', 'public');
+                \Illuminate\Support\Facades\Log::info('Receipt uploaded', ['path' => $receiptPath]);
             }
 
-            // 3. Create Transaction
+            // 2. Create Transaction
             $referenceNo = $this->generateReferenceNo();
             $transaction = Transaction::create([
                 'user_id' => $user->id,
-                'reference_no' => $referenceNo,
-                'total_amount' => $totalAmount,
-                'status' => 'In Process',
+                'barangay_id' => (int) $request->barangay_id,
+                'municipal_id' => (int) $request->municipality_id,
+                'province_id' => (int) $request->province_id,
+                'region_id' => (int) $request->region_id,
+                'shipping_address' => $request->address,
+                'reference_no' => $request->reference_no ?? $referenceNo,
+                'total_amount' => collect($request->items)->sum(fn($i) => (float)$i['price'] * (int)$i['quantity']),
+                'status' => 'Pending',
                 'payment_method' => ucfirst($request->payment_method),
                 'receipt_path' => $receiptPath,
-                'transacted_by' => $user->id,
-                'order_type' => 'delivery'
+                'transacted_by' => $request->customer_name,
+                'order_type' => 'Delivery'
             ]);
 
-            // 4. Process Items
+            \Illuminate\Support\Facades\Log::info('Transaction created', ['id' => $transaction->id, 'ref' => $transaction->reference_no]);
+
+            // 3. Process Items & Inventory
             foreach ($request->items as $itemData) {
-                // Create Order (Line Item)
                 Order::create([
                     'transaction_id' => $transaction->id,
                     'product_id' => $itemData['id'],
@@ -152,41 +151,45 @@ class CheckoutController extends Controller
                     'status' => 'Pending'
                 ]);
 
-                // 5. Deduct Inventory (Insert OUT record)
                 Inventory::create([
                     'product_id' => $itemData['id'],
                     'quantity' => $itemData['quantity'],
                     'type' => 'out',
-                    'remarks' => "Order #{$referenceNo}"
+                    'remarks' => "Order #{$transaction->reference_no}"
                 ]);
             }
 
-            // 6. Clear Cart (Update status to ordered)
+            // 4. Clear Cart
             $cart = Cart::where('user_id', $user->id)->where('status', 'active')->first();
             if ($cart) {
                 $cart->update(['status' => 'ordered']);
             }
 
-            // 7. Notifications
-            $admin = User::where('role_id', 1)->first();
-            if ($admin) {
+            // 5. Notifications
+            $admins = User::where('role_id', 1)->get();
+            foreach ($admins as $admin) {
                 Notification::create([
                     'user_id' => $admin->id,
                     'icon' => '🛍️',
                     'title' => 'New Order Received',
-                    'body' => "New order #{$referenceNo} placed by {$request->customer_name}.",
+                    'body' => "Order #{$transaction->reference_no} by {$request->customer_name}",
                     'unread' => true,
                     'type' => 'new_order',
-                    'url' => '#' // Add link when admin route is ready
+                    'url' => route('admin.orders.show', $transaction->id)
                 ]);
             }
 
             DB::commit();
+            \Illuminate\Support\Facades\Log::info('Checkout success', ['transaction_id' => $transaction->id]);
 
-            return redirect()->route('customer.orders.index')->with('success', "Order #{$referenceNo} has been placed successfully!");
+            return redirect()->route('customer.orders.index')->with('success', "Order placed successfully! Reference: {$transaction->reference_no}");
 
         } catch (\Exception $e) {
             DB::rollBack();
+            \Illuminate\Support\Facades\Log::error('Checkout Fatal Error: ' . $e->getMessage(), [
+                'exception' => $e,
+                'trace' => $e->getTraceAsString()
+            ]);
             return back()->with('error', 'Checkout failed: ' . $e->getMessage());
         }
     }

@@ -10,13 +10,21 @@ class Transaction extends Model
 {
     protected $fillable = [
         'user_id', 
+        'barangay_id',
+        'municipal_id',
+        'province_id',
+        'region_id',
+        'shipping_address',
         'reference_no', 
         'total_amount', 
-        'transacted_by',
-        'status',
-        'order_type', 
         'payment_method', 
-        'receipt_path'
+        'order_type', 
+        'receipt_path',
+        'transacted_by',
+        'journal_entry_id',
+        'posted_at',
+        'status',
+        'is_rated',
     ];
 
     /**

@@ -246,6 +246,7 @@ export default function Checkout({ auth, checkoutItems, customer, regions: allRe
                                         </button>
                                     ))}
                                 </div>
+                                {errors.payment_method && <p className="text-red-500 text-[10px] font-bold mt-2 uppercase tracking-widest">{errors.payment_method}</p>}
 
                                 {data.payment_method !== 'cash' && (
                                     <div className="p-6 bg-white border border-slate-100 rounded-2xl text-[#0B1F3B] space-y-6 h-full animate-in fade-in slide-in-from-top-2 duration-300">
@@ -285,6 +286,7 @@ export default function Checkout({ auth, checkoutItems, customer, regions: allRe
                                                     className="w-full px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold focus:ring-2 focus:ring-[#3BAA35]/20 focus:border-[#3BAA35] transition-all"
                                                     placeholder="Reference Number from payment app"
                                                 />
+                                                {errors.reference_no && <p className="text-red-500 text-[10px] font-bold mt-1 uppercase">{errors.reference_no}</p>}
                                             </div>
                                             <div className="space-y-2">
                                                 <label className={labelClass}>Proof of Remittance (Receipt)</label>
@@ -303,6 +305,7 @@ export default function Checkout({ auth, checkoutItems, customer, regions: allRe
                                                         </>
                                                     )}
                                                 </div>
+                                                {errors.receipt && <p className="text-red-500 text-[10px] font-bold mt-1 uppercase">{errors.receipt}</p>}
                                             </div>
                                         </div>
                                     </div>
