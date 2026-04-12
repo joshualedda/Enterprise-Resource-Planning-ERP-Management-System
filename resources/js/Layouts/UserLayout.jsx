@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import { ShoppingBag, LayoutGrid, ClipboardList, Menu, X, User, LogOut, ChevronDown } from 'lucide-react';
+import Chatbot from '@/Components/Chatbot';
 
 export default function UserLayout({ children, activeTab = 'marketplace' }) {
     const { auth } = usePage().props;
@@ -181,6 +182,7 @@ export default function UserLayout({ children, activeTab = 'marketplace' }) {
             <main className="flex-1">
                 {children}
             </main>
+            <Chatbot />
         </div>
     );
 }

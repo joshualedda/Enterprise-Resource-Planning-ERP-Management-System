@@ -16,6 +16,7 @@ use App\Http\Controllers\RatingController;
 use App\Http\Controllers\Customer\OrderController;
 use App\Http\Controllers\Customer\UserDashboardController;
 use App\Http\Controllers\Customer\CartController;
+use App\Http\Controllers\Customer\ChatController;
 use App\Http\Controllers\Staff\OrderManagementController;
 use App\Http\Controllers\Staff\InventoryDashboardController;
 use App\Http\Controllers\Staff\InventoryTasksController;
@@ -69,6 +70,8 @@ use App\Http\Controllers\Admin\InventoryController as AdminInventoryController;
 */
 Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead'])
     ->name('notifications.markAllRead');
+
+Route::post('/chat', [ChatController::class, 'chat'])->name('chat');
 
 Route::patch('/notifications/{id}/mark-read', [NotificationController::class, 'markAsRead'])
     ->name('notifications.markRead');
@@ -150,6 +153,8 @@ Route::middleware(['auth', 'verified'])->prefix('customer')->name('customer.')->
     Route::patch('/orders/{transaction}/received', [OrderController::class, 'markReceived'])->name('orders.received');
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('/api/orders/{id}/receipt', [OrderController::class, 'getReceipt'])->name('orders.receipt');
+    Route::get('/checkout', [\App\Http\Controllers\Customer\CheckoutController::class, 'index'])->name('checkout.index');
+    Route::post('/checkout', [\App\Http\Controllers\Customer\CheckoutController::class, 'store'])->name('checkout.store');
     Route::post('/checkout/place-order', [OrderController::class, 'placeOrder'])->name('checkout.place');
     Route::patch('/orders/{transaction}/cancel', [OrderController::class, 'cancelOrder'])->name('orders.cancel');
 

@@ -16,6 +16,10 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
 
+        $middleware->validateCsrfTokens(except: [
+            '/chat'
+        ]);
+
         $middleware->alias([
             'role' => \App\Http\Middleware\Role::class,
         ]);

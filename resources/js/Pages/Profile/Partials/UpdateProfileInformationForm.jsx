@@ -105,20 +105,26 @@ export default function UpdateProfileInformationForm({ mustVerifyEmail, status, 
         }
     }, [recentlySuccessful]);
 
-    const inputClass  = "mt-1 block w-full bg-slate-50 border-slate-200 rounded-xl focus:bg-white focus:ring-emerald-500 focus:border-emerald-500 transition-all text-sm";
-    const selectClass = "mt-1 block w-full bg-slate-50 border-slate-200 rounded-xl focus:bg-white focus:ring-emerald-500 focus:border-emerald-500 transition-all text-sm disabled:opacity-40 disabled:cursor-not-allowed";
+    const inputClass  = "mt-1 block w-full bg-slate-50 border-slate-200 rounded-xl focus:bg-white focus:ring-[#3BAA35] focus:border-[#3BAA35] transition-all text-sm";
+    const selectClass = "mt-1 block w-full bg-slate-50 border-slate-200 rounded-xl focus:bg-white focus:ring-[#3BAA35] focus:border-[#3BAA35] transition-all text-sm disabled:opacity-40 disabled:cursor-not-allowed";
     const labelClass  = "font-bold text-slate-700 text-sm";
 
     return (
-        <section className={`bg-white p-8 rounded-3xl border border-slate-200 shadow-sm ${className}`}>
+        <section className={`bg-white p-8 md:p-12 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/40 relative overflow-hidden ${className}`}>
             <Toaster />
+            <div className="absolute top-0 left-0 w-2 h-full bg-[#3BAA35]"></div>
 
-            <header className="mb-6">
-                <div className="flex items-center gap-2 mb-1">
-                    <User size={18} className="text-emerald-600" />
-                    <h2 className="text-xl font-black text-slate-900 tracking-tight">Profile Information</h2>
+            <header className="mb-10">
+                <div className="flex items-center gap-4 mb-3">
+                    <div className="w-12 h-12 rounded-2xl bg-[#3BAA35]/10 flex items-center justify-center text-[#3BAA35]">
+                        <User size={24} />
+                    </div>
+                    <div>
+                        <h2 className="text-2xl font-black text-[#0B1F3B] tracking-tight uppercase">Profile Information</h2>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mt-1">Acquisition Identity Management</p>
+                    </div>
                 </div>
-                <p className="text-sm text-slate-500 ml-6">Update your name, email, and delivery address.</p>
+                <p className="text-sm text-slate-500 font-medium">Update your institutional identity records and verified delivery coordinates.</p>
             </header>
 
             <form onSubmit={e => { e.preventDefault(); patch(route('profile.update')); }} className="space-y-8">

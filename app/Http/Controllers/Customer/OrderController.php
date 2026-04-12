@@ -224,8 +224,9 @@ class OrderController extends Controller
     {
         $transaction = Transaction::with('order_items')->where('user_id', Auth::id())->findOrFail($id);
 
-        if ($transaction->status !== 'Pending') {
-            return response()->json(['error' => 'Only pending orders can be cancelled.'], 422);
+        $allowedStatuses = ['Pending', 'Ready to Pickup', 'Delivery in Progress'];
+        if (!in_array($transaction->status, $allowedStatuses)) {
+            return response()->json(['error' => 'Orders that are already completed or already cancelled cannot be cancelled.'], 422);
         }
 
         DB::beginTransaction();

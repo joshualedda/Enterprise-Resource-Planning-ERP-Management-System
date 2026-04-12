@@ -5,6 +5,7 @@ import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
 import InputError from '@/Components/InputError';
 import PrimaryButton from '@/Components/PrimaryButton';
+import { ShieldCheck } from 'lucide-react';
 
 export default function UpdatePasswordForm({ className = '' }) {
     const passwordInput = useRef();
@@ -47,15 +48,24 @@ export default function UpdatePasswordForm({ className = '' }) {
     };
 
     return (
-        <section className={`bg-white p-8 rounded-3xl border border-slate-200 shadow-sm ${className}`}>
-            <Toaster /> {/* Toast container */}
+        <section className={`bg-white p-8 rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/40 relative overflow-hidden ${className}`}>
+            <Toaster />
+            <div className="absolute top-0 left-0 w-2 h-full bg-[#0B1F3B]"></div>
             
-            <header className="mb-6">
-                <h2 className="text-xl font-black text-slate-900 tracking-tight text-indigo-600">Security</h2>
-                <p className="mt-1 text-sm text-slate-500">Ensure your account uses a strong, random password.</p>
+            <header className="mb-8">
+                <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 rounded-xl bg-[#0B1F3B]/10 flex items-center justify-center text-[#0B1F3B]">
+                        <ShieldCheck size={20} />
+                    </div>
+                    <div>
+                        <h2 className="text-lg font-black text-[#0B1F3B] tracking-tight uppercase">Security</h2>
+                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none mt-1">Credentials Protection</p>
+                    </div>
+                </div>
+                <p className="text-xs text-slate-500 font-medium">Keep your scientific assets safe by utilizing a strong, institutional-grade password.</p>
             </header>
 
-            <form onSubmit={updatePassword} className="space-y-5 max-w-xl">
+            <form onSubmit={updatePassword} className="space-y-5">
                 <div>
                     <InputLabel htmlFor="current_password" value="Current Password" />
                     <TextInput id="current_password" ref={currentPasswordInput} value={data.current_password} onChange={(e) => setData('current_password', e.target.value)} type="password" className="mt-1 block w-full bg-slate-50" />

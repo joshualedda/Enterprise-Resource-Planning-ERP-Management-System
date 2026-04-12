@@ -39,12 +39,12 @@ export default function Show({ auth, product }) {
                     <div className="grid grid-cols-1 md:grid-cols-5">
 
                         {/* Image */}
-                        <div className="md:col-span-2 bg-slate-50 relative min-h-[380px] border-b md:border-b-0 md:border-r border-slate-100 flex items-center justify-center p-8">
+                        <div className="md:col-span-2 bg-slate-50 relative min-h-[500px] border-b md:border-b-0 md:border-r border-slate-100 flex items-center justify-center p-8">
                             {product.image_url ? (
                                 <img
                                     src={product.image_url}
                                     alt={product.product}
-                                    className="max-h-72 w-full object-contain drop-shadow-xl hover:scale-105 transition-transform duration-500"
+                                    className="max-h-[450px] w-full object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-500"
                                     onError={e => {
                                         e.target.style.display = 'none';
                                         e.target.nextSibling.style.display = 'flex';

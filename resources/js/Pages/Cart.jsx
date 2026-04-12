@@ -7,8 +7,26 @@ import { Search, Package, ChevronRight, ShoppingCart, Trash2, ShieldCheck, Arrow
 export default function Cart({ auth, cart = {} }) {
     // Determine type of cart prop and ensure it's iterable as an array.
     const cartItems = Array.isArray(cart) ? cart : Object.values(cart || {});
-    const totalAmount = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+    const [selectedItems, setSelectedItems] = useState(cartItems.map(item => item.id));
     const [itemToDelete, setItemToDelete] = useState(null);
+
+    // Calculate totals based only on selected items
+    const selectedCartItems = cartItems.filter(item => selectedItems.includes(item.id));
+    const totalAmount = selectedCartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+
+    const toggleItemSelection = (id) => {
+        setSelectedItems(prev => 
+            prev.includes(id) ? prev.filter(itemId => itemId !== id) : [...prev, id]
+        );
+    };
+
+    const toggleSelectAll = () => {
+        if (selectedItems.length === cartItems.length) {
+            setSelectedItems([]);
+        } else {
+            setSelectedItems(cartItems.map(item => item.id));
+        }
+    };
 
     const updateQuantity = (id, newQuantity) => {
         if (newQuantity < 1) return;
@@ -20,8 +38,8 @@ export default function Cart({ auth, cart = {} }) {
     };
 
     const checkout = () => {
-        // Standard placeholder navigation
-        router.get(route('checkout.index') || '#'); 
+        if (selectedItems.length === 0) return;
+        router.get(route('customer.checkout.index'), { items: selectedItems.join(',') }); 
     };
 
     return (
@@ -54,8 +72,38 @@ export default function Cart({ auth, cart = {} }) {
                     <div className="flex flex-col lg:flex-row gap-8">
                         {/* Cart Items List */}
                         <div className="flex-1 space-y-6">
+                            {/* Select All Toggle */}
+                            <div className="bg-white p-4 px-6 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+                                <label className="flex items-center gap-3 cursor-pointer group">
+                                    <div className="relative flex items-center">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={selectedItems.length === cartItems.length && cartItems.length > 0}
+                                            onChange={toggleSelectAll}
+                                            className="w-5 h-5 rounded border-gray-300 text-[#3BAA35] focus:ring-[#3BAA35]/20 cursor-pointer transition-all"
+                                        />
+                                    </div>
+                                    <span className="text-xs font-bold text-slate-600 uppercase tracking-widest group-hover:text-[#3BAA35] transition-colors">
+                                        {selectedItems.length === cartItems.length ? 'Deselect All' : 'Select All Assets'}
+                                    </span>
+                                </label>
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1 rounded-full border border-slate-100">
+                                    {selectedItems.length} / {cartItems.length} Selected
+                                </span>
+                            </div>
+
                             {cartItems.map((item) => (
-                                <div key={item.id} className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col md:flex-row overflow-hidden group">
+                                <div key={item.id} className={`bg-white rounded-xl border transition-all duration-300 flex flex-col md:flex-row overflow-hidden group ${selectedItems.includes(item.id) ? 'border-[#3BAA35]/30 shadow-md ring-1 ring-[#3BAA35]/5' : 'border-gray-100 shadow-sm opacity-80 hover:opacity-100'}`}>
+                                    {/* Selection Checkbox (Side) */}
+                                    <div className={`w-12 md:w-16 flex items-center justify-center border-b md:border-b-0 md:border-r border-gray-50 transition-colors ${selectedItems.includes(item.id) ? 'bg-[#3BAA35]/5' : 'bg-gray-50/30'}`}>
+                                        <input 
+                                            type="checkbox" 
+                                            checked={selectedItems.includes(item.id)}
+                                            onChange={() => toggleItemSelection(item.id)}
+                                            className="w-5 h-5 rounded border-gray-300 text-[#3BAA35] focus:ring-[#3BAA35]/20 cursor-pointer transition-all"
+                                        />
+                                    </div>
+
                                     {/* Item Image */}
                                     <div className="p-6 md:p-8 shrink-0 flex items-center justify-center border-b md:border-b-0 md:border-r border-gray-100 bg-gray-50/50">
                                         <div className="w-24 h-24 rounded-xl bg-[#F3F4F6] border border-gray-100 overflow-hidden flex items-center justify-center relative shadow-inner">
@@ -140,7 +188,7 @@ export default function Cart({ auth, cart = {} }) {
                                 
                                 <div className="space-y-4 mb-8">
                                     <div className="flex justify-between items-center text-sm">
-                                        <span className="text-slate-500 font-medium">Subtotal ({cartItems.length} assets)</span>
+                                        <span className="text-slate-500 font-medium">Subtotal ({selectedItems.length} selected)</span>
                                         <span className="font-semibold text-slate-800">₱{Number(totalAmount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                                     </div>
                                     <div className="flex justify-between items-center text-sm">
@@ -160,7 +208,8 @@ export default function Cart({ auth, cart = {} }) {
 
                                 <button 
                                     onClick={checkout}
-                                    className="w-full flex items-center justify-center gap-3 py-4 px-6 bg-[#0B1F3B] text-white rounded-xl hover:bg-[#3BAA35] shadow-lg shadow-[#0B1F3B]/10 hover:shadow-[#3BAA35]/20 transition-all font-bold text-xs uppercase tracking-widest active:scale-95"
+                                    disabled={selectedItems.length === 0}
+                                    className="w-full flex items-center justify-center gap-3 py-4 px-6 bg-[#0B1F3B] text-white rounded-xl hover:bg-[#3BAA35] shadow-lg shadow-[#0B1F3B]/10 hover:shadow-[#3BAA35]/20 transition-all font-bold text-xs uppercase tracking-widest active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#0B1F3B]"
                                 >
                                     Proceed to Checkout
                                     <ArrowRight size={18} />

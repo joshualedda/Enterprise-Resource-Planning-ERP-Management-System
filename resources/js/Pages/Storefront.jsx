@@ -3,6 +3,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination, EffectFade, Navigation } from 'swiper/modules';
+import Chatbot from '@/Components/Chatbot';
 
 import 'swiper/css';
 import 'swiper/css/pagination';
@@ -637,6 +638,7 @@ export default function Storefront({ auth, products }) {
                 .swiper-pagination-bullet-active { background: #3BAA35 !important; }
                 .swiper-pagination { bottom: 15px !important; text-align: left !important; padding-left: 20px; }
             `}</style>
+            <Chatbot />
         </div>
     );
 }

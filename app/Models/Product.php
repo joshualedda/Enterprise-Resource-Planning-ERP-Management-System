@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 class Product extends Model
 {
@@ -55,24 +56,29 @@ class Product extends Model
         );
     }
 
-protected function imageUrl(): Attribute
-{
-    return Attribute::make(
-        get: function () {
-            if (!$this->image_path) {
-                return asset('images/default-product.png');
+    protected function imageUrl(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                if (!$this->image_path) {
+                    return asset('images/default-product.png');
+                }
+
+                if (str_starts_with($this->image_path, 'http')) {
+                    return $this->image_path;
+                }
+
+                // Clean up the path: ensure it doesn't have double slashes and handles singular/plural folder names
+                $path = ltrim($this->image_path, '/');
+                if (str_starts_with($path, 'products/')) {
+                    $path = str_replace('products/', 'product/', $path);
+                }
+
+                // Using asset('storage/...') is the most reliable for XAMPP subfolder setups
+                return asset('storage/' . $path);
             }
-
-            if (str_starts_with($this->image_path, 'http')) {
-                return $this->image_path;
-            }
-
-            $fixedPath = str_replace('products/', 'product/', $this->image_path);
-
-            return asset('storage/' . $fixedPath);
-        }
-    );
-}
+        );
+    }
 
     public function ratings(): HasMany
     {

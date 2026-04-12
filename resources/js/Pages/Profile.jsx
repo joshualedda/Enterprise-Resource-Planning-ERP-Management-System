@@ -32,28 +32,29 @@ export default function Profile({ auth, mustVerifyEmail, status }) {
 
             {/* Main Content Area */}
             <main className="max-w-7xl mx-auto px-6 py-12 w-full">
-                <div className="space-y-8">
-                    {/* Profile Information Block */}
-                    <div className="bg-white p-6 sm:p-10 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
-                        <div className="absolute top-0 left-0 w-1.5 h-full bg-[#3BAA35]"></div>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+                    
+                    {/* Primary Column (Left): Profile Information */}
+                    <div className="lg:col-span-8 space-y-12">
                         <UpdateProfileInformationForm
                             mustVerifyEmail={mustVerifyEmail}
                             status={status}
-                            className="max-w-3xl"
                         />
                     </div>
 
-                    {/* Password Update Block */}
-                    <div className="bg-white p-6 sm:p-10 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
-                        <div className="absolute top-0 left-0 w-1.5 h-full bg-[#0B1F3B]"></div>
-                        <UpdatePasswordForm className="max-w-3xl" />
+                    {/* Secondary Column (Right): Security & Account Management */}
+                    <div className="lg:col-span-4 space-y-8">
+                        {/* Security Block */}
+                        <div className="space-y-4">
+                            <UpdatePasswordForm />
+                        </div>
+
+                        {/* Danger Zone */}
+                        <div className="space-y-4 pt-4 border-t border-slate-100">
+                            <DeleteUserForm />
+                        </div>
                     </div>
 
-                    {/* Delete Account Block */}
-                    <div className="bg-white p-6 sm:p-10 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
-                        <div className="absolute top-0 left-0 w-1.5 h-full bg-[#C9A227]"></div>
-                        <DeleteUserForm className="max-w-3xl" />
-                    </div>
                 </div>
             </main>
 
