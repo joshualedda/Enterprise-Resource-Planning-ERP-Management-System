@@ -23,11 +23,10 @@ function SidebarItem({ item, currentUrl }) {
     return (
         <Link
             href={item.href ?? '#'}
-            className={`flex items-center gap-3 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 group ${
-                isActive
-                    ? 'bg-teal-50 text-teal-800'
-                    : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
-            }`}
+            className={`flex items-center gap-3 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 group ${isActive
+                ? 'bg-teal-50 text-teal-800'
+                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                }`}
         >
             <svg className={`w-[18px] h-[18px] flex-shrink-0 transition-colors ${isActive ? 'text-teal-600' : 'text-slate-400 group-hover:text-teal-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
@@ -46,9 +45,8 @@ function SidebarGroup({ item, currentUrl }) {
         <div className="mb-1 block">
             <button
                 onClick={() => setOpen(v => !v)}
-                className={`w-full flex items-center justify-between px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 group ${
-                    isChildActive ? 'text-teal-800 bg-teal-50' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
-                }`}
+                className={`w-full flex items-center justify-between px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 group ${isChildActive ? 'text-teal-800 bg-teal-50' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                    }`}
             >
                 <div className="flex items-center gap-3">
                     <svg className={`w-[18px] h-[18px] flex-shrink-0 transition-colors ${isChildActive ? 'text-teal-600' : 'text-slate-400 group-hover:text-teal-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -67,11 +65,10 @@ function SidebarGroup({ item, currentUrl }) {
                             const active = child.href && child.href !== '#' && currentUrl.startsWith(child.href);
                             return (
                                 <Link key={child.name} href={child.href ?? '#'}
-                                    className={`block px-3 py-2 rounded-xl text-xs font-medium transition-all duration-200 ${
-                                        active
-                                            ? 'bg-teal-600 text-white shadow-sm font-bold'
-                                            : 'text-slate-500 hover:bg-teal-50 hover:text-teal-700'
-                                    }`}
+                                    className={`block px-3 py-2 rounded-xl text-xs font-medium transition-all duration-200 ${active
+                                        ? 'bg-teal-600 text-white shadow-sm font-bold'
+                                        : 'text-slate-500 hover:bg-teal-50 hover:text-teal-700'
+                                        }`}
                                 >
                                     {child.name}
                                 </Link>
@@ -189,7 +186,7 @@ function UserMenu({ user, fullName, roleInfo }) {
 // ─── MAIN LAYOUT ──────────────────────────────────────────────────────────
 export default function CashierStaffLayout({ children, header }) {
     const { auth, notifications = [] } = usePage().props;
-    const user     = auth.user;
+    const user = auth.user;
     const fullName = `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [now, setNow] = useState(new Date());
@@ -201,7 +198,7 @@ export default function CashierStaffLayout({ children, header }) {
     }, []);
 
     const roleConfig = {
-        7: { label: 'Cashier',  color: 'text-teal-100 bg-teal-600', dot: 'bg-teal-400' },
+        7: { label: 'Cashier', color: 'text-teal-100 bg-teal-600', dot: 'bg-teal-400' },
     };
     const roleInfo = roleConfig[user.role_id] ?? { label: 'Staff', color: 'text-slate-100 bg-slate-500', dot: 'bg-slate-400' };
 
@@ -216,46 +213,44 @@ export default function CashierStaffLayout({ children, header }) {
             name: 'Point of Sale',
             icon: 'M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z',
             children: [
-                { name: 'New Sale',        href: '#' },
-                { name: 'Held Orders',     href: '#' },
-                { name: 'Returns / Refunds', href: '#' },
+                { name: 'Held Orders', href: route().has('staff.cashier.pos.held-orders') ? route('staff.cashier.pos.held-orders') : '#' },
+                { name: 'Returns / Refunds', href: route().has('staff.cashier.pos.return-refund') ? route('staff.cashier.pos.return-refund') : '#' },
             ],
         },
         {
             name: 'Transactions',
             icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01',
             children: [
-                { name: 'Sales List',      href: '#' },
                 { name: 'Receipt Reprint', href: '#' },
-                { name: 'Void Requests',   href: '#' },
+                { name: 'Void Requests', href: '#' },
             ],
         },
         {
             name: 'Customers',
             icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v2h5M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z',
             children: [
-                { name: 'Customer List',      href: '#' },
-                { name: 'Customer Purchases', href: '#' },
+                { name: 'Customer List', href: route().has('staff.cashier.customer-list') ? route('staff.cashier.customer-list') : '#' },
+                { name: 'Customer Purchases', href: route().has('staff.cashier.customer-purchases') ? route('staff.cashier.customer-purchases') : '#' },
             ],
         },
         {
             name: 'Cash Management',
             icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z',
             children: [
-                { name: 'Open Cash Session',  href: '#' },
+                { name: 'Open Cash Session', href: '#' },
                 { name: 'Cash In / Cash Out', href: '#' },
                 { name: 'Cash Count (End Shift)', href: '#' },
-                { name: 'Remittance',         href: '#' },
+                { name: 'Remittance', href: '#' },
             ],
         },
         {
             name: 'Reports',
             icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
             children: [
-                { name: 'Daily Sales Report',     href: '#' },
+                { name: 'Daily Sales Report', href: '#' },
                 { name: 'Payment Method Summary', href: '#' },
-                { name: 'Cashier Performance',    href: '#' },
-                { name: 'Void / Refund Report',   href: '#' },
+                { name: 'Cashier Performance', href: '#' },
+                { name: 'Void / Refund Report', href: '#' },
             ],
         },
         { separator: 'Settings' },
@@ -264,7 +259,7 @@ export default function CashierStaffLayout({ children, header }) {
             icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z',
             children: [
                 { name: 'Payment Methods', href: '#' },
-                { name: 'Receipt Format',  href: '#' },
+                { name: 'Receipt Format', href: '#' },
                 { name: 'POS Permissions', href: '#' },
             ],
         },
@@ -276,10 +271,10 @@ export default function CashierStaffLayout({ children, header }) {
         },
     ], []);
 
-    const dayStr  = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    const dayStr = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
     const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
-    let pageTitle    = header || 'Cashier Panel';
+    let pageTitle = header || 'Cashier Panel';
     const activeItem = navigation.find(n =>
         !n.separator && (n.children
             ? n.children.some(c => c.href && c.href !== '#' && currentUrl.startsWith(c.href))

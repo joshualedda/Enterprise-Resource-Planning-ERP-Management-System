@@ -54,9 +54,15 @@ use App\Http\Controllers\Staff\Accounting\BalanceSheetController;
 use App\Http\Controllers\Staff\Cashier\CashierDashboardController;
 use App\Http\Controllers\Staff\Cashier\CashierTasksController;
 use App\Http\Controllers\Staff\Cashier\CashierReportsController;
+use App\Http\Controllers\Staff\Cashier\CashierCustomerController;
+use App\Http\Controllers\Staff\Cashier\CashierPurchaseController;
+use App\Http\Controllers\Staff\Cashier\CashierHeldOrderController;
+use App\Http\Controllers\Staff\Cashier\CashierReturnRefundController;
 use App\Http\Controllers\Staff\MarketingSales\MarketingSalesDashboardController;
 use App\Http\Controllers\Staff\MarketingSales\MarketingSalesTasksController;
 use App\Http\Controllers\Staff\MarketingSales\MarketingSalesReportsController;
+use App\Http\Controllers\Staff\MarketingSales\MarketingCustomerController;
+use App\Http\Controllers\Staff\MarketingSales\MarketingSalesListController;
 use App\Http\Controllers\Customer\StorefrontController;
 use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\Admin\ReportsController;
@@ -415,6 +421,23 @@ Route::middleware(['auth', 'verified'])->prefix('staff')->name('staff.')->group(
             Route::get('reports/pdf', 'pdf')->name('reports.pdf');
             Route::get('reports/excel', 'excel')->name('reports.excel');
         });
+        Route::controller(CashierCustomerController::class)->group(function () {
+            Route::get('customer-list', 'index')->name('.customer-list');
+        });
+        Route::controller(CashierPurchaseController::class)->group(function () {
+            Route::get('customer-purchases', 'index')->name('.customer-purchases');
+        });
+        Route::prefix('pos')->name('.pos')->group(function () {
+            Route::controller(CashierHeldOrderController::class)->group(function () {
+                Route::get('held-orders', 'index')->name('.held-orders');
+                Route::post('held-orders/{id}/resume', 'resume')->name('.held-orders.resume');
+                Route::delete('held-orders/{id}', 'destroy')->name('.held-orders.cancel');
+            });
+            Route::controller(CashierReturnRefundController::class)->group(function () {
+                Route::get('return-refund', 'index')->name('.return-refund');
+                Route::post('return-refund/{id}/process', 'processReturn')->name('.return-refund.process');
+            });
+        });
         Route::controller(ProfileController::class)->group(function () {
             Route::get('profile', 'edit')->name('profile');
             Route::patch('profile', 'update')->name('profile.update');
@@ -440,6 +463,14 @@ Route::middleware(['auth', 'verified'])->prefix('staff')->name('staff.')->group(
             Route::get('reports', 'index')->name('reports');
             Route::get('reports/pdf', 'pdf')->name('reports.pdf');
             Route::get('reports/excel', 'excel')->name('reports.excel');
+        });
+        Route::controller(MarketingCustomerController::class)->group(function () {
+            Route::get('customer-list', 'index')->name('.customer-list');
+        });
+        Route::controller(MarketingSalesListController::class)->group(function () {
+            Route::get('sales-list', 'index')->name('.sales-list');
+            Route::get('sales-list/pdf', 'pdf')->name('.sales-list.pdf');
+            Route::get('sales-list/excel', 'excel')->name('.sales-list.excel');
         });
         Route::controller(ProfileController::class)->group(function () {
             Route::get('profile', 'edit')->name('profile');
