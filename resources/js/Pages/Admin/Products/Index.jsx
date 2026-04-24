@@ -10,7 +10,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import {
     Search, Filter, Plus, X, Package, AlertTriangle,
     CheckCircle2, XCircle, Edit3, Trash2, Eye,
-    ChevronDown, List, ImageIcon
+    ChevronDown, List, ImageIcon, ChevronRight
 } from 'lucide-react';
 
 // --- COMPONENTS ---
@@ -355,14 +355,45 @@ export default function Index({ auth, products = [], categories = [] }) {
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {categories.map(cat => (
-                            <div key={cat.id} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
-                                <div>
-                                    <h3 className="font-bold text-slate-900 text-lg group-hover:text-indigo-600 transition-colors">{cat.category}</h3>
-                                    <p className="text-sm text-slate-500 mt-1">{cat.products_count || 0} Products</p>
+                            <div key={cat.id} 
+                                onClick={() => {
+                                    setCategoryFilter(cat.id);
+                                    setActiveTab('products');
+                                }}
+                                className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-xl hover:border-indigo-100 transition-all flex flex-col justify-between group cursor-pointer relative overflow-hidden">
+                                
+                                {/* Background Decorative Element */}
+                                <div className="absolute -right-6 -top-6 w-24 h-24 bg-indigo-50 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-500 blur-2xl" />
+
+                                <div className="relative z-10">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center group-hover:bg-indigo-50 transition-colors">
+                                            <List size={20} className="text-slate-400 group-hover:text-indigo-600 transition-colors" />
+                                        </div>
+                                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all translate-y-1 group-hover:translate-y-0">
+                                            <button 
+                                                onClick={(e) => { e.stopPropagation(); openCategoryModal(cat); }} 
+                                                className="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-600 hover:text-white transition"
+                                                title="Edit Category"
+                                            >
+                                                <Edit3 size={14} />
+                                            </button>
+                                            <button 
+                                                onClick={(e) => { e.stopPropagation(); deleteCategory(cat.id); }} 
+                                                className="p-1.5 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-600 hover:text-white transition"
+                                                title="Delete Category"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <h3 className="font-black text-slate-900 text-lg group-hover:text-indigo-600 transition-colors leading-tight">{cat.category}</h3>
+                                    <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-wider">{cat.products_count || 0} Products</p>
                                 </div>
-                                <div className="flex gap-2 mt-4 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => openCategoryModal(cat)} className="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-600 hover:text-white transition"><Edit3 size={14} /></button>
-                                    <button onClick={() => deleteCategory(cat.id)} className="p-2 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-600 hover:text-white transition"><Trash2 size={14} /></button>
+
+                                <div className="mt-6 flex items-center justify-between relative z-10">
+                                    <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">View Products</span>
+                                    <ChevronRight size={16} className="text-slate-300 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all" />
                                 </div>
                             </div>
                         ))}

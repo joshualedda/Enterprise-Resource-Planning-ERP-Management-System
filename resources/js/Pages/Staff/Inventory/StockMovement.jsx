@@ -12,7 +12,7 @@ import Pagination from '@/Components/Pagination';
 import Table, { Tr, Td } from '@/Components/Table';
 
 const MOVEMENT_COLORS = {
-    purchase: 'from-emerald-400 to-green-500', 
+    purchase: 'from-emerald-400 to-green-500',
     sale: 'from-blue-400 to-indigo-500',
     transfer_in: 'from-sky-400 to-cyan-500',
     transfer_out: 'from-violet-400 to-purple-600',
@@ -23,7 +23,7 @@ const MOVEMENT_COLORS = {
 
 const getMovementColor = (type) => MOVEMENT_COLORS[type] || 'from-slate-400 to-slate-600';
 const getMovementIcon = (type) => {
-    switch(type) {
+    switch (type) {
         case 'purchase': return '📥';
         case 'sale': return '📤';
         case 'transfer_in': return '🚛';
@@ -35,9 +35,6 @@ const getMovementIcon = (type) => {
     }
 };
 
-// ─────────────────────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────────────────────
 function KpiCard({ label, value, badge, badgeColor, iconPath, iconBg }) {
     return (
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 flex flex-col gap-3 hover:shadow-md transition-shadow">
@@ -98,9 +95,9 @@ export default function StockMovement({
 
     const { data, setData, post, put, delete: destroy, processing, errors, reset, clearErrors } = useForm({
         id: '',
-        product_id: '',
-        warehouse_id: '',
-        batch_id: '',
+        raw_product_id: '',
+        raw_warehouse_id: '',
+        raw_batch_id: '',
         movement_type: 'purchase',
         quantity: '',
         unit_cost: '0',
@@ -112,12 +109,12 @@ export default function StockMovement({
 
     // Fetch batches when product changes
     useEffect(() => {
-        if (data.product_id && isModalOpen) {
-            fetchBatches(data.product_id);
+        if (data.raw_product_id && isModalOpen) {
+            fetchBatches(data.raw_product_id);
         } else {
             setAvailableBatches([]);
         }
-    }, [data.product_id, isModalOpen]);
+    }, [data.raw_product_id, isModalOpen]);
 
     const fetchBatches = async (productId) => {
         setIsLoadingBatches(true);
@@ -138,9 +135,9 @@ export default function StockMovement({
         if (mode === 'edit' && m) {
             setData({
                 id: m.id,
-                product_id: m.product_id || '',
-                warehouse_id: m.warehouse_id || '',
-                batch_id: m.batch_id || '',
+                raw_product_id: m.raw_product_id || '',
+                raw_warehouse_id: m.raw_warehouse_id || '',
+                raw_batch_id: m.raw_batch_id || '',
                 movement_type: m.movement_type || 'purchase',
                 quantity: m.quantity || '',
                 unit_cost: m.unit_cost || '0',
@@ -150,13 +147,13 @@ export default function StockMovement({
                 reference_id: m.reference_id || '',
             });
             // Fetch batches for editing product immediately
-            if (m.product_id) {
-                await fetchBatches(m.product_id);
+            if (m.raw_product_id) {
+                await fetchBatches(m.raw_product_id);
             }
         } else {
             reset();
-            if (products.length > 0) setData('product_id', products[0].id);
-            if (warehouses.length > 0) setData('warehouse_id', warehouses[0].id);
+            if (products.length > 0) setData('raw_product_id', products[0].id);
+            if (warehouses.length > 0) setData('raw_warehouse_id', warehouses[0].id);
         }
         setIsModalOpen(true);
     };
@@ -227,7 +224,7 @@ export default function StockMovement({
     ];
 
     // Filtered batches based on selected product
-    const filteredBatches = batches.filter(b => b.raw_product_id === parseInt(data.product_id));
+    const filteredBatches = batches.filter(b => b.raw_product_id === parseInt(data.raw_product_id));
 
     return (
         <InventoryStaffLayout>
@@ -242,7 +239,8 @@ export default function StockMovement({
                     <div>
                         <h1 className="text-3xl font-black text-slate-900 tracking-tight">Stock Movements</h1>
                         <p className="text-slate-500 font-medium mt-1">
-                            Track every inflow and outflow of stock across your warehouses.
+                            {/* Track every inflow and outflow of stock across your warehouses. */}
+                            Stock movement is the record of every change in inventory quantity.
                         </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
@@ -330,9 +328,9 @@ export default function StockMovement({
                                 <p className="text-xs font-bold text-slate-400">
                                     Page {serverMovements.current_page} of {serverMovements.last_page} · {serverMovements.total} total
                                 </p>
-                                <Pagination 
-                                    currentPage={serverMovements.current_page} 
-                                    totalPages={serverMovements.last_page} 
+                                <Pagination
+                                    currentPage={serverMovements.current_page}
+                                    totalPages={serverMovements.last_page}
                                     onPageChange={(page) => {
                                         router.get(route(route().current()), { search, type, warehouse_id: warehouseId, page }, { preserveState: true, preserveScroll: true });
                                     }}
@@ -387,7 +385,7 @@ export default function StockMovement({
                         {rows.map(m => (
                             <div key={m.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden p-5 flex flex-col gap-4 relative group">
                                 <div className={`absolute top-0 right-0 w-16 h-16 bg-gradient-to-br ${getMovementColor(m.movement_type)} opacity-5 rounded-bl-[4rem]`} />
-                                
+
                                 <div className="flex items-start justify-between">
                                     <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${getMovementColor(m.movement_type)} flex items-center justify-center text-white text-lg shadow-sm shadow-indigo-100`}>
                                         {getMovementIcon(m.movement_type)}
@@ -437,30 +435,30 @@ export default function StockMovement({
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             {/* Product */}
                             <div className="md:col-span-2">
-                                <InputLabel htmlFor="product_id" value="Select Product *" />
-                                <select id="product_id" value={data.product_id} onChange={e => setData('product_id', e.target.value)} className="mt-1 block w-full bg-slate-50 border-slate-200 rounded-xl text-sm font-bold text-slate-700" required>
+                                <InputLabel htmlFor="raw_product_id" value="Select Product *" />
+                                <select id="raw_product_id" value={data.raw_product_id} onChange={e => setData('raw_product_id', e.target.value)} className="mt-1 block w-full bg-slate-50 border-slate-200 rounded-xl text-sm font-bold text-slate-700" required>
                                     <option value="">Choose a product...</option>
                                     {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                                 </select>
-                                <InputError message={errors.product_id} className="mt-2" />
+                                <InputError message={errors.raw_product_id} className="mt-2" />
                             </div>
 
                             {/* Warehouse & Batch */}
                             <div>
-                                <InputLabel htmlFor="warehouse_id" value="Warehouse *" />
-                                <select id="warehouse_id" value={data.warehouse_id} onChange={e => setData('warehouse_id', e.target.value)} className="mt-1 block w-full bg-slate-50 border-slate-200 rounded-xl text-sm font-bold text-slate-700" required>
+                                <InputLabel htmlFor="raw_warehouse_id" value="Warehouse *" />
+                                <select id="raw_warehouse_id" value={data.raw_warehouse_id} onChange={e => setData('raw_warehouse_id', e.target.value)} className="mt-1 block w-full bg-slate-50 border-slate-200 rounded-xl text-sm font-bold text-slate-700" required>
                                     <option value="">Select storage...</option>
                                     {warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
                                 </select>
-                                <InputError message={errors.warehouse_id} className="mt-2" />
+                                <InputError message={errors.raw_warehouse_id} className="mt-2" />
                             </div>
                             <div>
-                                <InputLabel htmlFor="batch_id" value={isLoadingBatches ? "Batch (Fetching...)" : "Batch (Optional)"} />
-                                <select id="batch_id" value={data.batch_id} onChange={e => setData('batch_id', e.target.value)} className="mt-1 block w-full bg-slate-50 border-slate-200 rounded-xl text-sm font-bold text-slate-700" disabled={isLoadingBatches}>
+                                <InputLabel htmlFor="raw_batch_id" value={isLoadingBatches ? "Batch (Fetching...)" : "Batch (Optional)"} />
+                                <select id="raw_batch_id" value={data.raw_batch_id} onChange={e => setData('raw_batch_id', e.target.value)} className="mt-1 block w-full bg-slate-50 border-slate-200 rounded-xl text-sm font-bold text-slate-700" disabled={isLoadingBatches}>
                                     <option value="">{isLoadingBatches ? 'Loading batches...' : 'No Batch'}</option>
                                     {availableBatches.map(b => <option key={b.id} value={b.id}>{b.batch_code}</option>)}
                                 </select>
-                                <InputError message={errors.batch_id} className="mt-2" />
+                                <InputError message={errors.raw_batch_id} className="mt-2" />
                             </div>
 
                             {/* Movement Type & Date */}

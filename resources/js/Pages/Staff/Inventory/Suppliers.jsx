@@ -10,6 +10,7 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import Alert from '@/Components/Alert';
 import Table, { Tr, Td } from '@/Components/Table';
 import Pagination from '@/Components/Pagination';
+import { validateContactNumber } from '@/Components/Utils/Validation';
 
 // DUMMY DATA FOR SUPPLIERS
 const DUMMY_SUPPLIERS = [
@@ -125,6 +126,15 @@ export default function Suppliers({ suppliers: serverSuppliers, stats: serverSta
 
     const submitForm = (e) => {
         e.preventDefault();
+
+        // Client-side validation for Phone
+        const phoneError = validateContactNumber(data.phone);
+        if (phoneError) {
+            setData('phone', data.phone); // trigger re-render
+            errors.phone = phoneError; // Manually set error for display
+            return;
+        }
+
         if (modalMode === 'add') {
             post(route('staff.inventory.suppliers.store'), {
                 onSuccess: () => closeModal(),
@@ -308,8 +318,21 @@ export default function Suppliers({ suppliers: serverSuppliers, stats: serverSta
                             </div>
 
                             <div className="col-span-2 md:col-span-1">
-                                <InputLabel htmlFor="phone" value="Phone" />
-                                <TextInput id="phone" value={data.phone} onChange={e => setData('phone', e.target.value)} className="mt-1 block w-full" />
+                                <InputLabel htmlFor="phone" value="Phone (PH Format: 09...)" />
+                                <TextInput 
+                                    id="phone" 
+                                    value={data.phone} 
+                                    onChange={e => {
+                                        setData('phone', e.target.value);
+                                        if (errors.phone) clearErrors('phone');
+                                    }} 
+                                    onBlur={() => {
+                                        const err = validateContactNumber(data.phone);
+                                        if (err) errors.phone = err; 
+                                        else clearErrors('phone');
+                                    }}
+                                    className="mt-1 block w-full" 
+                                />
                                 <InputError message={errors.phone} className="mt-2" />
                             </div>
                             

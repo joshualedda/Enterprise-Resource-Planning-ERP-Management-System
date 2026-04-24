@@ -38,6 +38,10 @@ class AuthenticatedSessionController extends Controller
             return redirect()->route('products.all');
         }
 
+        if ((int) $user->role_id === 2) {
+            return redirect()->route('staff.hr.dashboard');
+        }
+
         return redirect()->intended(route('dashboard'));
     }
 

@@ -65,25 +65,69 @@ class OrderController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $transaction = Transaction::findOrFail($id);
+        $transaction = Transaction::with('order_items')->findOrFail($id);
 
         $validated = $request->validate([
-            'status' => 'required|string|in:Pending,In Process,Ready to Pickup,On Delivery,Product Received,Cancelled'
+            'status'              => 'required|string|in:Pending,In Process,Ready to Pickup,On Delivery,Product Received,Cancelled',
+            'cancellation_reason' => 'nullable|string|max:500'
         ]);
 
-        $transaction->update(['status' => $validated['status']]);
+        DB::beginTransaction();
 
-        Notification::create([
-            'user_id' => $transaction->user_id,
-            'icon'    => '📦',
-            'title'   => 'Order Status Update',
-            'body'    => "Your order #{$transaction->reference_no} is now {$validated['status']}.",
-            'unread'  => true,
-            'type'    => 'order_update',
-            'url'     => route('customer.orders.index')
-        ]);
+        try {
+            $oldStatus = $transaction->status;
+            $newStatus = $validated['status'];
 
-        return redirect()->back()->with('success', 'Order status updated successfully.');
+            // 1. Handle Cancellation Logic
+            if ($newStatus === 'Cancelled' && $oldStatus !== 'Cancelled') {
+                if (!$request->filled('cancellation_reason')) {
+                    return redirect()->back()->with('error', 'Cancellation reason is required.');
+                }
+
+                $transaction->update([
+                    'status'              => 'Cancelled',
+                    'cancellation_reason' => $validated['cancellation_reason']
+                ]);
+
+                // Restore inventory stock
+                foreach ($transaction->order_items as $item) {
+                    $inventoryRow = Inventory::where('product_id', $item->product_id)
+                        ->where('type', 'in')
+                        ->latest()
+                        ->first();
+
+                    if ($inventoryRow) {
+                        $inventoryRow->increment('quantity', $item->quantity);
+                        $inventoryRow->update([
+                            'remarks' => "Stock restored — Order #{$transaction->reference_no} cancelled by admin.",
+                        ]);
+                    }
+                }
+
+                $body = "Your order #{$transaction->reference_no} has been cancelled. Reason: {$validated['cancellation_reason']}";
+            } else {
+                $transaction->update(['status' => $newStatus]);
+                $body = "Your order #{$transaction->reference_no} is now {$newStatus}.";
+            }
+
+            // 2. Notify Customer
+            Notification::create([
+                'user_id' => $transaction->user_id,
+                'icon'    => $newStatus === 'Cancelled' ? '❌' : '📦',
+                'title'   => 'Order Status Update',
+                'body'    => $body,
+                'unread'  => true,
+                'type'    => 'order_update',
+                'url'     => route('customer.orders.index')
+            ]);
+
+            DB::commit();
+            return redirect()->back()->with('success', 'Order status updated successfully.');
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Something went wrong: ' . $e->getMessage());
+        }
     }
 
     /**

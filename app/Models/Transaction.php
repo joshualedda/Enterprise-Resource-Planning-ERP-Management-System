@@ -25,6 +25,7 @@ class Transaction extends Model
         'posted_at',
         'status',
         'is_rated',
+        'cancellation_reason',
     ];
 
     /**

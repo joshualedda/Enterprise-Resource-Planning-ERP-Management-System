@@ -13,13 +13,15 @@ class InventoryProductsController extends Controller
 {
     public function index(Request $request)
     {
-        $query = RawProduct::with(['category', 'unit'])->latest();
+        $query = RawProduct::with(['category', 'unit'])
+            ->withSum('stocks as total_on_hand', 'quantity_on_hand')
+            ->withSum('stocks as total_reserved', 'quantity_reserved')
+            ->latest();
 
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('sku', 'like', "%{$search}%")
                   ->orWhereHas('category', function ($q) use ($search) {
                       $q->where('name', 'like', "%{$search}%");
                   });
@@ -60,7 +62,6 @@ class InventoryProductsController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'sku' => 'nullable|string|max:100|unique:raw_products,sku',
             'category_id' => 'nullable|exists:raw_product_categories,id',
             'unit_id' => 'nullable|exists:raw_product_units,id',
             'product_type' => 'required|in:raw_material,wip,finished_good,supply',
@@ -80,7 +81,6 @@ class InventoryProductsController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'sku' => 'nullable|string|max:100|unique:raw_products,sku,' . $product->id,
             'category_id' => 'nullable|exists:raw_product_categories,id',
             'unit_id' => 'nullable|exists:raw_product_units,id',
             'product_type' => 'required|in:raw_material,wip,finished_good,supply',

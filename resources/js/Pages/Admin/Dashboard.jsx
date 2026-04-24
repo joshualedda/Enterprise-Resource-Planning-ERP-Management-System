@@ -144,7 +144,7 @@ export default function AdminDashboard({
         {
             label:   'New Customers',
             value:   stats.new_customers ?? 0,
-            delta:   'Today',
+            delta:   'Last 7 Days',
             up:      true,
             icon:    'M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z',
             iconBg:  'bg-violet-50 text-violet-600',
@@ -476,7 +476,7 @@ export default function AdminDashboard({
                             { label: 'Total Orders',       value: stats.total_orders ?? 0,     icon: '📦', color: 'bg-indigo-50' },
                             { label: 'Pending Orders',     value: stats.pending_orders ?? 0,   icon: '⏳', color: 'bg-amber-50' },
                             { label: 'For Pickup/Delivery',value: stats.for_shipping ?? 0,     icon: '🚚', color: 'bg-cyan-50' },
-                            { label: 'New Customers Today',value: stats.new_customers ?? 0,    icon: '👤', color: 'bg-violet-50' },
+                            { label: 'New Customers (7d)',value: stats.new_customers ?? 0,    icon: '👤', color: 'bg-violet-50' },
                             { label: 'Revenue Today',      value: fmt(stats.revenue_today??0), icon: '💰', color: 'bg-emerald-50' },
                             { label: 'Avg Order Value',    value: fmt(stats.aov ?? 0),         icon: '📈', color: 'bg-rose-50' },
                         ].map(item => (

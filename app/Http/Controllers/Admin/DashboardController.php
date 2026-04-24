@@ -35,7 +35,7 @@ class DashboardController extends Controller
             ->count();
 
         $newCustomers = User::where('role_id', 3)
-            ->whereDate('created_at', $now->toDateString())
+            ->where('created_at', '>=', Carbon::now()->subDays(7)->startOfDay())
             ->count();
 
         $totalOrdersCount = Transaction::whereNotIn('status', ['Cancelled'])->count();
@@ -69,7 +69,7 @@ class DashboardController extends Controller
             'Ready to Pickup'  => '#8b5cf6',
             'On Delivery'      => '#06b6d4',
             'Product Received' => '#10b981',
-            'Cancelled'        => '#f43f5e',
+            'Cancelled'        => '#f43f5e',    
         ];
 
         $statusData = collect($statusColorMap)->map(function ($color, $status) use ($statusCounts) {

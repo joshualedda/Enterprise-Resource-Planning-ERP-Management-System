@@ -58,6 +58,7 @@ use App\Http\Controllers\Staff\Cashier\CashierCustomerController;
 use App\Http\Controllers\Staff\Cashier\CashierPurchaseController;
 use App\Http\Controllers\Staff\Cashier\CashierHeldOrderController;
 use App\Http\Controllers\Staff\Cashier\CashierReturnRefundController;
+use App\Http\Controllers\Staff\HumanResource\HRDashboardController;
 use App\Http\Controllers\Staff\MarketingSales\MarketingSalesDashboardController;
 use App\Http\Controllers\Staff\MarketingSales\MarketingSalesTasksController;
 use App\Http\Controllers\Staff\MarketingSales\MarketingSalesReportsController;
@@ -476,6 +477,72 @@ Route::middleware(['auth', 'verified'])->prefix('staff')->name('staff.')->group(
             Route::get('profile', 'edit')->name('profile');
             Route::patch('profile', 'update')->name('profile.update');
             Route::delete('profile', 'destroy')->name('profile.destroy');
+        });
+    });
+});
+
+use App\Http\Controllers\Staff\HumanResource\EmployeeController;
+use App\Http\Controllers\Staff\HumanResource\EmployeeStatusController;
+
+/*
+|--------------------------------------------------------------------------
+| Staff — Human Resource — role_id = 2
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', 'verified'])->prefix('staff')->name('staff.')->group(function () {
+    Route::prefix('hr')->name('hr.')->group(function () {
+        Route::controller(HRDashboardController::class)->group(function () {
+            Route::get('dashboard', 'index')->name('dashboard');
+        });
+
+        Route::controller(EmployeeController::class)->group(function () {
+            Route::get('employees', 'index')->name('employees');
+            Route::get('employees/create', 'create')->name('employees.create');
+            Route::post('employees', 'store')->name('employees.store');
+            Route::get('employees/{id}/edit', 'edit')->name('employees.edit');
+            Route::post('employees/{id}', 'update')->name('employees.update'); // Using POST for FormData updates with files
+            Route::delete('employees/{id}', 'destroy')->name('employees.destroy');
+        });
+
+        Route::controller(EmployeeStatusController::class)->group(function () {
+            Route::get('emp-status', 'index')->name('emp-status');
+            Route::post('emp-status', 'store')->name('emp-status.store');
+            Route::put('emp-status/{id}', 'update')->name('emp-status.update');
+            Route::delete('emp-status/{id}', 'destroy')->name('emp-status.destroy');
+        });
+
+        Route::controller(\App\Http\Controllers\Staff\HumanResource\CivilStatusController::class)->group(function () {
+            Route::get('civil-status', 'index')->name('civil-status');
+            Route::post('civil-status', 'store')->name('civil-status.store');
+            Route::put('civil-status/{id}', 'update')->name('civil-status.update');
+            Route::delete('civil-status/{id}', 'destroy')->name('civil-status.destroy');
+        });
+
+        Route::controller(\App\Http\Controllers\Staff\HumanResource\DepartmentController::class)->group(function () {
+            Route::get('department', 'index')->name('department');
+            Route::post('department', 'store')->name('department.store');
+            Route::put('department/{id}', 'update')->name('department.update');
+            Route::delete('department/{id}', 'destroy')->name('department.destroy');
+        });
+
+        Route::controller(\App\Http\Controllers\Staff\HumanResource\PositionController::class)->group(function () {
+            Route::get('position', 'index')->name('position');
+            Route::post('position', 'store')->name('position.store');
+            Route::put('position/{id}', 'update')->name('position.update');
+            Route::delete('position/{id}', 'destroy')->name('position.destroy');
+        });
+
+        Route::controller(ProfileController::class)->group(function () {
+            Route::get('profile', 'edit')->name('profile');
+            Route::patch('profile', 'update')->name('profile.update');
+            Route::delete('profile', 'destroy')->name('profile.destroy');
+        });
+
+        Route::controller(\App\Http\Controllers\Staff\HumanResource\AccountController::class)->group(function () {
+            Route::get('accounts', 'index')->name('accounts');
+            Route::post('accounts', 'store')->name('accounts.store');
+            Route::put('accounts/{id}', 'update')->name('accounts.update');
+            Route::delete('accounts/{id}', 'destroy')->name('accounts.destroy');
         });
     });
 });

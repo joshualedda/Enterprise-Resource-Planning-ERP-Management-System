@@ -11,7 +11,6 @@ class RawProduct extends Model
 
     protected $fillable = [
         'name',
-        'sku',
         'category_id',
         'unit_id',
         'product_type',
@@ -37,5 +36,10 @@ class RawProduct extends Model
     public function unit()
     {
         return $this->belongsTo(RawProductUnit::class, 'unit_id');
+    }
+
+    public function stocks()
+    {
+        return $this->hasMany(RawProductStock::class, 'product_id');
     }
 }

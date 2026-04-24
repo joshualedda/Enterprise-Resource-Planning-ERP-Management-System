@@ -7,6 +7,7 @@ use App\Models\RawProduct;
 use App\Models\RawProductBatch;
 use App\Models\StockMovement;
 use App\Models\Warehouse;
+use App\Models\RawProductStock;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
@@ -43,7 +44,7 @@ class InventoryStockMovementsController extends Controller
             $query->where('movement_type', $request->type);
         }
         if ($request->filled('warehouse_id')) {
-            $query->where('warehouse_id', $request->warehouse_id);
+            $query->where('raw_warehouse_id', $request->warehouse_id);
         }
 
         $movements = $query->latest('movement_date')->paginate(10)->withQueryString();
@@ -57,6 +58,10 @@ class InventoryStockMovementsController extends Controller
             'movementTypes' => [
                 'purchase', 'sale', 'transfer_in', 'transfer_out', 'adjustment', 'production_use', 'return'
             ],
+            'flash' => [
+                'success' => session('success'),
+                'error' => session('error'),
+            ]
         ]);
     }
 
@@ -66,9 +71,9 @@ class InventoryStockMovementsController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'product_id' => 'required|exists:raw_products,id',
-            'warehouse_id' => 'required|exists:warehouses,id',
-            'batch_id' => 'nullable|exists:raw_product_batches,id',
+            'raw_product_id' => 'required|exists:raw_products,id',
+            'raw_warehouse_id' => 'required|exists:warehouses,id',
+            'raw_batch_id' => 'nullable|exists:raw_product_batches,id',
             'movement_type' => 'required|in:purchase,sale,transfer_in,transfer_out,adjustment,production_use,return',
             'quantity' => 'required|numeric',
             'unit_cost' => 'required|numeric|min:0',
@@ -78,9 +83,28 @@ class InventoryStockMovementsController extends Controller
             'reference_id' => 'nullable|integer',
         ]);
 
-        StockMovement::create($validated);
+        DB::transaction(function () use ($validated) {
+            // 1. Create the movement record
+            StockMovement::create($validated);
 
-        return redirect()->back()->with('success', 'Stock movement logged successfully.');
+            // 2. Update or Create the physical stock record
+            $stock = RawProductStock::firstOrNew([
+                'product_id' => $validated['raw_product_id'],
+                'warehouse_id' => $validated['raw_warehouse_id'],
+                'batch_id' => $validated['raw_batch_id'] ?? null,
+            ]);
+
+            // Adjust quantity_on_hand
+            $stock->quantity_on_hand += $validated['quantity'];
+            
+            if ($stock->quantity_on_hand < 0) {
+                $stock->quantity_on_hand = 0;
+            }
+            
+            $stock->save();
+        });
+
+        return redirect()->back()->with('success', 'Stock movement logged successfully and inventory updated.');
     }
 
     /**
@@ -91,9 +115,9 @@ class InventoryStockMovementsController extends Controller
         $movement = StockMovement::findOrFail($id);
 
         $validated = $request->validate([
-            'product_id' => 'required|exists:raw_products,id',
-            'warehouse_id' => 'required|exists:warehouses,id',
-            'batch_id' => 'nullable|exists:raw_product_batches,id',
+            'raw_product_id' => 'required|exists:raw_products,id',
+            'raw_warehouse_id' => 'required|exists:warehouses,id',
+            'raw_batch_id' => 'nullable|exists:raw_product_batches,id',
             'movement_type' => 'required|in:purchase,sale,transfer_in,transfer_out,adjustment,production_use,return',
             'quantity' => 'required|numeric',
             'unit_cost' => 'required|numeric|min:0',
@@ -103,9 +127,34 @@ class InventoryStockMovementsController extends Controller
             'reference_id' => 'nullable|integer',
         ]);
 
-        $movement->update($validated);
+        DB::transaction(function () use ($movement, $validated) {
+            // 1. Reverse the old stock change
+            $oldStock = RawProductStock::where([
+                'product_id' => $movement->raw_product_id,
+                'warehouse_id' => $movement->raw_warehouse_id,
+                'batch_id' => $movement->raw_batch_id,
+            ])->first();
 
-        return redirect()->back()->with('success', 'Stock movement updated successfully.');
+            if ($oldStock) {
+                $oldStock->quantity_on_hand -= $movement->quantity;
+                $oldStock->save();
+            }
+
+            // 2. Apply the new stock change
+            $newStock = RawProductStock::firstOrNew([
+                'product_id' => $validated['raw_product_id'],
+                'warehouse_id' => $validated['raw_warehouse_id'],
+                'batch_id' => $validated['raw_batch_id'] ?? null,
+            ]);
+
+            $newStock->quantity_on_hand += $validated['quantity'];
+            $newStock->save();
+
+            // 3. Update the movement record
+            $movement->update($validated);
+        });
+
+        return redirect()->back()->with('success', 'Stock movement updated and inventory synchronized.');
     }
 
     /**
@@ -114,10 +163,26 @@ class InventoryStockMovementsController extends Controller
     public function destroy(string $id)
     {
         $movement = StockMovement::findOrFail($id);
-        $movement->delete();
 
-        return redirect()->back()->with('success', 'Stock movement deleted successfully.');
+        DB::transaction(function () use ($movement) {
+            // Reverse the stock change before deleting
+            $stock = RawProductStock::where([
+                'product_id' => $movement->raw_product_id,
+                'warehouse_id' => $movement->raw_warehouse_id,
+                'batch_id' => $movement->raw_batch_id,
+            ])->first();
+
+            if ($stock) {
+                $stock->quantity_on_hand -= $movement->quantity;
+                $stock->save();
+            }
+
+            $movement->delete();
+        });
+
+        return redirect()->back()->with('success', 'Stock movement deleted and inventory reversed.');
     }
+
     public function getBatchesByProduct(string $productId)
     {
         $batches = RawProductBatch::where('raw_product_id', $productId)

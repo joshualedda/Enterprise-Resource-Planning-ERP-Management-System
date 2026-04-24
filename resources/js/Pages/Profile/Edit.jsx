@@ -1,5 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import UserLayout from '@/Layouts/UserLayout';
+import HRStaffLayout from '@/Layouts/HRStaffLayout';
 import InventoryStaffLayout from '@/Layouts/InventoryStaffLayout';
 import ProductionStaffLayout from '@/Layouts/ProductionStaffLayout';
 import AccountingStaffLayout from '@/Layouts/AccountingStaffLayout';
@@ -15,6 +16,7 @@ export default function Edit({ mustVerifyEmail, status }) {
     const roleId = Number(auth.user.role_id);
 
     const Layout =
+        roleId === 2 ? HRStaffLayout :
         roleId === 4 ? InventoryStaffLayout :
         roleId === 5 ? ProductionStaffLayout :
         roleId === 6 ? AccountingStaffLayout :

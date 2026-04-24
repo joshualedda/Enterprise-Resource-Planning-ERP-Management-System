@@ -10,49 +10,16 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import Alert from '@/Components/Alert';
 import Table, { Tr, Td } from '@/Components/Table';
 import Pagination from '@/Components/Pagination';
-// ─────────────────────────────────────────────────────────
-// DUMMY DATA — used when no backend data is passed in
-// ─────────────────────────────────────────────────────────
-const DUMMY_PRODUCTS = [
-    { id: 1, product: 'Mulberry Leaves (Fresh)',    category: { name: 'Raw Materials' },  price: 25.00,  status: 'active',   stock_count: 340, image_url: null, created_at: '2026-01-15' },
-    { id: 2, product: 'Mulberry Leaves (Dried)',    category: { name: 'Raw Materials' },  price: 60.00,  status: 'active',   stock_count: 120, image_url: null, created_at: '2026-01-15' },
-    { id: 3, product: 'Silkworm Eggs (Boxed)',      category: { name: 'Raw Materials' },  price: 450.00, status: 'active',   stock_count: 8,   image_url: null, created_at: '2026-01-20' },
-    { id: 4, product: 'Fresh Cocoons (Grade A)',    category: { name: 'Cocoons' },        price: 180.00, status: 'active',   stock_count: 820, image_url: null, created_at: '2026-01-22' },
-    { id: 5, product: 'Fresh Cocoons (Grade B)',    category: { name: 'Cocoons' },        price: 120.00, status: 'active',   stock_count: 410, image_url: null, created_at: '2026-01-22' },
-    { id: 6, product: 'Dried Cocoons',              category: { name: 'Cocoons' },        price: 250.00, status: 'active',   stock_count: 230, image_url: null, created_at: '2026-01-25' },
-    { id: 7, product: 'Raw Silk Thread (Reeled)',   category: { name: 'Silk Products' },  price: 1200.00,status: 'active',   stock_count: 42,  image_url: null, created_at: '2026-02-01' },
-    { id: 8, product: 'Silk Yarn Grade A',          category: { name: 'Silk Products' },  price: 1800.00,status: 'active',   stock_count: 156, image_url: null, created_at: '2026-02-01' },
-    { id: 9, product: 'Silk Yarn Grade B',          category: { name: 'Silk Products' },  price: 1200.00,status: 'active',   stock_count: 88,  image_url: null, created_at: '2026-02-05' },
-    { id: 10, product: 'Degummed Silk',             category: { name: 'Silk Products' },  price: 2400.00,status: 'active',   stock_count: 20,  image_url: null, created_at: '2026-02-08' },
-    { id: 11, product: 'Silk Waste (Floss)',        category: { name: 'By-Products' },    price: 80.00,  status: 'active',   stock_count: 600, image_url: null, created_at: '2026-02-10' },
-    { id: 12, product: 'Pupae (Dried)',             category: { name: 'By-Products' },    price: 150.00, status: 'active',   stock_count: 0,   image_url: null, created_at: '2026-02-10' },
-    { id: 13, product: 'Silk Cocoon Powder',        category: { name: 'By-Products' },    price: 320.00, status: 'archived', stock_count: 55,  image_url: null, created_at: '2026-02-12' },
-    { id: 14, product: 'Silk Wax',                  category: { name: 'Supplies' },       price: 210.00, status: 'active',   stock_count: 90,  image_url: null, created_at: '2026-02-14' },
-    { id: 15, product: 'Reeling Machine Oil',       category: { name: 'Supplies' },       price: 95.00,  status: 'active',   stock_count: 34,  image_url: null, created_at: '2026-02-18' },
-];
+import InfoTooltip from '@/Components/Utils/InfoTooltip';
 
-const DUMMY_STATS = {
-    total: 15,
-    active: 13,
-    archived: 1,
-    low_stock: 3,
-};
-
-const DUMMY_CATEGORIES = [
-    'Raw Materials', 'Cocoons', 'Silk Products', 'By-Products', 'Supplies',
-];
-
-// ─────────────────────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────────────────────
 const phpFmt = (n) =>
     new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', minimumFractionDigits: 2 }).format(n);
 
 function stockBadge(qty) {
-    if (qty === 0)  return { label: 'Out of Stock', cls: 'bg-rose-50 text-rose-600 border-rose-100' };
-    if (qty < 10)   return { label: 'Critical',      cls: 'bg-rose-50 text-rose-600 border-rose-100' };
-    if (qty < 50)   return { label: 'Low Stock',     cls: 'bg-amber-50 text-amber-600 border-amber-200' };
-    return            { label: 'In Stock',           cls: 'bg-emerald-50 text-emerald-600 border-emerald-100' };
+    if (qty === 0) return { label: 'Out of Stock', cls: 'bg-rose-50 text-rose-600 border-rose-100' };
+    if (qty < 10) return { label: 'Critical', cls: 'bg-rose-50 text-rose-600 border-rose-100' };
+    if (qty < 50) return { label: 'Low Stock', cls: 'bg-amber-50 text-amber-600 border-amber-200' };
+    return { label: 'In Stock', cls: 'bg-emerald-50 text-emerald-600 border-emerald-100' };
 }
 
 function statusBadge(status) {
@@ -62,15 +29,23 @@ function statusBadge(status) {
 }
 
 // Stock bar (0-500 scale for display)
-function StockBar({ qty }) {
+function StockBar({ qty, reserved = 0 }) {
+    const available = qty - reserved;
     const pct = Math.min((qty / 500) * 100, 100);
-    const color = qty === 0 ? 'bg-rose-400' : qty < 10 ? 'bg-rose-400' : qty < 50 ? 'bg-amber-400' : 'bg-emerald-500';
+    const color = available <= 0 ? 'bg-rose-400' : available < 10 ? 'bg-rose-400' : available < 50 ? 'bg-amber-400' : 'bg-emerald-500';
     return (
-        <div className="flex items-center gap-2 w-32">
-            <div className="flex-1 bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                <div className={`h-full rounded-full ${color} transition-all duration-500`} style={{ width: `${pct}%` }} />
+        <div className="flex flex-col gap-1 w-32">
+            <div className="flex items-center gap-2">
+                <div className="flex-1 bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                    <div className={`h-full rounded-full ${color} transition-all duration-500`} style={{ width: `${pct}%` }} />
+                </div>
+                <span className="text-[10px] font-black text-slate-700 w-8 text-right">{available}</span>
             </div>
-            <span className="text-xs font-black text-slate-700 w-8 text-right">{qty}</span>
+            {reserved > 0 && (
+                <p className="text-[9px] font-bold text-slate-400 leading-none">
+                    {qty} total · <span className="text-amber-500">{reserved} reserved</span>
+                </p>
+            )}
         </div>
     );
 }
@@ -80,10 +55,10 @@ function StockBar({ qty }) {
 // ─────────────────────────────────────────────────────────
 const CATEGORY_COLORS = {
     'Raw Materials': 'from-lime-400 to-green-500',
-    'Cocoons':       'from-amber-300 to-orange-400',
+    'Cocoons': 'from-amber-300 to-orange-400',
     'Silk Products': 'from-violet-400 to-purple-600',
-    'By-Products':   'from-sky-400 to-blue-500',
-    'Supplies':      'from-slate-300 to-slate-500',
+    'By-Products': 'from-sky-400 to-blue-500',
+    'Supplies': 'from-slate-300 to-slate-500',
 };
 
 function ProductAvatar({ product, category }) {
@@ -147,9 +122,9 @@ export default function AllProducts({
     }, [flash]);
 
     // Local UI state
-    const [search, setSearch]     = useState(serverFilters.search ?? '');
-    const [catFilter, setCat]     = useState(serverFilters.category ?? 'All');
-    const [unitFilter, setUnit]   = useState(serverFilters.unit ?? 'All');
+    const [search, setSearch] = useState(serverFilters.search ?? '');
+    const [catFilter, setCat] = useState(serverFilters.category ?? 'All');
+    const [unitFilter, setUnit] = useState(serverFilters.unit ?? 'All');
     const [viewMode, setViewMode] = useState('table'); // 'table' | 'grid'
 
     // Auto-filter
@@ -179,7 +154,6 @@ export default function AllProducts({
     const { data, setData, post, put, delete: destroy, processing, errors, reset, clearErrors } = useForm({
         id: '',
         name: '',
-        sku: '',
         category_id: '',
         unit_id: '',
         product_type: 'raw_material',
@@ -197,7 +171,6 @@ export default function AllProducts({
             setData({
                 id: p.id,
                 name: p.name || '',
-                sku: p.sku || '',
                 category_id: p.category_id || '',
                 unit_id: p.unit_id || '',
                 product_type: p.product_type || 'raw_material',
@@ -254,8 +227,8 @@ export default function AllProducts({
             const productName = p.product || p.name || '';
             const categoryName = p.category?.name || '';
             const matchSearch = search === '' || productName.toLowerCase().includes(search.toLowerCase()) || categoryName.toLowerCase().includes(search.toLowerCase());
-            const matchCat    = catFilter === 'All' || categoryName === catFilter;
-            const matchUnit   = unitFilter === 'All' || (p.unit?.name || '') === unitFilter;
+            const matchCat = catFilter === 'All' || categoryName === catFilter;
+            const matchUnit = unitFilter === 'All' || (p.unit?.name || '') === unitFilter;
             return matchSearch && matchCat && matchUnit;
         });
     }, [rows, search, catFilter, unitFilter, isServer]);
@@ -376,7 +349,7 @@ export default function AllProducts({
                         <div className="flex items-center bg-slate-100 rounded-xl p-1 gap-1 flex-shrink-0">
                             {[
                                 { mode: 'table', icon: 'M3 10h18M3 14h18M3 6h18M3 18h18' },
-                                { mode: 'grid',  icon: 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z' },
+                                { mode: 'grid', icon: 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z' },
                             ].map(v => (
                                 <button
                                     key={v.mode}
@@ -420,9 +393,9 @@ export default function AllProducts({
                                         Page {serverProducts.current_page} of {serverProducts.last_page}
                                         &nbsp;·&nbsp; {serverProducts.total} total products
                                     </p>
-                                    <Pagination 
-                                        currentPage={serverProducts.current_page} 
-                                        totalPages={serverProducts.last_page} 
+                                    <Pagination
+                                        currentPage={serverProducts.current_page}
+                                        totalPages={serverProducts.last_page}
                                         onPageChange={(page) => {
                                             router.get(route(route().current()), {
                                                 search,
@@ -436,7 +409,10 @@ export default function AllProducts({
                             )}
                         >
                             {filtered.map((p, i) => {
-                                const stkBadge = stockBadge(p.stock_count ?? 0);
+                                const onHand = Number(p.total_on_hand || 0);
+                                const reserved = Number(p.total_reserved || 0);
+                                const available = onHand - reserved;
+                                const stkBadge = stockBadge(available);
                                 return (
                                     <Tr key={p.id}>
                                         {/* # */}
@@ -467,7 +443,7 @@ export default function AllProducts({
 
                                         {/* Stock bar */}
                                         <Td>
-                                            <StockBar qty={p.stock_count ?? 0} />
+                                            <StockBar qty={onHand} reserved={reserved} />
                                         </Td>
 
                                         {/* Stock status badge */}
@@ -507,17 +483,19 @@ export default function AllProducts({
                     <div className="flex flex-col gap-4">
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                             {filtered.length > 0 ? filtered.map(p => {
-                                const stkBadge = stockBadge(p.stock_count ?? 0);
+                                const onHand = Number(p.total_on_hand || 0);
+                                const reserved = Number(p.total_reserved || 0);
+                                const available = onHand - reserved;
+                                const stkBadge = stockBadge(available);
                                 return (
                                     <div key={p.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden group">
                                         {/* Card top color strip by category */}
-                                        <div className={`h-1.5 bg-gradient-to-r ${
-                                            p.category?.name === 'Raw Materials'  ? 'from-lime-400 to-green-500' :
-                                            p.category?.name === 'Cocoons'        ? 'from-amber-300 to-orange-400' :
-                                            p.category?.name === 'Silk Products'  ? 'from-violet-400 to-purple-600' :
-                                            p.category?.name === 'By-Products'    ? 'from-sky-400 to-blue-500' :
-                                            'from-slate-300 to-slate-400'
-                                        }`} />
+                                        <div className={`h-1.5 bg-gradient-to-r ${p.category?.name === 'Raw Materials' ? 'from-lime-400 to-green-500' :
+                                            p.category?.name === 'Cocoons' ? 'from-amber-300 to-orange-400' :
+                                                p.category?.name === 'Silk Products' ? 'from-violet-400 to-purple-600' :
+                                                    p.category?.name === 'By-Products' ? 'from-sky-400 to-blue-500' :
+                                                        'from-slate-300 to-slate-400'
+                                            }`} />
 
                                         <div className="p-4 space-y-3">
                                             {/* Header */}
@@ -541,7 +519,7 @@ export default function AllProducts({
                                                     <p className="text-xs font-bold text-slate-400">Stock</p>
                                                     <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border ${stkBadge.cls}`}>{stkBadge.label}</span>
                                                 </div>
-                                                <StockBar qty={p.stock_count ?? 0} />
+                                                <StockBar qty={onHand} reserved={reserved} />
                                             </div>
 
                                             {/* Footer */}
@@ -576,9 +554,9 @@ export default function AllProducts({
                                     Page {serverProducts.current_page} of {serverProducts.last_page}
                                     &nbsp;·&nbsp; {serverProducts.total} total products
                                 </p>
-                                <Pagination 
-                                    currentPage={serverProducts.current_page} 
-                                    totalPages={serverProducts.last_page} 
+                                <Pagination
+                                    currentPage={serverProducts.current_page}
+                                    totalPages={serverProducts.last_page}
                                     onPageChange={(page) => {
                                         router.get(route(route().current()), {
                                             search,
@@ -601,8 +579,8 @@ export default function AllProducts({
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 divide-x divide-slate-50">
                         {uniqueCats.filter(c => c !== 'All').map(cat => {
-                            const catRows = (isServer ? rows : DUMMY_PRODUCTS).filter(p => (p.category?.name || '') === cat);
-                            const totalStock = catRows.reduce((s, p) => s + (p.stock_count ?? 0), 0);
+                            const catRows = (isServer ? rows : []).filter(p => (p.category?.name || '') === cat);
+                            const totalStock = catRows.reduce((s, p) => s + Number(p.total_on_hand || 0), 0);
                             const gradient = CATEGORY_COLORS[cat] ?? 'from-slate-300 to-slate-400';
                             return (
                                 <div key={cat} className="px-5 py-4 text-center hover:bg-slate-50/60 transition-colors">
@@ -623,19 +601,14 @@ export default function AllProducts({
                         <h2 className="text-lg font-black text-slate-800 mb-4">
                             {modalMode === 'add' ? 'Add New Product' : 'Edit Product'}
                         </h2>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="col-span-2 md:col-span-1">
                                 <InputLabel htmlFor="name" value="Product Name *" />
                                 <TextInput id="name" value={data.name} onChange={e => setData('name', e.target.value)} className="mt-1 block w-full" required />
                                 <InputError message={errors.name} className="mt-2" />
                             </div>
-                            <div className="col-span-2 md:col-span-1">
-                                <InputLabel htmlFor="sku" value="SKU" />
-                                <TextInput id="sku" value={data.sku} onChange={e => setData('sku', e.target.value)} className="mt-1 block w-full" />
-                                <InputError message={errors.sku} className="mt-2" />
-                            </div>
-                            
+
                             <div className="col-span-2 md:col-span-1">
                                 <InputLabel htmlFor="category_id" value="Category" />
                                 <select id="category_id" value={data.category_id} onChange={e => setData('category_id', e.target.value)} className="mt-1 block w-full border-slate-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm text-sm">
@@ -653,7 +626,7 @@ export default function AllProducts({
                                 </select>
                                 <InputError message={errors.unit_id} className="mt-2" />
                             </div>
-                            
+
                             <div className="col-span-2 md:col-span-1">
                                 <InputLabel htmlFor="product_type" value="Product Type *" />
                                 <select id="product_type" value={data.product_type} onChange={e => setData('product_type', e.target.value)} className="mt-1 block w-full border-slate-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm text-sm" required>
@@ -668,16 +641,29 @@ export default function AllProducts({
                             <div className="col-span-2 md:col-span-1 flex gap-2">
                                 <div className="flex-1">
                                     <InputLabel htmlFor="cost_price" value="Cost Price" />
-                                    <TextInput id="cost_price" type="number" step="0.01" value={data.cost_price} onChange={e => setData('cost_price', e.target.value)} className="mt-1 block w-full" />
+                                    <div className="relative mt-1">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <span className="text-slate-500 text-sm">₱</span>
+                                        </div>
+                                        <TextInput id="cost_price" type="number" step="0.01" value={data.cost_price} onChange={e => setData('cost_price', e.target.value)} className="pl-7 block w-full" />
+                                    </div>
                                 </div>
                                 <div className="flex-1">
                                     <InputLabel htmlFor="selling_price" value="Selling Price" />
-                                    <TextInput id="selling_price" type="number" step="0.01" value={data.selling_price} onChange={e => setData('selling_price', e.target.value)} className="mt-1 block w-full" />
+                                    <div className="relative mt-1">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <span className="text-slate-500 text-sm">₱</span>
+                                        </div>
+                                        <TextInput id="selling_price" type="number" step="0.01" value={data.selling_price} onChange={e => setData('selling_price', e.target.value)} className="pl-7 block w-full" />
+                                    </div>
                                 </div>
                             </div>
 
                             <div className="col-span-2 md:col-span-1">
-                                <InputLabel htmlFor="reorder_level" value="Reorder Level" />
+                                <div className="flex items-center gap-1">
+                                    <InputLabel htmlFor="reorder_level" value="Reorder Level" />
+                                    <InfoTooltip text="If stock goes this low, we need to buy more." />
+                                </div>
                                 <TextInput id="reorder_level" type="number" value={data.reorder_level} onChange={e => setData('reorder_level', e.target.value)} className="mt-1 block w-full" />
                                 <InputError message={errors.reorder_level} className="mt-2" />
                             </div>

@@ -9,10 +9,12 @@ class StockMovement extends Model
 {
     use HasFactory;
 
+    protected $table = 'raw_stock_movements';
+
     protected $fillable = [
-        'product_id',
-        'warehouse_id',
-        'batch_id',
+        'raw_product_id',
+        'raw_warehouse_id',
+        'raw_batch_id',
         'movement_type',
         'reference_type',
         'reference_id',
@@ -30,16 +32,16 @@ class StockMovement extends Model
 
     public function product()
     {
-        return $this->belongsTo(RawProduct::class, 'product_id');
+        return $this->belongsTo(RawProduct::class, 'raw_product_id');
     }
 
     public function warehouse()
     {
-        return $this->belongsTo(Warehouse::class);
+        return $this->belongsTo(Warehouse::class, 'raw_warehouse_id');
     }
 
     public function batch()
     {
-        return $this->belongsTo(RawProductBatch::class, 'batch_id');
+        return $this->belongsTo(RawProductBatch::class, 'raw_batch_id');
     }
 }

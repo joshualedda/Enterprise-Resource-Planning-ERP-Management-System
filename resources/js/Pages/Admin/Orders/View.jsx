@@ -100,13 +100,58 @@ function RejectModal({ open, onConfirm, onCancel, loading }) {
         </div>
     );
 }
+// ── Cancellation Modal ────────────────────────────────────────────────────────
+function CancellationModal({ open, onConfirm, onCancel, loading }) {
+    const [reason, setReason] = React.useState('');
+    React.useEffect(() => { if (open) setReason(''); }, [open]);
+    if (!open) return null;
+    const handleConfirm = () => {
+        if (!reason.trim()) return;
+        onConfirm(reason.trim());
+    };
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-sm w-full p-6 space-y-4">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center shrink-0">
+                        <XCircle size={20} className="text-rose-500" />
+                    </div>
+                    <div>
+                        <p className="font-black text-slate-900 text-sm">Cancel Order</p>
+                        <p className="text-xs text-slate-500 mt-0.5">Please provide a reason for cancelling.</p>
+                    </div>
+                </div>
+                <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                        Reason for Cancellation <span className="text-rose-500">*</span>
+                    </label>
+                    <textarea
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        placeholder="e.g. Out of stock, customer requested, etc..."
+                        rows={3}
+                        maxLength={500}
+                        className="w-full border border-slate-200 rounded-xl text-xs p-3 resize-none focus:ring-rose-400 focus:border-rose-400 placeholder:text-slate-300"
+                    />
+                </div>
+                <div className="flex gap-2">
+                    <button onClick={onCancel} disabled={loading} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-xs font-black text-slate-600 hover:bg-slate-50 disabled:opacity-50">Back</button>
+                    <button onClick={handleConfirm} disabled={loading || !reason.trim()} className="flex-1 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs font-black disabled:opacity-50 flex items-center justify-center gap-1.5">
+                        {loading ? 'Processing...' : 'Confirm Cancel'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 export default function View({ auth, order, shippingAddress }) {
     const [processing, setProcessing] = React.useState(false);
-    const [receiptModal, setReceiptModal] = React.useState({ open: false, src: null });
     const [rejectModal, setRejectModal] = React.useState(false);
+    const [cancelModal, setCancelModal] = React.useState(false);
     const [rejecting, setRejecting] = React.useState(false);
+    const [cancelling, setCancelling] = React.useState(false);
 
     const isDelivery = order.order_type === 'delivery';
 
@@ -119,13 +164,26 @@ export default function View({ auth, order, shippingAddress }) {
         { label: 'Cancelled',        color: 'bg-rose-500 hover:bg-rose-600 text-white',        activeRing: 'ring-rose-500',    show: true },
     ].filter(s => s.show);
 
-    const updateStatus = (newStatus) => {
-        if (processing) return;
-        setProcessing(true);
-        router.put(route('admin.orders.update', order.id), { status: newStatus }, {
-            onSuccess: () => { toast.success('Order status updated.'); setProcessing(false); },
-            onError:   () => { toast.error('Failed to update status.');  setProcessing(false); },
-            onFinish:  () => setProcessing(false),
+    const updateStatus = (newStatus, reason = null) => {
+        if (processing || cancelling) return;
+        if (newStatus === 'Cancelled') setCancelling(true);
+        else setProcessing(true);
+
+        const data = { status: newStatus };
+        if (reason) data.cancellation_reason = reason;
+
+        router.put(route('admin.orders.update', order.id), data, {
+            onSuccess: () => { 
+                toast.success('Order status updated.'); 
+                setCancelModal(false);
+            },
+            onError: (err) => {
+                toast.error(err.message || 'Failed to update status.');
+            },
+            onFinish: () => {
+                setProcessing(false);
+                setCancelling(false);
+            },
         });
     };
 
@@ -158,6 +216,13 @@ export default function View({ auth, order, shippingAddress }) {
                 onConfirm={handleRejectReceipt}
                 onCancel={() => setRejectModal(false)}
                 loading={rejecting}
+            />
+
+            <CancellationModal
+                open={cancelModal}
+                onConfirm={(reason) => updateStatus('Cancelled', reason)}
+                onCancel={() => setCancelModal(false)}
+                loading={cancelling}
             />
 
             <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-500">
@@ -199,8 +264,12 @@ export default function View({ auth, order, shippingAddress }) {
                         {order.status !== 'Cancelled' && order.status !== 'Product Received' && (
                             <div className="flex bg-white rounded-xl border border-slate-200 p-1 shadow-sm flex-wrap gap-0.5">
                                 {statusButtons.map((s) => (
-                                    <button key={s.label} onClick={() => updateStatus(s.label)}
-                                        disabled={processing || order.status === s.label}
+                                    <button key={s.label} 
+                                        onClick={() => {
+                                            if (s.label === 'Cancelled') setCancelModal(true);
+                                            else updateStatus(s.label);
+                                        }}
+                                        disabled={processing || cancelling || order.status === s.label}
                                         className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                                             order.status === s.label
                                                 ? `${s.color} shadow-md ring-2 ring-offset-2 ${s.activeRing}`
@@ -403,9 +472,16 @@ export default function View({ auth, order, shippingAddress }) {
 
                                 {/* Cancelled notice */}
                                 {order.status === 'Cancelled' && (
-                                    <div className="mt-3 flex items-center gap-2 p-2.5 bg-rose-50 rounded-xl border border-rose-100">
-                                        <XCircle size={13} className="text-rose-400 shrink-0" />
-                                        <p className="text-[10px] font-bold text-rose-500">This order was cancelled.</p>
+                                    <div className="mt-3 flex flex-col gap-2 p-3 bg-rose-50 rounded-xl border border-rose-100">
+                                        <div className="flex items-center gap-2">
+                                            <XCircle size={14} className="text-rose-500 shrink-0" />
+                                            <p className="text-xs font-black text-rose-600 uppercase tracking-wider">Cancelled</p>
+                                        </div>
+                                        {order.cancellation_reason && (
+                                            <p className="text-[11px] text-rose-500 font-medium leading-relaxed bg-white/50 p-2 rounded-lg border border-rose-100/50">
+                                                <strong>Reason:</strong> {order.cancellation_reason}
+                                            </p>
+                                        )}
                                     </div>
                                 )}
                             </div>
